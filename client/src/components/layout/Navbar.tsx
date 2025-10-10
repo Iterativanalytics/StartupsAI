@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -38,6 +38,8 @@ import {
   X
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { useFeature } from "@/contexts/FeatureFlagsContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +77,8 @@ const ListItem = ({ className, title, href, children, ...props }: any) => {
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, isLoading, login, logout } = useAuth();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const globalSearchEnabled = useFeature('global_search_v1');
 
   const getUserInitials = (user: any) => {
     if (!user) return "U";
@@ -84,6 +88,13 @@ export default function Navbar() {
   };
 
   const [location] = useLocation();
+
+  useEffect(() => {
+    if (!globalSearchEnabled) return;
+    const open = () => setIsSearchOpen(true);
+    window.addEventListener('global-search:open', open as EventListener);
+    return () => window.removeEventListener('global-search:open', open as EventListener);
+  }, [globalSearchEnabled]);
 
   return (
     <nav className="fixed top-0 w-full z-50 glass-container border-b border-white/10 shadow-sm safe-area-top">
@@ -378,6 +389,30 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {globalSearchEnabled && (
+              <>
+                <Button
+                  variant="ghost"
+                  className="h-9 px-3 hidden sm:flex items-center gap-2"
+                  onClick={() => setIsSearchOpen(true)}
+                >
+                  <span className="text-sm">Search</span>
+                  <kbd className="hidden md:inline text-[10px] bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded">⌘K</kbd>
+                </Button>
+                <CommandDialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+                  <CommandInput placeholder="Search documents, pages, and resources..." />
+                  <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup heading="Go to">
+                      <CommandItem onSelect={() => { setIsSearchOpen(false); (window.location.href = '/documents'); }}>Documents</CommandItem>
+                      <CommandItem onSelect={() => { setIsSearchOpen(false); (window.location.href = '/funding'); }}>Funding Hub</CommandItem>
+                      <CommandItem onSelect={() => { setIsSearchOpen(false); (window.location.href = '/education'); }}>Learning Hub</CommandItem>
+                      <CommandItem onSelect={() => { setIsSearchOpen(false); (window.location.href = '/analytics'); }}>Analytics</CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </CommandDialog>
+              </>
+            )}
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"

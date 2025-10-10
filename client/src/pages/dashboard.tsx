@@ -2,6 +2,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { UserType } from "@shared/schema";
 import { UnifiedDashboard } from "@/components/dashboard";
 import UserTypeSelector from "../components/onboarding/UserTypeSelector";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { useFeature } from "@/contexts/FeatureFlagsContext";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoadingSpinner } from "@/components/ui/loading-spinner";
@@ -9,6 +11,7 @@ import { PageLoadingSpinner } from "@/components/ui/loading-spinner";
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
+  const onboardingEnabled = useFeature('onboarding_v2');
 
   if (isLoading) {
     return <PageLoadingSpinner text="Loading your personalized dashboard..." />;
@@ -17,11 +20,14 @@ export default function Dashboard() {
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen">
-        <UserTypeSelector onUserTypeSelect={(type, subtype) => {
-          setSelectedUserType(type);
-          // Here you would typically save the user type to the backend
-          console.log('Selected user type:', type, 'subtype:', subtype);
-        }} />
+        {onboardingEnabled ? (
+          <OnboardingWizard onComplete={() => { /* no-op */ }} onSkip={() => { /* no-op */ }} />
+        ) : (
+          <UserTypeSelector onUserTypeSelect={(type, subtype) => {
+            setSelectedUserType(type);
+            console.log('Selected user type:', type, 'subtype:', subtype);
+          }} />
+        )}
       </div>
     );
   }
@@ -33,11 +39,14 @@ export default function Dashboard() {
   if (!userType) {
     return (
       <div className="min-h-screen">
-        <UserTypeSelector onUserTypeSelect={(type, subtype) => {
-          setSelectedUserType(type);
-          // Save to backend
-          console.log('Selected user type:', type, 'subtype:', subtype);
-        }} />
+        {onboardingEnabled ? (
+          <OnboardingWizard onComplete={() => { /* no-op */ }} onSkip={() => { /* no-op */ }} />
+        ) : (
+          <UserTypeSelector onUserTypeSelect={(type, subtype) => {
+            setSelectedUserType(type);
+            console.log('Selected user type:', type, 'subtype:', subtype);
+          }} />
+        )}
       </div>
     );
   }
