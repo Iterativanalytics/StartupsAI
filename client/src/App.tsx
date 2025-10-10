@@ -51,8 +51,24 @@ import Team from "@/pages/team";
 import Organizations from "@/pages/organizations";
 import Settings from "@/pages/settings";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useEffect } from 'react';
+import { useFeature } from '@/contexts/FeatureFlagsContext';
 
 function App() {
+  const globalSearchEnabled = useFeature('global_search_v1');
+  useEffect(() => {
+    if (!globalSearchEnabled) return;
+    const handler = (e: KeyboardEvent) => {
+      const isCmdK = (e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k');
+      if (isCmdK) {
+        e.preventDefault();
+        const openEvent = new CustomEvent('global-search:open');
+        window.dispatchEvent(openEvent);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [globalSearchEnabled]);
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
