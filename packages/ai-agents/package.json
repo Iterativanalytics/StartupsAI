@@ -1,0 +1,32 @@
+{
+  "name": "@iterative-startups/ai-agents",
+  "version": "0.1.0",
+  "description": "AI Agent system for IterativeStartups platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "zod": "^3.22.4",
+    "openai": "^4.28.0",
+    "langchain": "^0.1.25",
+    "@pinecone-database/pinecone": "^2.0.1",
+    "ioredis": "^5.3.2",
+    "cheerio": "^1.0.0-rc.12",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/jest": "^29.5.11",
+    "typescript": "^5.3.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "eslint": "^8.56.0"
+  }
+}

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iterativ Analytics - Visual Clone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for consistent theming */
+        :root {
+            --primary-purple: #8A4EF5; /* Main accent purple */
+            --dark-purple: #6A34D0;     /* Darker purple for gradients */
+            --light-purple-bg: #E0DAF5; /* Background light purple */
+            --teal-accent: #4ED0F5;     /* Main accent teal */
+            --text-dark: #2C2C2C;       /* Dark text color */
+            --text-light: #5A5A5A;      /* Lighter text color */
+            --glass-bg: rgba(255, 255, 255, 0.3); /* Slightly more transparent main glass */
+            --glass-border: rgba(255, 255, 255, 0.65); /* Finer border for main glass */
+            --dark-button-bg: #1A1A1A;  /* Near black for 'Try Now' */
+            --red-negative: #E55353;    /* Specific red for -30% */
+            --card-glass-bg: rgba(255, 255, 255, 0.65); /* Slightly less transparent for cards */
+            --card-glass-border: rgba(255, 255, 255, 0.85); /* Finer border for cards */
+            --subtle-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); /* General subtle shadow */
+            --strong-shadow: 0 12px 35px rgba(0, 0, 0, 0.18); /* Stronger shadow for main container */
+        }
+
+        /* Base styles for body and overall layout */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            /* Background gradient to match the ethereal feel */
+            background: linear-gradient(135deg, var(--light-purple-bg) 0%, rgba(255, 255, 255, 0.7) 40%, var(--teal-accent) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Hide background overflow for abstract shapes */
+            position: relative;
+        }
+
+        /* Abstract Background Shapes - Made more amorphous and strategically placed */
+        .bg-shape {
+            position: absolute;
+            filter: blur(90px); /* Increased blur */
+            opacity: 0.55; /* Slightly less opaque */
+            z-index: 0;
+        }
+
+        .bg-shape.one {
+            width: 650px; /* Larger */
+            height: 650px;
+            background: var(--primary-purple);
+            border-radius: 55% 25% 65% 35% / 35% 65% 25% 55%; /* More irregular shape */
+            top: -120px; /* Adjusted position */
+            left: -200px; /* Adjusted position */
+            transform: rotate(35deg); /* Slight rotation change */
+        }
+
+        .bg-shape.two {
+            width: 850px; /* Larger */
+            height: 850px;
+            background: var(--teal-accent);
+            border-radius: 25% 75% 45% 55% / 65% 35% 55% 45%; /* More irregular shape */
+            bottom: -300px; /* Adjusted position */
+            right: -300px; /* Adjusted position */
+            transform: rotate(-50deg); /* Slight rotation change */
+            opacity: 0.45; /* Slightly less opaque */
+        }
+
+        .bg-shape.three {
+            width: 400px; /* Larger */
+            height: 400px;
+            background: var(--primary-purple);
+            border-radius: 50% 50% 35% 65% / 65% 35% 65% 35%; /* More irregular shape */
+            top: 18%; /* Adjusted position */
+            right: -150px; /* Adjusted position */
+            opacity: 0.4;
+        }
+
+        /* Main container for the website content, with refined glassmorphism */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 1320px; /* Slightly wider */
+            max-width: 96%; /* Responsive width */
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px); /* More blur for deeper glass effect */
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px; /* Slightly more rounded */
+            box-shadow: var(--strong-shadow); /* More pronounced shadow */
+            padding: 30px; /* Increased overall padding */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px; /* Increased padding */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4); /* Finer, more subtle separator */
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.6em; /* Slightly larger logo text */
+            font-weight: 600;
+            color: var(--text-dark);
+            letter-spacing: -0.03em; /* Tighter letter spacing */
+        }
+
+        .logo svg {
+            margin-right: 10px; /* More space */
+            color: var(--primary-purple);
+            width: 26px; /* Slightly larger icon */
+            height: 26px;
+            filter: drop-shadow(0 0 6px rgba(138, 78, 245, 0.4)); /* Stronger glow for logo icon */
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 40px; /* Increased gap */
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 1em; /* Slightly larger nav links */
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary-purple);
+            text-shadow: 0 0 5px rgba(138, 78, 245, 0.2); /* Subtle text glow on hover */
+        }
+
+        nav ul li a .dropdown-arrow {
+            margin-left: 6px; /* More space */
+            font-size: 0.75em; /* Slightly larger arrow */
+            color: #A0A0A0; /* Muted arrow */
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 30px; /* Increased gap */
+        }
+
+        .header-actions .sign-in {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 1em; /* Slightly larger */
+            transition: color 0.2s ease;
+        }
+
+        .header-actions .sign-in:hover {
+            color: var(--primary-purple);
+        }
+
+        .header-actions .try-now-btn {
+            background-color: var(--dark-button-bg);
+            color: white;
+            padding: 12px 25px; /* Adjusted padding */
+            border-radius: 28px; /* More rounded */
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95em; /* Slightly larger */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); /* Stronger button shadow */
+        }
+
+        .header-actions .try-now-btn:hover {
+            background-color: #000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            justify-content: space-between;
+            padding: 100px 90px 70px; /* More generous padding */
+            gap: 90px; /* Increased gap between panels */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .left-panel {
+            flex: 2;
+            min-width: 350px; /* Ensure content doesn't shrink too much */
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Increased gap */
+            max-width: 65%; /* Slightly wider left panel */
+        }
+
+        .headline {
+            font-size: 3.8em; /* Even larger headline */
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.15; /* Tighter line height */
+            letter-spacing: -0.045em; /* Tighter spacing for headline */
+            margin: 0; /* Remove default margin */
+        }
+
+        .headline span {
+            /* Refined gradient for "Iterativ Analytics" */
+            background-image: linear-gradient(to right, var(--primary-purple) 0%, #A05FF8 50%, var(--teal-accent) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sub-headline {
+            font-size: 1.15em; /* Slightly larger */
+            color: var(--text-light);
+            line-height: 1.6;
+            max-width: 600px; /* Wider */
+            margin: 0; /* Remove default margin */
+        }
+
+        .cta-buttons {
+            display: flex;
+            align-items: center;
+            gap: 25px; /* Adjusted gap */
+            margin-top: 40px; /* More space from sub-headline */
+        }
+
+        .watch-demo-btn {
+            /* Refined gradient for button */
+            background-image: linear-gradient(to right, var(--primary-purple) 0%, var(--dark-purple) 100%);
+            color: white;
+            padding: 16px 35px; /* Larger padding */
+            border-radius: 30px; /* More rounded */
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px; /* Increased gap */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px rgba(138, 78, 245, 0.4); /* Stronger button shadow */
+        }
+
+        .watch-demo-btn:hover {
+            transform: translateY(-3px); /* More pronounced lift */
+            box-shadow: 0 12px 30px rgba(138, 78, 245, 0.5);
+        }
+
+        .watch-demo-btn svg {
+            width: 24px; /* Larger icon */
+            height: 24px;
+        }
+
+        .play-icon-circle {
+            width: 54px; /* Larger circle */
+            height: 54px;
+            border: 1px solid rgba(0, 0, 0, 0.12); /* Slightly thicker border */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.85); /* More opaque background */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+        }
+
+        .play-icon-circle:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.08); /* More pronounced scale */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .play-icon-circle svg {
+            color: var(--primary-purple);
+            font-size: 1.6em; /* Larger icon */
+        }
+
+        /* Right Panel with Data Cards */
+        .right-panel {
+            flex: 1;
+            min-width: 300px; /* Ensure cards don't shrink too much */
+            display: flex;
+            flex-direction: column;
+            gap: 50px; /* Increased gap between cards */
+            align-items: flex-start; /* Align cards to the left in their flex container */
+            position: relative;
+            padding-top: 40px; /* Adjust vertical position */
+            /* Add an additional invisible flex item to push content slightly down, matching visual */
+            padding-bottom: 20px;
+        }
+
+        .data-card {
+            background: var(--card-glass-bg); /* Use card specific glass bg */
+            backdrop-filter: blur(18px); /* More blur for cards */
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--card-glass-border); /* Use card specific glass border */
+            border-radius: 20px; /* Slightly more rounded */
+            padding: 30px; /* Adjusted padding */
+            width: 300px; /* Adjusted width */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); /* More pronounced shadow */
+            position: relative;
+            transform: translateZ(0); /* Ensure hardware acceleration for blur/shadow */
+        }
+
+        .data-card.top {
+            align-self: flex-end; /* Push to the right */
+            margin-right: -60px; /* Increased overlap */
+            margin-top: -50px; /* More pull up */
+        }
+
+        .data-card.bottom {
+            align-self: flex-start; /* Push to the left */
+            margin-left: -60px; /* Increased overlap */
+        }
+
+        .data-card .value {
+            font-size: 3em; /* Larger value */
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px; /* More space */
+        }
+
+        .data-card .sub-value {
+            font-size: 1em; /* Slightly larger */
+            color: var(--red-negative);
+            font-weight: 600;
+            margin-bottom: 20px; /* More space */
+            line-height: 1.2;
+        }
+
+        .data-card .chart-placeholder {
+            height: 70px; /* Taller chart */
+            background: linear-gradient(to right, var(--primary-purple), var(--teal-accent));
+            border-radius: 10px; /* More rounded */
+            opacity: 0.8; /* Slightly more opaque background */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+        }
+        .data-card.top .chart-placeholder::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Refined SVG path for a more accurate wave effect */
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 70"><path fill="none" stroke="%23ffffff" stroke-width="4" opacity="0.65" d="M0,50 C20,30 40,65 60,45 80,25 100,55 120,35 140,15 160,45 180,25 200,5" /></svg>') no-repeat center bottom / 100% auto;
+            opacity: 0.8; /* Increased opacity for the wave */
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5)); /* Subtle white glow on the wave */
+        }
+
+        .data-card.bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 30px; /* Adjusted padding */
+        }
+
+        .data-card.bottom .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 30px; /* More space */
+            font-size: 1.15em; /* Slightly larger */
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .data-card.bottom .title-row svg {
+            color: var(--text-dark);
+            width: 22px; /* Larger icon */
+            height: 22px;
+        }
+
+        .data-card.bottom .percentage {
+            font-size: 4.2em; /* Even larger percentage text */
+            font-weight: 700;
+            color: var(--primary-purple);
+            position: relative;
+            display: inline-block;
+            margin-top: 15px;
+            filter: drop-shadow(0 0 10px rgba(138, 78, 245, 0.5)); /* Stronger glow for the number */
+        }
+
+        .circle-progress {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg); /* Start from top directly */
+            width: 220px; /* Larger circle */
+            height: 220px;
+            border-radius: 50%;
+            box-sizing: border-box;
+            z-index: -1;
+            /* Conic gradient for accurate segment fill and subtle border effect */
+            background: conic-gradient(
+                var(--primary-purple) 0% 82%, /* 82% filled */
+                rgba(138, 78, 245, 0.15) 82% 100%
+            );
+            /* Outer subtle border to match original image */
+            box-shadow: inset 0 0 0 10px rgba(138, 78, 245, 0.15); /* Simulate inner border */
+            border: 2px solid rgba(255, 255, 255, 0.7); /* Outer subtle white border */
+            /* No animation here, as conic-gradient gives static fill */
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            background: var(--glass-bg); /* Consistent glass background */
+            backdrop-filter: blur(25px); /* Stronger blur */
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid var(--glass-border);
+            border-radius: 0 0 24px 24px; /* Match container border-radius */
+            padding: 25px 40px; /* Increased padding */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px; /* More space from main content */
+            flex-wrap: wrap; /* Allow wrapping */
+            gap: 20px; /* Increased gap for wrapped items */
+        }
+
+        .bottom-bar .info {
+            display: flex;
+            align-items: center;
+            gap: 18px; /* Increased gap */
+            color: var(--text-light);
+            font-size: 1em; /* Slightly larger */
+            flex-shrink: 1;
+            min-width: 280px; /* Minimum width before wrapping */
+        }
+
+        .bottom-bar .info svg {
+            color: var(--primary-purple);
+            font-size: 1.8em; /* Larger icon */
+        }
+
+        .bottom-bar .news-button {
+            background-color: rgba(255, 255, 255, 0.75); /* More opaque background */
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-dark);
+            padding: 12px 25px; /* Adjusted padding */
+            border-radius: 28px; /* More rounded */
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Increased gap */
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: var(--subtle-shadow); /* Subtle shadow */
+        }
+
+        .bottom-bar .news-button:hover {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .bottom-bar .news-button svg {
+            font-size: 1em; /* Slightly larger */
+            color: var(--text-dark);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1360px) {
+            .container {
+                width: 90%;
+            }
+            .main-content {
+                padding: 80px 60px 50px;
+                gap: 60px;
+            }
+            .left-panel {
+                max-width: 60%;
+            }
+            .right-panel {
+                padding-top: 20px;
+                gap: 40px;
+            }
+            .data-card.top {
+                margin-right: -40px;
+            }
+            .data-card.bottom {
+                margin-left: -40px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column; /* Stack panels vertically */
+                align-items: center; /* Center stacked content */
+                padding: 50px 30px;
+                gap: 50px;
+            }
+            .left-panel {
+                max-width: 100%; /* Take full width */
+                text-align: center;
+                align-items: center; /* Center text and buttons */
+            }
+            .right-panel {
+                margin-top: 40px; /* Space between stacked panels */
+                align-items: center; /* Center cards */
+                padding-top: 0; /* Remove top padding when stacked */
+            }
+            .header-actions .sign-in {
+                display: none; /* Hide sign in on smaller screens */
+            }
+            nav ul {
+                gap: 15px;
+            }
+            header {
+                padding: 15px 25px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .data-card.top,
+            .data-card.bottom {
+                margin-left: 0; /* Remove negative margins when stacked */
+                margin-right: 0;
+                align-self: center; /* Center cards */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .headline {
+                font-size: 2.5em;
+                letter-spacing: -0.03em;
+            }
+            .sub-headline {
+                font-size: 0.95em;
+            }
+            .cta-buttons {
+                flex-direction: column; /* Stack CTA buttons */
+                gap: 15px;
+            }
+            .bottom-bar {
+                flex-direction: column; /* Stack bottom bar elements */
+                text-align: center;
+                gap: 15px;
+                padding: 20px;
+            }
+            .bottom-bar .info {
+                justify-content: center; /* Center info text */
+            }
+            .data-card {
+                width: 280px; /* Maintain readable width */
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 540px) {
+            .headline {
+                font-size: 2em;
+            }
+            .sub-headline {
+                font-size: 0.85em;
+            }
+            .header-actions .try-now-btn {
+                padding: 10px 18px;
+                font-size: 0.8em;
+            }
+            .play-icon-circle {
+                width: 44px;
+                height: 44px;
+            }
+            .watch-demo-btn {
+                padding: 12px 25px;
+                font-size: 0.9em;
+            }
+            .bottom-bar .news-button {
+                padding: 10px 18px;
+                font-size: 0.85em;
+            }
+            .data-card .value {
+                font-size: 2.5em;
+            }
+            .data-card.bottom .percentage {
+                font-size: 3.5em;
+            }
+            .circle-progress {
+                width: 180px;
+                height: 180px;
+            }
+        }
+
+        @media (max-width: 400px) {
+             /* Hide navigation on very small screens */
+            nav {
+                display: none;
+            }
+            header {
+                justify-content: center; /* Center logo when nav is hidden */
+            }
+            .header-actions {
+                position: absolute; /* Position actions if needed */
+                top: 10px;
+                right: 10px;
+                gap: 10px;
+            }
+            .headline {
+                font-size: 1.8em;
+            }
+            .sub-headline {
+                font-size: 0.8em;
+            }
+            .data-card {
+                width: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Abstract Background Shapes - More fluid and positioned to match image -->
+    <div class="bg-shape one"></div>
+    <div class="bg-shape two"></div>
+    <div class="bg-shape three"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <!-- Generic chart icon as a placeholder for Tableau's actual logo icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 12h5v10h10V12h5L12 2zm0 14h-2v-4h2v4zm4 0h-2v-4h2v4zm-8 0H6v-4h2v4z"/>
+                </svg>
+                Iterativ
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#">Why Iterativ <span class="dropdown-arrow">▼</span></a></li>
+                    <li><a href="#">Products <span class="dropdown-arrow">▼</span></a></li>
+                    <li><a href="#">Solutions <span class="dropdown-arrow">▼</span></a></li>
+                    <li><a href="#">Resources <span class="dropdown-arrow">▼</span></a></li>
+                    <li><a href="#">Partners <span class="dropdown-arrow">▼</span></a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <a href="#" class="sign-in">Sign In</a>
+                <a href="#" class="try-now-btn">Try Now</a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <!-- Headline with text gradient for "Iterativ Analytics" and right arrow entity -->
+                <h1 class="headline">Explore data &rarr; deliver insights, and take action with <span>Iterativ Analytics.</span></h1>
+                <p class="sub-headline">Accelerate decision-making and eliminate repetitive tasks with Iterativ Pulse and Einstein Copilot. Intelligent analytics at scale.</p>
+                <div class="cta-buttons">
+                    <!-- Watch Demo button with gradient background and play icon -->
+                    <a href="#" class="watch-demo-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Watch Demo
+                    </a>
+                    <!-- Circular play icon -->
+                    <div class="play-icon-circle">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <!-- Top Data Card: 10.7M with wave chart -->
+                <div class="data-card top">
+                    <div class="value">10.7M</div>
+                    <div class="sub-value">-30% Last Week</div>
+                    <div class="chart-placeholder"></div>
+                </div>
+                <!-- Bottom Data Card: Data Analysis Reimagined with 82% progress circle -->
+                <div class="data-card bottom">
+                    <div class="title-row">
+                        <span>Data Analysis Reimagined</span>
+                        <!-- Right arrow icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </div>
+                    <div class="percentage">
+                        82%
+                        <!-- Circular progress bar using conic-gradient for better fill accuracy -->
+                        <div class="circle-progress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar with info and news button -->
+        <div class="bottom-bar">
+            <div class="info">
+                <!-- Info icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 14H11V9H13V14ZM13 18H11V16H13V18ZM1 21H23V3H1V21ZM3 5H21V19H3V5Z"/>
+                </svg>
+                Harness the full value of your data with Iterativ's latest product release.
+            </div>
+            <!-- News button with right arrow icon -->
+            <a href="#" class="news-button">
+                What's new in Iterativ 2023.2
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
