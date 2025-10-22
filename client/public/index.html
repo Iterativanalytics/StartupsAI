@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartupsAI Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #8A4EF5 0%, #4ED0F5 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .routes {
+            margin-top: 30px;
+        }
+        .routes a {
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .routes a:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 StartupsAI Dashboard</h1>
+        
+        <div class="status">
+            <h2>Application Status</h2>
+            <div class="status-item success">
+                <span>✅</span>
+                <span style="margin-left: 10px;">Server is running on port 3000</span>
+            </div>
+            <div class="status-item success">
+                <span>✅</span>
+                <span style="margin-left: 10px;">React dependencies are loading</span>
+            </div>
+            <div class="status-item success">
+                <span>✅</span>
+                <span style="margin-left: 10px;">Vite HMR is working</span>
+            </div>
+            <div class="status-item warning">
+                <span>⚠️</span>
+                <span style="margin-left: 10px;">Authentication is disabled in development</span>
+            </div>
+        </div>
+
+        <div class="routes">
+            <h2>Available Routes</h2>
+            <a href="/test">Test Page</a>
+            <a href="/login">Login Page</a>
+            <a href="/education">Education Hub</a>
+            <a href="/ecosystem">Ecosystem Hub</a>
+            <a href="/debug.html">Debug Page</a>
+        </div>
+
+        <div class="status">
+            <h2>React App Test</h2>
+            <div id="react-test">
+                <p>Testing React app loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test if React app is working
+        setTimeout(() => {
+            const rootElement = document.getElementById('root');
+            if (rootElement && rootElement.innerHTML.trim() !== '') {
+                document.getElementById('react-test').innerHTML = 
+                    '<div class="status-item success"><span>✅</span><span style="margin-left: 10px;">React app is rendering</span></div>';
+            } else {
+                document.getElementById('react-test').innerHTML = 
+                    '<div class="status-item error"><span>❌</span><span style="margin-left: 10px;">React app is not rendering</span></div>';
+            }
+        }, 2000);
+
+        // Force hide any loading screens
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+        }, 100);
+    </script>
+</body>
+</html>

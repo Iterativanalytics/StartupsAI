@@ -10,7 +10,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { AssessmentEngine, AssessmentResponse } from '../../packages/assessment-engine/src/index.ts';
+// Temporarily commented out due to import issues
+// import { AssessmentEngine } from '../../packages/assessment-engine/src/engine.ts';
+// import { AssessmentResponse } from '../../packages/assessment-engine/src/models/common.model.ts';
 import { getAssessmentDatabase } from '../services/assessment-database';
 import { getAssessmentService } from '../services/assessment-integration';
 

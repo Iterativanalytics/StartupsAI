@@ -96,29 +96,26 @@
         });
       }
 
+      // Force hide loading screen immediately
+      function hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+      }
+
       // Hide loading screen when app loads
       window.addEventListener('load', () => {
-        setTimeout(() => {
-          const loadingScreen = document.getElementById('loading-screen');
-          if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
-            loadingScreen.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => {
-              loadingScreen.style.display = 'none';
-            }, 300);
-          }
-        }, 1000);
+        setTimeout(hideLoadingScreen, 500);
       });
 
       // Also hide loading screen when DOM is ready
       document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-          const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) {
-          loadingScreen.style.display = 'none';
-        }
-      }, 2000);
+        setTimeout(hideLoadingScreen, 1000);
       });
+
+      // Force hide after 3 seconds regardless
+      setTimeout(hideLoadingScreen, 3000);
 
       // Install prompt for PWA
       let deferredPrompt;

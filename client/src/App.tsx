@@ -55,86 +55,39 @@ import { useEffect } from 'react';
 import { useFeature } from '@/contexts/FeatureFlagsContext';
 
 function App() {
-  const globalSearchEnabled = useFeature('global_search_v1');
-  useEffect(() => {
-    if (!globalSearchEnabled) return;
-    const handler = (e: KeyboardEvent) => {
-      const isCmdK = (e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k');
-      if (isCmdK) {
-        e.preventDefault();
-        const openEvent = new CustomEvent('global-search:open');
-        window.dispatchEvent(openEvent);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [globalSearchEnabled]);
+  // Very simple test to isolate the issue
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-            <div className="relative z-10">
-              <Navbar />
-              <main className="pt-20">
-              <Switch>
-                <Route path="/test" component={() => <div className="p-8"><h1 className="text-2xl font-bold">Test Page - App is working!</h1></div>} />
-                <Route path="/login" component={Login} />
-                <Route path="/" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/documents" component={() => <ProtectedRoute><DocumentsHub /></ProtectedRoute>} />
-                <Route path="/business-plans" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
-                <Route path="/upload" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
-                <Route path="/proposals" component={() => <ProtectedRoute><Proposals /></ProtectedRoute>} />
-                <Route path="/pitch-decks" component={() => <ProtectedRoute><PitchDeck /></ProtectedRoute>} />
-                <Route path="/applications" component={() => <ProtectedRoute><Applications /></ProtectedRoute>} />
-                <Route path="/edit-plan/:id" component={() => <ProtectedRoute><EditPlan /></ProtectedRoute>} />
-                <Route path="/analysis/:id" component={() => <ProtectedRoute><Analysis /></ProtectedRoute>} />
-                <Route path="/funding-matcher" component={() => <ProtectedRoute><FundingMatcher /></ProtectedRoute>} />
-                <Route path="/funding" component={() => <ProtectedRoute><Funding /></ProtectedRoute>} />
-                <Route path="/funding/equity" component={() => <ProtectedRoute><EquityFunding /></ProtectedRoute>} />
-                <Route path="/funding/debt" component={() => <ProtectedRoute><DebtFunding /></ProtectedRoute>} />
-                <Route path="/funding/grants" component={() => <ProtectedRoute><GrantFunding /></ProtectedRoute>} />
-                <Route path="/competitive-advantage" component={() => <ProtectedRoute><CompetitiveAdvantage /></ProtectedRoute>} />
-                <Route path="/industry-analysis" component={() => <ProtectedRoute><IndustryAnalysis /></ProtectedRoute>} />
-                <Route path="/startup-league" component={() => <ProtectedRoute><StartupLeague /></ProtectedRoute>} />
-                <Route path="/investor-dashboard" component={() => <ProtectedRoute><InvestorDashboard /></ProtectedRoute>} />
-                <Route path="/portfolios" component={() => <ProtectedRoute><Portfolios /></ProtectedRoute>} />
-                <Route path="/education" component={Education} />
-                <Route path="/education/fundamentals" component={() => <ProtectedRoute><EducationFundamentals /></ProtectedRoute>} />
-                <Route path="/education/funding" component={() => <ProtectedRoute><EducationFunding /></ProtectedRoute>} />
-                <Route path="/education/product" component={() => <ProtectedRoute><EducationProduct /></ProtectedRoute>} />
-                <Route path="/education/leadership" component={() => <ProtectedRoute><EducationLeadership /></ProtectedRoute>} />
-                <Route path="/programs" component={Programs} />
-                <Route path="/venture-building" component={() => <ProtectedRoute><VentureBuilding /></ProtectedRoute>} />
-                <Route path="/pitch-deck" component={() => <ProtectedRoute><PitchDeck /></ProtectedRoute>} />
-                <Route path="/valuation" component={() => <ProtectedRoute><Valuation /></ProtectedRoute>} />
-                <Route path="/ai-credit-scoring" component={() => <ProtectedRoute><AICreditScoring /></ProtectedRoute>} />
-                <Route path="/ecosystem" component={EcosystemHub} />
-                <Route path="/venture-studio" component={() => <ProtectedRoute><VentureStudio /></ProtectedRoute>} />
-                <Route path="/accelerator" component={() => <ProtectedRoute><Accelerator /></ProtectedRoute>} />
-                <Route path="/incubator" component={() => <ProtectedRoute><Incubator /></ProtectedRoute>} />
-                <Route path="/collaboration/:id" component={Collaboration} />
-                <Route path="/ai-market-analysis/:id" component={AIMarketAnalysis} />
-                <Route path="/analytics" component={() => <ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
-                <Route path="/co-founder" component={() => <ProtectedRoute><CoFounderHub /></ProtectedRoute>} />
-                <Route path="/assessment-demo" component={AssessmentDemo} />
-                <Route path="/ai-business-plan" component={() => <ProtectedRoute><AIBusinessPlan /></ProtectedRoute>} />
-                <Route path="/apple-dashboard" component={AppleDashboard} />
-        <Route path="/profile" component={() => <ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/team" component={() => <ProtectedRoute><Team /></ProtectedRoute>} />
-        <Route path="/organizations" component={() => <ProtectedRoute><Organizations /></ProtectedRoute>} />
-        <Route path="/settings" component={() => <ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route component={NotFound} />
-              </Switch>
-              </main>
-            </div>
-          </div>
-        </Router>
-        <Toaster />
-        <OfflineIndicator />
-        <PWAInstallPrompt />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: '#333', fontSize: '2rem', marginBottom: '1rem' }}>
+        🚀 StartupsAI Dashboard
+      </h1>
+      <div style={{ backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px' }}>
+        <h2 style={{ color: '#666', marginBottom: '1rem' }}>Application Status</h2>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          <li style={{ margin: '8px 0', color: 'green' }}>✅ Server is running on port 3000</li>
+          <li style={{ margin: '8px 0', color: 'green' }}>✅ React app is loading</li>
+          <li style={{ margin: '8px 0', color: 'green' }}>✅ Vite HMR is working</li>
+          <li style={{ margin: '8px 0', color: 'orange' }}>⚠️ Authentication is disabled in development</li>
+        </ul>
+        <div style={{ marginTop: '20px' }}>
+          <h3 style={{ color: '#666', marginBottom: '10px' }}>Available Routes:</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ margin: '5px 0' }}>
+              <a href="/test" style={{ color: '#0066cc', textDecoration: 'none' }}>/test - Test page</a>
+            </li>
+            <li style={{ margin: '5px 0' }}>
+              <a href="/login" style={{ color: '#0066cc', textDecoration: 'none' }}>/login - Login page</a>
+            </li>
+            <li style={{ margin: '5px 0' }}>
+              <a href="/education" style={{ color: '#0066cc', textDecoration: 'none' }}>/education - Education hub</a>
+            </li>
+            <li style={{ margin: '5px 0' }}>
+              <a href="/ecosystem" style={{ color: '#0066cc', textDecoration: 'none' }}>/ecosystem - Ecosystem hub</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 }
 

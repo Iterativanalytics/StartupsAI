@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Information</h1>
+    
+    <div class="debug">
+        <h3>Server Status</h3>
+        <p id="server-status">Checking...</p>
+    </div>
+    
+    <div class="debug">
+        <h3>React App Status</h3>
+        <p id="react-status">Checking...</p>
+    </div>
+    
+    <div class="debug">
+        <h3>Console Errors</h3>
+        <div id="console-errors">No errors detected</div>
+    </div>
+    
+    <div class="debug">
+        <h3>Available Routes</h3>
+        <ul>
+            <li><a href="/">Main App</a></li>
+            <li><a href="/test">Test Route</a></li>
+            <li><a href="/test.html">Static Test Page</a></li>
+            <li><a href="/login">Login Page</a></li>
+        </ul>
+    </div>
+
+    <script>
+        // Check server status
+        fetch('/api/user')
+            .then(response => {
+                document.getElementById('server-status').innerHTML = 
+                    '<span class="success">✅ Server is responding (Status: ' + response.status + ')</span>';
+            })
+            .catch(error => {
+                document.getElementById('server-status').innerHTML = 
+                    '<span class="error">❌ Server error: ' + error.message + '</span>';
+            });
+
+        // Check if React app loads
+        setTimeout(() => {
+            const rootElement = document.getElementById('root');
+            if (rootElement && rootElement.innerHTML.trim() !== '') {
+                document.getElementById('react-status').innerHTML = 
+                    '<span class="success">✅ React app is rendering</span>';
+            } else {
+                document.getElementById('react-status').innerHTML = 
+                    '<span class="error">❌ React app is not rendering</span>';
+            }
+        }, 3000);
+
+        // Capture console errors
+        const originalError = console.error;
+        const errors = [];
+        console.error = function(...args) {
+            errors.push(args.join(' '));
+            originalError.apply(console, args);
+        };
+
+        setTimeout(() => {
+            if (errors.length > 0) {
+                document.getElementById('console-errors').innerHTML = 
+                    '<span class="error">❌ Errors found:<br>' + errors.join('<br>') + '</span>';
+            } else {
+                document.getElementById('console-errors').innerHTML = 
+                    '<span class="success">✅ No console errors</span>';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
