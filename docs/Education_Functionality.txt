@@ -1,0 +1,2744 @@
+===== FILE: client/src/pages/education.tsx =====
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Loader2, 
+  Book, 
+  Clock, 
+  Target, 
+  Award, 
+  ChevronRight, 
+  Moon, 
+  Sun, 
+  Play, 
+  Users, 
+  TrendingUp, 
+  DollarSign,
+  Lightbulb,
+  Rocket,
+  Building2,
+  GraduationCap,
+  Star,
+  ExternalLink,
+  CheckCircle,
+  BarChart3,
+  PieChart,
+  FileText,
+  Video,
+  Headphones,
+  Download
+} from "lucide-react";
+
+// Educational Module schema
+const moduleSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  description: z.string().optional(),
+  creatorId: z.number(),
+  content: z.any().optional(), // JSON content for the module
+  resources: z.any().optional(), // JSON resources for the module
+  prerequisites: z.any().optional(), // JSON prerequisites for the module
+});
+
+type EducationalModule = {
+  id: number;
+  title: string;
+  description: string | null;
+  creatorId: number;
+  content: any;
+  resources: any;
+  prerequisites: any;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function EducationalModulesList() {
+  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Create educational module form
+  const form = useForm<z.infer<typeof moduleSchema>>({
+    resolver: zodResolver(moduleSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      creatorId: 5,
+    },
+  });
+
+  // Curated educational content
+  const educationalModules = [
+    {
+      id: 1,
+      title: "Startup Fundamentals",
+      description: "Master the essential building blocks of launching a successful startup from idea to execution.",
+      category: "Foundation",
+      level: "Beginner",
+      duration: 45,
+      sections: 6,
+      rating: 4.8,
+      completions: 2847,
+      instructor: "Y Combinator",
+      type: "video",
+      thumbnail: "🚀",
+      topics: ["Business Model", "Market Research", "MVP Development", "Team Building"]
+    },
+    {
+      id: 2,
+      title: "Fundraising Masterclass",
+      description: "Complete guide to raising capital - from seed rounds to Series A and beyond.",
+      category: "Funding",
+      level: "Intermediate",
+      duration: 120,
+      sections: 12,
+      rating: 4.9,
+      completions: 1892,
+      instructor: "Sequoia Capital",
+      type: "course",
+      thumbnail: "💰",
+      topics: ["Pitch Decks", "Due Diligence", "Valuation", "Term Sheets"]
+    },
+    {
+      id: 3,
+      title: "Product-Market Fit",
+      description: "Discover how to identify, achieve, and measure product-market fit for sustainable growth.",
+      category: "Product",
+      level: "Intermediate",
+      duration: 85,
+      sections: 8,
+      rating: 4.7,
+      completions: 1634,
+      instructor: "Andreessen Horowitz",
+      type: "workshop",
+      thumbnail: "🎯",
+      topics: ["Customer Discovery", "Metrics", "Iteration", "Scaling"]
+    },
+    {
+      id: 4,
+      title: "Growth Marketing Strategies",
+      description: "Learn proven tactics to acquire, activate, and retain customers cost-effectively.",
+      category: "Marketing",
+      level: "Advanced",
+      duration: 95,
+      sections: 10,
+      rating: 4.6,
+      completions: 1456,
+      instructor: "First Round Capital",
+      type: "masterclass",
+      thumbnail: "📈",
+      topics: ["Customer Acquisition", "Viral Growth", "Retention", "Analytics"]
+    },
+    {
+      id: 5,
+      title: "Financial Planning & Analysis",
+      description: "Build robust financial models and understand key metrics that drive startup success.",
+      category: "Finance",
+      level: "Intermediate",
+      duration: 110,
+      sections: 9,
+      rating: 4.5,
+      completions: 1203,
+      instructor: "Bessemer Venture Partners",
+      type: "course",
+      thumbnail: "📊",
+      topics: ["Financial Modeling", "Unit Economics", "Cash Flow", "KPIs"]
+    },
+    {
+      id: 6,
+      title: "Leadership & Team Building",
+      description: "Develop the leadership skills needed to build and manage high-performing teams.",
+      category: "Leadership",
+      level: "Advanced",
+      duration: 75,
+      sections: 7,
+      rating: 4.7,
+      completions: 987,
+      instructor: "Greylock Partners",
+      type: "workshop",
+      thumbnail: "👥",
+      topics: ["Hiring", "Culture", "Performance Management", "Communication"]
+    },
+    {
+      id: 7,
+      title: "Legal Essentials for Startups",
+      description: "Navigate the legal landscape with confidence - from incorporation to contracts.",
+      category: "Legal",
+      level: "Beginner",
+      duration: 60,
+      sections: 5,
+      rating: 4.4,
+      completions: 876,
+      instructor: "Wilson Sonsini",
+      type: "guide",
+      thumbnail: "⚖️",
+      topics: ["Incorporation", "Equity", "IP Protection", "Compliance"]
+    },
+    {
+      id: 8,
+      title: "Go-to-Market Strategy",
+      description: "Create and execute winning go-to-market strategies for B2B and B2C products.",
+      category: "Strategy",
+      level: "Advanced",
+      duration: 105,
+      sections: 11,
+      rating: 4.8,
+      completions: 743,
+      instructor: "Lightspeed Venture Partners",
+      type: "masterclass",
+      thumbnail: "🎯",
+      topics: ["Market Positioning", "Sales Strategy", "Distribution", "Pricing"]
+    }
+  ];
+
+  const categories = ["All", "Foundation", "Funding", "Product", "Marketing", "Finance", "Leadership", "Legal", "Strategy"];
+
+  const filteredModules = selectedCategory === "All" 
+    ? educationalModules 
+    : educationalModules.filter(module => module.category === selectedCategory);
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "video": return <Video className="h-4 w-4" />;
+      case "course": return <Book className="h-4 w-4" />;
+      case "workshop": return <Users className="h-4 w-4" />;
+      case "masterclass": return <Star className="h-4 w-4" />;
+      case "guide": return <FileText className="h-4 w-4" />;
+      default: return <Book className="h-4 w-4" />;
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case "Beginner": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "Intermediate": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "Advanced": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent">
+            Educational Modules
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Curated content from top VCs and industry experts
+          </p>
+        </div>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600">
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Create Module
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[550px]">
+            <DialogHeader>
+              <DialogTitle>Create New Educational Module</DialogTitle>
+              <DialogDescription>
+                Create a new educational module for startups and entrepreneurs.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Module Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Fundraising Fundamentals" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Learn the fundamentals of raising capital for your startup..."
+                          className="min-h-32"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit">
+                    Create Module
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Category Filter */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category)}
+              className="transition-all duration-200"
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Modules Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredModules.map((module) => (
+          <Card key={module.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="text-3xl">{module.thumbnail}</div>
+                  <div>
+                    <CardTitle className="text-lg line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {module.title}
+                    </CardTitle>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {getTypeIcon(module.type)}
+                      <span className="text-sm text-gray-500 dark:text-gray-400 capitalize">{module.type}</span>
+                    </div>
+                  </div>
+                </div>
+                <Badge className={`${getLevelColor(module.level)} border-0`}>
+                  {module.level}
+                </Badge>
+              </div>
+              <CardDescription className="text-sm line-clamp-3 mt-2">
+                {module.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="pb-4">
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium">{module.duration} min</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Book className="h-4 w-4 text-teal-500" />
+                  <span className="text-sm font-medium">{module.sections} sections</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-medium">{module.rating}/5.0</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">{module.completions.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Instructor */}
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  By <span className="font-semibold text-purple-600 dark:text-purple-400">{module.instructor}</span>
+                </p>
+              </div>
+
+              {/* Topics */}
+              <div className="flex flex-wrap gap-1">
+                {module.topics.slice(0, 3).map((topic, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {topic}
+                  </Badge>
+                ))}
+                {module.topics.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{module.topics.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex justify-between border-t bg-gray-50/50 dark:bg-gray-800/50 p-4">
+              <Button variant="outline" size="sm" className="flex-1 mr-2">
+                <Play className="mr-2 h-4 w-4" />
+                Preview
+              </Button>
+              <Button size="sm" className="flex-1 bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600">
+                Start Learning
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      {filteredModules.length === 0 && (
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">📚</div>
+          <h3 className="text-xl font-medium mb-2">No modules found</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            Try selecting a different category or create your own module.
+          </p>
+          <Button onClick={() => setSelectedCategory("All")}>
+            View All Modules
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MentorshipsList() {
+  const mentors = [
+    {
+      id: 1,
+      name: "Sarah Chen",
+      title: "Former VP Product at Stripe",
+      expertise: ["Product Strategy", "Growth", "B2B SaaS"],
+      bio: "Led product development for Stripe's fastest growing segments. 10+ years in product leadership.",
+      rating: 4.9,
+      sessions: 156,
+      price: "$200/hour",
+      available: true,
+      image: "👩‍💼"
+    },
+    {
+      id: 2,
+      name: "Marcus Rodriguez",
+      title: "3x Founder & Angel Investor",
+      expertise: ["Fundraising", "Sales", "Operations"],
+      bio: "Built and sold 2 companies. Now investing in early-stage startups. 15+ years experience.",
+      rating: 4.8,
+      sessions: 203,
+      price: "$300/hour",
+      available: true,
+      image: "👨‍💼"
+    },
+    {
+      id: 3,
+      name: "Dr. Emily Foster",
+      title: "Former McKinsey Partner",
+      expertise: ["Strategy", "Market Entry", "Operations"],
+      bio: "Specialized in scaling tech companies. Worked with 50+ startups in transformation.",
+      rating: 4.9,
+      sessions: 127,
+      price: "$250/hour",
+      available: false,
+      image: "👩‍🎓"
+    }
+  ];
+
+  return (
+    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent mb-2">
+          Expert Mentorship
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Get 1-on-1 guidance from experienced entrepreneurs and industry leaders
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {mentors.map((mentor) => (
+          <Card key={mentor.id} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-start space-x-4">
+                <div className="text-4xl">{mentor.image}</div>
+                <div className="flex-1">
+                  <CardTitle className="text-lg">{mentor.name}</CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{mentor.title}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-medium ml-1">{mentor.rating}</span>
+                    </div>
+                    <span className="text-gray-300">•</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{mentor.sessions} sessions</span>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="pb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                {mentor.bio}
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {mentor.expertise.map((skill, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  {mentor.price}
+                </span>
+                <div className={`flex items-center space-x-1 ${mentor.available ? 'text-green-600' : 'text-gray-500'}`}>
+                  <div className={`w-2 h-2 rounded-full ${mentor.available ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  <span className="text-sm">{mentor.available ? 'Available' : 'Busy'}</span>
+                </div>
+              </div>
+            </CardContent>
+
+            <CardFooter className="border-t bg-gray-50/50 dark:bg-gray-800/50 p-4">
+              <Button 
+                className="w-full bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600"
+                disabled={!mentor.available}
+              >
+                {mentor.available ? 'Book Session' : 'Join Waitlist'}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-12 text-center">
+        <Card className="max-w-2xl mx-auto bg-gradient-to-r from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20 border-0">
+          <CardContent className="p-8">
+            <h3 className="text-xl font-bold mb-4">Become a Mentor</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Share your expertise and help the next generation of entrepreneurs succeed.
+            </p>
+            <Button variant="outline" className="mr-4">
+              Learn More
+            </Button>
+            <Button className="bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600">
+              Apply to Mentor
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function LearningPathsList() {
+  const learningPaths = [
+    {
+      id: 1,
+      title: "Entrepreneur Essentials",
+      description: "Complete journey from idea to launch for first-time founders",
+      modules: 8,
+      duration: "6-8 weeks",
+      level: "Beginner",
+      students: 1247,
+      progress: 0,
+      topics: ["Business Fundamentals", "Market Research", "MVP", "Launch Strategy"],
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      id: 2,
+      title: "Scale-Up Success",
+      description: "Advanced strategies for growing from startup to scale-up",
+      modules: 12,
+      duration: "8-10 weeks",
+      level: "Advanced",
+      students: 892,
+      progress: 0,
+      topics: ["Operations", "Team Building", "Growth Hacking", "Fundraising"],
+      color: "from-purple-500 to-pink-500"
+    },
+    {
+      id: 3,
+      title: "Tech Startup Blueprint",
+      description: "Specialized path for technology-focused startups",
+      modules: 10,
+      duration: "7-9 weeks",
+      level: "Intermediate",
+      students: 634,
+      progress: 0,
+      topics: ["Product Development", "Technical Leadership", "DevOps", "Security"],
+      color: "from-green-500 to-teal-500"
+    }
+  ];
+
+  return (
+    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent mb-2">
+          Learning Paths
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Structured curriculum designed to take you from beginner to expert
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {learningPaths.map((path) => (
+          <Card key={path.id} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm overflow-hidden">
+            <div className={`h-2 bg-gradient-to-r ${path.color}`} />
+
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <CardTitle className="text-xl group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  {path.title}
+                </CardTitle>
+                <Badge className={`${path.level === 'Beginner' ? 'bg-green-100 text-green-800' : path.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'} border-0`}>
+                  {path.level}
+                </Badge>
+              </div>
+              <CardDescription className="line-clamp-2">
+                {path.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="pb-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex items-center space-x-2">
+                  <Book className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm font-medium">{path.modules} modules</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-teal-500" />
+                  <span className="text-sm font-medium">{path.duration}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">{path.students.toLocaleString()} students</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-medium">{path.progress}% complete</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1 mb-4">
+                {path.topics.map((topic, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {topic}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full bg-gradient-to-r ${path.color} transition-all duration-300`}
+                  style={{ width: `${path.progress}%` }}
+                />
+              </div>
+            </CardContent>
+
+            <CardFooter className="border-t bg-gray-50/50 dark:bg-gray-800/50 p-4">
+              <Button className="w-full bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-700 hover:to-teal-600">
+                {path.progress > 0 ? 'Continue Learning' : 'Start Path'}
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function EducationPage() {
+  const [darkMode, setDarkMode] = useState(false);
+  const tabs = ["Modules", "Mentorships", "Learning Paths"];
+
+  useEffect(() => {
+    // Check if dark mode is already set
+    if (localStorage.getItem('darkMode') === 'true' || 
+        (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    if (!darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+      {/* Dark mode toggle */}
+      <div className="fixed top-24 right-4 z-50">
+        <Card className="p-2 shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+          <div className="flex items-center space-x-2">
+            <Sun className="h-4 w-4 text-yellow-500" />
+            <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+            <Moon className="h-4 w-4 text-purple-500" />
+          </div>
+        </Card>
+      </div>
+
+      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <GraduationCap className="h-10 w-10 text-purple-600" />
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent">
+              Learning Hub
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            Learn from the best, grow with experts, and build the skills you need to succeed
+          </p>
+        </div>
+
+        <Tabs defaultValue="Modules" className="w-full">
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid w-full max-w-md grid-cols-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0">
+              {tabs.map((tab) => (
+                <TabsTrigger 
+                  key={tab} 
+                  value={tab}
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-teal-500 data-[state=active]:text-white"
+                >
+                  {tab}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <TabsContent value="Modules" className="space-y-4">
+            <EducationalModulesList />
+          </TabsContent>
+          <TabsContent value="Mentorships" className="space-y-4">
+            <MentorshipsList />
+          </TabsContent>
+          <TabsContent value="Learning Paths" className="space-y-4">
+            <LearningPathsList />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+===== FILE: client/src/pages/education-fundamentals.tsx =====
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
+import { 
+  Book, Play, Clock, Users, Award, CheckCircle, Star, ArrowRight,
+  Target, Zap, Building, DollarSign, TrendingUp, Globe, Shield
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  lessons: number;
+  completed: boolean;
+  progress: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  topics: string[];
+}
+
+interface LearningPath {
+  id: string;
+  name: string;
+  description: string;
+  modules: number;
+  duration: number;
+  level: string;
+  icon: any;
+  color: string;
+}
+
+function EducationFundamentals() {
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch business plan
+  const { data: businessPlan, isLoading: isLoadingPlan } = useQuery({
+    queryKey: [`/api/business-plans/${id}`],
+    enabled: !!id
+  });
+
+  // Mock data for course modules
+  const courseModules: CourseModule[] = [
+    {
+      id: 'business-model',
+      title: 'Business Model Canvas',
+      description: 'Learn how to design and validate your business model using proven frameworks.',
+      duration: 45,
+      lessons: 6,
+      completed: true,
+      progress: 100,
+      difficulty: 'Beginner',
+      topics: ['Value Proposition', 'Customer Segments', 'Revenue Streams', 'Key Partnerships']
+    },
+    {
+      id: 'market-research',
+      title: 'Market Research & Validation',
+      description: 'Master the art of market research and customer validation techniques.',
+      duration: 60,
+      lessons: 8,
+      completed: false,
+      progress: 75,
+      difficulty: 'Beginner',
+      topics: ['Customer Interviews', 'Market Sizing', 'Competitive Analysis', 'User Personas']
+    },
+    {
+      id: 'mvp-development',
+      title: 'MVP Development',
+      description: 'Build your Minimum Viable Product and learn rapid prototyping techniques.',
+      duration: 90,
+      lessons: 10,
+      completed: false,
+      progress: 30,
+      difficulty: 'Intermediate',
+      topics: ['Prototyping', 'User Testing', 'Feature Prioritization', 'Technical Architecture']
+    },
+    {
+      id: 'team-building',
+      title: 'Team Building & Culture',
+      description: 'Learn how to build and manage high-performing startup teams.',
+      duration: 75,
+      lessons: 7,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Hiring', 'Culture', 'Remote Teams', 'Performance Management']
+    },
+    {
+      id: 'legal-basics',
+      title: 'Legal & Compliance Basics',
+      description: 'Understand essential legal requirements for startups and founders.',
+      duration: 50,
+      lessons: 5,
+      completed: false,
+      progress: 0,
+      difficulty: 'Beginner',
+      topics: ['Entity Formation', 'IP Protection', 'Contracts', 'Regulatory Compliance']
+    },
+    {
+      id: 'financial-basics',
+      title: 'Financial Planning',
+      description: 'Learn startup financial fundamentals and key metrics.',
+      duration: 65,
+      lessons: 8,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Unit Economics', 'Cash Flow', 'Financial Modeling', 'Key Metrics']
+    }
+  ];
+
+  const learningPaths: LearningPath[] = [
+    {
+      id: 'founder-track',
+      name: 'Founder Track',
+      description: 'Complete journey from idea to launch',
+      modules: 12,
+      duration: 480,
+      level: 'Beginner',
+      icon: Target,
+      color: 'blue'
+    },
+    {
+      id: 'product-track',
+      name: 'Product Track',
+      description: 'Focus on product development and user experience',
+      modules: 8,
+      duration: 320,
+      level: 'Intermediate',
+      icon: Zap,
+      color: 'purple'
+    },
+    {
+      id: 'business-track',
+      name: 'Business Track',
+      description: 'Business strategy and operations',
+      modules: 10,
+      duration: 400,
+      level: 'Intermediate',
+      icon: Building,
+      color: 'green'
+    }
+  ];
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-600 bg-green-50';
+      case 'Intermediate': return 'text-yellow-600 bg-yellow-50';
+      case 'Advanced': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getPathIcon = (pathId: string) => {
+    const path = learningPaths.find(p => p.id === pathId);
+    return path ? path.icon : Target;
+  };
+
+  const getPathColor = (pathId: string) => {
+    const path = learningPaths.find(p => p.id === pathId);
+    return path ? path.color : 'gray';
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const completedModules = courseModules.filter(module => module.completed).length;
+  const totalProgress = Math.round(
+    courseModules.reduce((sum, module) => sum + module.progress, 0) / courseModules.length
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Book className="h-6 w-6 text-blue-600" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">
+              Startup Fundamentals
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 max-w-3xl">
+            Master the essential building blocks of launching a successful startup from idea to execution.
+          </p>
+        </div>
+
+        {/* Key Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Book className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6</p>
+                  <p className="text-sm text-gray-600">Core Modules</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{completedModules}</p>
+                  <p className="text-sm text-gray-600">Completed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6.5h</p>
+                  <p className="text-sm text-gray-600">Total Duration</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{totalProgress}%</p>
+                  <p className="text-sm text-gray-600">Progress</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="paths">Learning Paths</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Your Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <span className="text-sm font-bold">{totalProgress}%</span>
+                    </div>
+                    <Progress value={totalProgress} className="h-3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Completed Modules</p>
+                      <p className="font-bold">{completedModules} / {courseModules.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Time Invested</p>
+                      <p className="font-bold">2.5 hours</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Recent Achievements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium">Business Model Canvas</p>
+                        <p className="text-sm text-gray-600">Completed successfully</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Star className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Market Research</p>
+                        <p className="text-sm text-gray-600">75% complete</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {courseModules.map(module => (
+                <Card key={module.id} className={module.completed ? 'ring-2 ring-green-500' : ''}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{module.title}</CardTitle>
+                        <CardDescription>{module.description}</CardDescription>
+                      </div>
+                      {module.completed && (
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <span>{formatDuration(module.duration)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Book className="h-4 w-4 text-gray-500" />
+                        <span>{module.lessons} lessons</span>
+                      </div>
+                      <Badge className={getDifficultyColor(module.difficulty)}>
+                        {module.difficulty}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Progress</span>
+                        <span className="font-medium">{module.progress}%</span>
+                      </div>
+                      <Progress value={module.progress} className="h-2" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Topics Covered</p>
+                      <div className="flex flex-wrap gap-1">
+                        {module.topics.map((topic, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {topic}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full" disabled={module.completed}>
+                      {module.completed ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Completed
+                        </>
+                      ) : module.progress > 0 ? (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Continue
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start Module
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Learning Paths Tab */}
+          <TabsContent value="paths" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {learningPaths.map(path => {
+                const Icon = path.icon;
+                return (
+                  <Card key={path.id}>
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 bg-${path.color}-100 rounded-lg`}>
+                          <Icon className={`h-5 w-5 text-${path.color}-600`} />
+                        </div>
+                        <div>
+                          <CardTitle>{path.name}</CardTitle>
+                          <CardDescription>{path.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Modules</p>
+                          <p className="font-bold">{path.modules}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Duration</p>
+                          <p className="font-bold">{formatDuration(path.duration)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Level</p>
+                          <p className="font-bold">{path.level}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Progress</p>
+                          <p className="font-bold">0%</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full">
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        Start Path
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default EducationFundamentals;
+
+
+===== FILE: client/src/pages/education-funding.tsx =====
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
+import { 
+  DollarSign, Play, Clock, Users, Award, CheckCircle, Star, ArrowRight,
+  Target, Zap, Building, TrendingUp, Globe, Shield, FileText, Presentation
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface FundingModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  lessons: number;
+  completed: boolean;
+  progress: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  topics: string[];
+  type: 'video' | 'workshop' | 'template' | 'case-study';
+}
+
+interface FundingStage {
+  id: string;
+  name: string;
+  description: string;
+  amount: string;
+  equity: string;
+  duration: string;
+  keyInvestors: string[];
+  requirements: string[];
+}
+
+function EducationFunding() {
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch business plan
+  const { data: businessPlan, isLoading: isLoadingPlan } = useQuery({
+    queryKey: [`/api/business-plans/${id}`],
+    enabled: !!id
+  });
+
+  // Mock data for funding modules
+  const fundingModules: FundingModule[] = [
+    {
+      id: 'pitch-deck',
+      title: 'Pitch Deck Mastery',
+      description: 'Create compelling pitch decks that win over investors and secure funding.',
+      duration: 90,
+      lessons: 12,
+      completed: false,
+      progress: 25,
+      difficulty: 'Intermediate',
+      topics: ['Storytelling', 'Financial Projections', 'Market Analysis', 'Team Slide'],
+      type: 'workshop'
+    },
+    {
+      id: 'valuation',
+      title: 'Startup Valuation',
+      description: 'Learn how to value your startup and negotiate fair terms with investors.',
+      duration: 75,
+      lessons: 8,
+      completed: false,
+      progress: 0,
+      difficulty: 'Advanced',
+      topics: ['DCF Analysis', 'Comparable Companies', 'Market Multiples', 'Risk Assessment'],
+      type: 'video'
+    },
+    {
+      id: 'term-sheets',
+      title: 'Term Sheet Negotiation',
+      description: 'Understand and negotiate term sheets to protect your interests.',
+      duration: 60,
+      lessons: 6,
+      completed: false,
+      progress: 0,
+      difficulty: 'Advanced',
+      topics: ['Liquidation Preferences', 'Anti-dilution', 'Board Rights', 'Vesting'],
+      type: 'case-study'
+    },
+    {
+      id: 'due-diligence',
+      title: 'Due Diligence Process',
+      description: 'Prepare for and navigate the investor due diligence process.',
+      duration: 45,
+      lessons: 5,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Documentation', 'Financial Records', 'Legal Structure', 'IP Protection'],
+      type: 'template'
+    },
+    {
+      id: 'investor-relations',
+      title: 'Investor Relations',
+      description: 'Build and maintain strong relationships with investors and stakeholders.',
+      duration: 50,
+      lessons: 7,
+      completed: false,
+      progress: 0,
+      difficulty: 'Beginner',
+      topics: ['Communication', 'Reporting', 'Board Meetings', 'Updates'],
+      type: 'workshop'
+    },
+    {
+      id: 'alternative-funding',
+      title: 'Alternative Funding Sources',
+      description: 'Explore grants, crowdfunding, and other non-equity funding options.',
+      duration: 40,
+      lessons: 5,
+      completed: false,
+      progress: 0,
+      difficulty: 'Beginner',
+      topics: ['Grants', 'Crowdfunding', 'Revenue-based Financing', 'SBIR'],
+      type: 'video'
+    }
+  ];
+
+  const fundingStages: FundingStage[] = [
+    {
+      id: 'pre-seed',
+      name: 'Pre-Seed',
+      description: 'Initial funding to validate your idea and build MVP',
+      amount: '$50K - $500K',
+      equity: '5-15%',
+      duration: '6-12 months',
+      keyInvestors: ['Friends & Family', 'Angel Investors', 'Accelerators'],
+      requirements: ['Idea validation', 'Basic prototype', 'Founding team']
+    },
+    {
+      id: 'seed',
+      name: 'Seed Round',
+      description: 'Funding to build product and achieve product-market fit',
+      amount: '$500K - $2M',
+      equity: '10-25%',
+      duration: '12-18 months',
+      keyInvestors: ['Angel Investors', 'Seed VCs', 'Micro VCs'],
+      requirements: ['Working product', 'Early customers', 'Revenue traction']
+    },
+    {
+      id: 'series-a',
+      name: 'Series A',
+      description: 'Scaling funding to grow team and expand market reach',
+      amount: '$2M - $15M',
+      equity: '15-30%',
+      duration: '18-24 months',
+      keyInvestors: ['VCs', 'Growth Investors', 'Strategic Investors'],
+      requirements: ['Product-market fit', 'Strong metrics', 'Scalable business model']
+    }
+  ];
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-600 bg-green-50';
+      case 'Intermediate': return 'text-yellow-600 bg-yellow-50';
+      case 'Advanced': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video': return Play;
+      case 'workshop': return Users;
+      case 'template': return FileText;
+      case 'case-study': return Presentation;
+      default: return Play;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'video': return 'blue';
+      case 'workshop': return 'purple';
+      case 'template': return 'green';
+      case 'case-study': return 'orange';
+      default: return 'gray';
+    }
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const completedModules = fundingModules.filter(module => module.completed).length;
+  const totalProgress = Math.round(
+    fundingModules.reduce((sum, module) => sum + module.progress, 0) / fundingModules.length
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <DollarSign className="h-6 w-6 text-green-600" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">
+              Fundraising Masterclass
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 max-w-3xl">
+            Complete guide to raising capital - from seed rounds to Series A and beyond.
+          </p>
+        </div>
+
+        {/* Key Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6</p>
+                  <p className="text-sm text-gray-600">Funding Modules</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{completedModules}</p>
+                  <p className="text-sm text-gray-600">Completed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6.5h</p>
+                  <p className="text-sm text-gray-600">Total Duration</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{totalProgress}%</p>
+                  <p className="text-sm text-gray-600">Progress</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="stages">Funding Stages</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Your Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <span className="text-sm font-bold">{totalProgress}%</span>
+                    </div>
+                    <Progress value={totalProgress} className="h-3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Completed Modules</p>
+                      <p className="font-bold">{completedModules} / {fundingModules.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Time Invested</p>
+                      <p className="font-bold">1.5 hours</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Key Learning Outcomes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium">Create Winning Pitch Decks</p>
+                        <p className="text-sm text-gray-600">Master the art of storytelling</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Star className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Understand Valuation Methods</p>
+                        <p className="text-sm text-gray-600">Learn startup valuation techniques</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                      <Shield className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium">Negotiate Term Sheets</p>
+                        <p className="text-sm text-gray-600">Protect your interests</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {fundingModules.map(module => {
+                const TypeIcon = getTypeIcon(module.type);
+                const typeColor = getTypeColor(module.type);
+                return (
+                  <Card key={module.id} className={module.completed ? 'ring-2 ring-green-500' : ''}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{module.title}</CardTitle>
+                          <CardDescription>{module.description}</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`bg-${typeColor}-100 text-${typeColor}-700`}>
+                            <TypeIcon className="h-3 w-3 mr-1" />
+                            {module.type}
+                          </Badge>
+                          {module.completed && (
+                            <CheckCircle className="h-6 w-6 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span>{formatDuration(module.duration)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span>{module.lessons} lessons</span>
+                        </div>
+                        <Badge className={getDifficultyColor(module.difficulty)}>
+                          {module.difficulty}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Progress</span>
+                          <span className="font-medium">{module.progress}%</span>
+                        </div>
+                        <Progress value={module.progress} className="h-2" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Topics Covered</p>
+                        <div className="flex flex-wrap gap-1">
+                          {module.topics.map((topic, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full" disabled={module.completed}>
+                        {module.completed ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Completed
+                          </>
+                        ) : module.progress > 0 ? (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Continue
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Module
+                          </>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* Funding Stages Tab */}
+          <TabsContent value="stages" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {fundingStages.map(stage => (
+                <Card key={stage.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{stage.name}</CardTitle>
+                    <CardDescription>{stage.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Funding Amount</p>
+                        <p className="text-lg font-bold text-green-600">{stage.amount}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Equity Given</p>
+                        <p className="text-lg font-bold">{stage.equity}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Duration</p>
+                        <p className="text-sm">{stage.duration}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Key Investors</p>
+                      <div className="flex flex-wrap gap-1">
+                        {stage.keyInvestors.map((investor, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {investor}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Requirements</p>
+                      <ul className="space-y-1 text-sm">
+                        {stage.requirements.map((requirement, index) => (
+                          <li key={index} className="flex items-center gap-2">
+                            <CheckCircle className="h-3 w-3 text-green-600" />
+                            <span>{requirement}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full">
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Learn More
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default EducationFunding;
+
+
+===== FILE: client/src/pages/education-leadership.tsx =====
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
+import { 
+  Users, Play, Clock, Award, CheckCircle, Star, ArrowRight,
+  Target, Zap, Building, DollarSign, TrendingUp, Globe, Shield, FileText, Presentation
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface LeadershipModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  lessons: number;
+  completed: boolean;
+  progress: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  topics: string[];
+  type: 'video' | 'workshop' | 'template' | 'case-study';
+}
+
+interface LeadershipSkill {
+  id: string;
+  name: string;
+  description: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  importance: 'High' | 'Medium' | 'Low';
+  icon: any;
+  color: string;
+}
+
+function EducationLeadership() {
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch business plan
+  const { data: businessPlan, isLoading: isLoadingPlan } = useQuery({
+    queryKey: [`/api/business-plans/${id}`],
+    enabled: !!id
+  });
+
+  // Mock data for leadership modules
+  const leadershipModules: LeadershipModule[] = [
+    {
+      id: 'team-building',
+      title: 'Building High-Performing Teams',
+      description: 'Learn how to recruit, hire, and build teams that drive startup success.',
+      duration: 75,
+      lessons: 7,
+      completed: false,
+      progress: 30,
+      difficulty: 'Intermediate',
+      topics: ['Hiring', 'Team Culture', 'Remote Teams', 'Performance Management'],
+      type: 'workshop'
+    },
+    {
+      id: 'leadership-styles',
+      title: 'Leadership Styles & Approaches',
+      description: 'Discover different leadership styles and when to apply them effectively.',
+      duration: 60,
+      lessons: 6,
+      completed: false,
+      progress: 15,
+      difficulty: 'Beginner',
+      topics: ['Leadership Styles', 'Situational Leadership', 'Emotional Intelligence', 'Decision Making'],
+      type: 'video'
+    },
+    {
+      id: 'communication',
+      title: 'Effective Communication',
+      description: 'Master communication skills for leading teams and managing stakeholders.',
+      duration: 50,
+      lessons: 5,
+      completed: false,
+      progress: 0,
+      difficulty: 'Beginner',
+      topics: ['Active Listening', 'Feedback', 'Presentations', 'Conflict Resolution'],
+      type: 'workshop'
+    },
+    {
+      id: 'culture-building',
+      title: 'Building Company Culture',
+      description: 'Create and maintain a strong company culture that attracts and retains talent.',
+      duration: 65,
+      lessons: 6,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Values Definition', 'Culture Implementation', 'Employee Engagement', 'Remote Culture'],
+      type: 'case-study'
+    },
+    {
+      id: 'performance-management',
+      title: 'Performance Management',
+      description: 'Learn to set goals, provide feedback, and manage team performance effectively.',
+      duration: 55,
+      lessons: 5,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Goal Setting', 'Performance Reviews', 'Coaching', 'Career Development'],
+      type: 'template'
+    },
+    {
+      id: 'change-management',
+      title: 'Leading Change & Transformation',
+      description: 'Guide your organization through change and transformation initiatives.',
+      duration: 70,
+      lessons: 7,
+      completed: false,
+      progress: 0,
+      difficulty: 'Advanced',
+      topics: ['Change Strategy', 'Stakeholder Management', 'Resistance Handling', 'Transformation'],
+      type: 'video'
+    }
+  ];
+
+  const leadershipSkills: LeadershipSkill[] = [
+    {
+      id: 'emotional-intelligence',
+      name: 'Emotional Intelligence',
+      description: 'Understanding and managing emotions in yourself and others',
+      level: 'Intermediate',
+      importance: 'High',
+      icon: Shield,
+      color: 'blue'
+    },
+    {
+      id: 'decision-making',
+      name: 'Decision Making',
+      description: 'Making effective decisions under pressure and uncertainty',
+      level: 'Advanced',
+      importance: 'High',
+      icon: Target,
+      color: 'green'
+    },
+    {
+      id: 'communication',
+      name: 'Communication',
+      description: 'Clear and effective communication with teams and stakeholders',
+      level: 'Beginner',
+      importance: 'High',
+      icon: Users,
+      color: 'purple'
+    },
+    {
+      id: 'strategic-thinking',
+      name: 'Strategic Thinking',
+      description: 'Long-term planning and strategic vision for the organization',
+      level: 'Advanced',
+      importance: 'High',
+      icon: Globe,
+      color: 'orange'
+    },
+    {
+      id: 'delegation',
+      name: 'Delegation',
+      description: 'Effectively delegating tasks and responsibilities to team members',
+      level: 'Intermediate',
+      importance: 'Medium',
+      icon: Building,
+      color: 'red'
+    },
+    {
+      id: 'coaching',
+      name: 'Coaching & Mentoring',
+      description: 'Developing and mentoring team members for growth',
+      level: 'Intermediate',
+      importance: 'Medium',
+      icon: Award,
+      color: 'yellow'
+    }
+  ];
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-600 bg-green-50';
+      case 'Intermediate': return 'text-yellow-600 bg-yellow-50';
+      case 'Advanced': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getImportanceColor = (importance: string) => {
+    switch (importance) {
+      case 'High': return 'text-red-600 bg-red-50';
+      case 'Medium': return 'text-yellow-600 bg-yellow-50';
+      case 'Low': return 'text-green-600 bg-green-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video': return Play;
+      case 'workshop': return Users;
+      case 'template': return FileText;
+      case 'case-study': return Presentation;
+      default: return Play;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'video': return 'blue';
+      case 'workshop': return 'purple';
+      case 'template': return 'green';
+      case 'case-study': return 'orange';
+      default: return 'gray';
+    }
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const completedModules = leadershipModules.filter(module => module.completed).length;
+  const totalProgress = Math.round(
+    leadershipModules.reduce((sum, module) => sum + module.progress, 0) / leadershipModules.length
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Users className="h-6 w-6 text-orange-600" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">
+              Leadership & Team
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 max-w-3xl">
+            Develop leadership skills and build high-performing teams that drive startup success.
+          </p>
+        </div>
+
+        {/* Key Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Users className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6</p>
+                  <p className="text-sm text-gray-600">Leadership Modules</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{completedModules}</p>
+                  <p className="text-sm text-gray-600">Completed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6.5h</p>
+                  <p className="text-sm text-gray-600">Total Duration</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{totalProgress}%</p>
+                  <p className="text-sm text-gray-600">Progress</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="skills">Leadership Skills</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Your Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <span className="text-sm font-bold">{totalProgress}%</span>
+                    </div>
+                    <Progress value={totalProgress} className="h-3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Completed Modules</p>
+                      <p className="font-bold">{completedModules} / {leadershipModules.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Time Invested</p>
+                      <p className="font-bold">1.5 hours</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Key Learning Outcomes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium">Build High-Performing Teams</p>
+                        <p className="text-sm text-gray-600">Recruit and manage top talent</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Star className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Develop Leadership Skills</p>
+                        <p className="text-sm text-gray-600">Master essential leadership competencies</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                      <Shield className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium">Create Strong Culture</p>
+                        <p className="text-sm text-gray-600">Build culture that attracts talent</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {leadershipModules.map(module => {
+                const TypeIcon = getTypeIcon(module.type);
+                const typeColor = getTypeColor(module.type);
+                return (
+                  <Card key={module.id} className={module.completed ? 'ring-2 ring-green-500' : ''}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{module.title}</CardTitle>
+                          <CardDescription>{module.description}</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`bg-${typeColor}-100 text-${typeColor}-700`}>
+                            <TypeIcon className="h-3 w-3 mr-1" />
+                            {module.type}
+                          </Badge>
+                          {module.completed && (
+                            <CheckCircle className="h-6 w-6 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span>{formatDuration(module.duration)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span>{module.lessons} lessons</span>
+                        </div>
+                        <Badge className={getDifficultyColor(module.difficulty)}>
+                          {module.difficulty}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Progress</span>
+                          <span className="font-medium">{module.progress}%</span>
+                        </div>
+                        <Progress value={module.progress} className="h-2" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Topics Covered</p>
+                        <div className="flex flex-wrap gap-1">
+                          {module.topics.map((topic, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full" disabled={module.completed}>
+                        {module.completed ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Completed
+                          </>
+                        ) : module.progress > 0 ? (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Continue
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Module
+                          </>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* Leadership Skills Tab */}
+          <TabsContent value="skills" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {leadershipSkills.map(skill => {
+                const Icon = skill.icon;
+                return (
+                  <Card key={skill.id}>
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 bg-${skill.color}-100 rounded-lg`}>
+                          <Icon className={`h-5 w-5 text-${skill.color}-600`} />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{skill.name}</CardTitle>
+                          <CardDescription>{skill.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Badge className={getDifficultyColor(skill.level)}>
+                          {skill.level}
+                        </Badge>
+                        <Badge className={getImportanceColor(skill.importance)}>
+                          {skill.importance} Priority
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Your Level</span>
+                          <span className="font-medium">Beginner</span>
+                        </div>
+                        <Progress value={25} className="h-2" />
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full">
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        Develop Skill
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default EducationLeadership;
+
+
+===== FILE: client/src/pages/education-product.tsx =====
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
+import { 
+  Target, Play, Clock, Users, Award, CheckCircle, Star, ArrowRight,
+  Zap, Building, DollarSign, TrendingUp, Globe, Shield, FileText, Presentation
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface ProductModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  lessons: number;
+  completed: boolean;
+  progress: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  topics: string[];
+  type: 'video' | 'workshop' | 'template' | 'case-study';
+}
+
+interface ProductFramework {
+  id: string;
+  name: string;
+  description: string;
+  steps: number;
+  duration: string;
+  icon: any;
+  color: string;
+  useCase: string;
+}
+
+function EducationProduct() {
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch business plan
+  const { data: businessPlan, isLoading: isLoadingPlan } = useQuery({
+    queryKey: [`/api/business-plans/${id}`],
+    enabled: !!id
+  });
+
+  // Mock data for product modules
+  const productModules: ProductModule[] = [
+    {
+      id: 'product-market-fit',
+      title: 'Product-Market Fit',
+      description: 'Discover how to identify, achieve, and measure product-market fit for sustainable growth.',
+      duration: 85,
+      lessons: 8,
+      completed: false,
+      progress: 40,
+      difficulty: 'Intermediate',
+      topics: ['Customer Discovery', 'Market Validation', 'Metrics', 'Iteration'],
+      type: 'workshop'
+    },
+    {
+      id: 'user-research',
+      title: 'User Research & Discovery',
+      description: 'Learn comprehensive user research methods to understand your customers deeply.',
+      duration: 70,
+      lessons: 9,
+      completed: false,
+      progress: 20,
+      difficulty: 'Beginner',
+      topics: ['User Interviews', 'Surveys', 'Personas', 'Journey Mapping'],
+      type: 'video'
+    },
+    {
+      id: 'mvp-development',
+      title: 'MVP Development',
+      description: 'Build your Minimum Viable Product using lean startup principles and rapid prototyping.',
+      duration: 95,
+      lessons: 10,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Prototyping', 'User Testing', 'Feature Prioritization', 'Technical Architecture'],
+      type: 'workshop'
+    },
+    {
+      id: 'product-strategy',
+      title: 'Product Strategy & Roadmapping',
+      description: 'Develop a comprehensive product strategy and create effective roadmaps.',
+      duration: 60,
+      lessons: 6,
+      completed: false,
+      progress: 0,
+      difficulty: 'Advanced',
+      topics: ['Strategic Planning', 'Roadmapping', 'Feature Planning', 'Stakeholder Alignment'],
+      type: 'case-study'
+    },
+    {
+      id: 'user-experience',
+      title: 'User Experience Design',
+      description: 'Master UX design principles to create intuitive and engaging user experiences.',
+      duration: 80,
+      lessons: 8,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['Wireframing', 'Prototyping', 'Usability Testing', 'Design Systems'],
+      type: 'template'
+    },
+    {
+      id: 'analytics-metrics',
+      title: 'Product Analytics & Metrics',
+      description: 'Learn to measure and analyze product performance using key metrics and analytics.',
+      duration: 55,
+      lessons: 7,
+      completed: false,
+      progress: 0,
+      difficulty: 'Intermediate',
+      topics: ['KPI Definition', 'Analytics Tools', 'A/B Testing', 'Data Interpretation'],
+      type: 'video'
+    }
+  ];
+
+  const productFrameworks: ProductFramework[] = [
+    {
+      id: 'lean-startup',
+      name: 'Lean Startup',
+      description: 'Build-Measure-Learn cycle for rapid product iteration',
+      steps: 3,
+      duration: '2-4 weeks',
+      icon: Zap,
+      color: 'blue',
+      useCase: 'Early-stage product development'
+    },
+    {
+      id: 'design-thinking',
+      name: 'Design Thinking',
+      description: 'Human-centered approach to innovation and problem-solving',
+      steps: 5,
+      duration: '4-6 weeks',
+      icon: Target,
+      color: 'purple',
+      useCase: 'Complex problem solving'
+    },
+    {
+      id: 'agile-development',
+      name: 'Agile Development',
+      description: 'Iterative development methodology for software products',
+      steps: 4,
+      duration: '2-3 weeks per sprint',
+      icon: Building,
+      color: 'green',
+      useCase: 'Software development'
+    },
+    {
+      id: 'jobs-to-be-done',
+      name: 'Jobs to be Done',
+      description: 'Focus on customer jobs and outcomes rather than features',
+      steps: 4,
+      duration: '3-4 weeks',
+      icon: Users,
+      color: 'orange',
+      useCase: 'Feature prioritization'
+    }
+  ];
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-600 bg-green-50';
+      case 'Intermediate': return 'text-yellow-600 bg-yellow-50';
+      case 'Advanced': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video': return Play;
+      case 'workshop': return Users;
+      case 'template': return FileText;
+      case 'case-study': return Presentation;
+      default: return Play;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'video': return 'blue';
+      case 'workshop': return 'purple';
+      case 'template': return 'green';
+      case 'case-study': return 'orange';
+      default: return 'gray';
+    }
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const completedModules = productModules.filter(module => module.completed).length;
+  const totalProgress = Math.round(
+    productModules.reduce((sum, module) => sum + module.progress, 0) / productModules.length
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Target className="h-6 w-6 text-purple-600" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">
+              Product Development
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 max-w-3xl">
+            Learn product-market fit and development strategies to build products that customers love.
+          </p>
+        </div>
+
+        {/* Key Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Target className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">6</p>
+                  <p className="text-sm text-gray-600">Product Modules</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{completedModules}</p>
+                  <p className="text-sm text-gray-600">Completed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">7.5h</p>
+                  <p className="text-sm text-gray-600">Total Duration</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{totalProgress}%</p>
+                  <p className="text-sm text-gray-600">Progress</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="frameworks">Frameworks</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Your Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <span className="text-sm font-bold">{totalProgress}%</span>
+                    </div>
+                    <Progress value={totalProgress} className="h-3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Completed Modules</p>
+                      <p className="font-bold">{completedModules} / {productModules.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Time Invested</p>
+                      <p className="font-bold">2.0 hours</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Key Learning Outcomes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium">Achieve Product-Market Fit</p>
+                        <p className="text-sm text-gray-600">Build products customers love</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Star className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Master User Research</p>
+                        <p className="text-sm text-gray-600">Understand your customers deeply</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                      <Shield className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium">Build Better MVPs</p>
+                        <p className="text-sm text-gray-600">Rapid prototyping and validation</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Modules Tab */}
+          <TabsContent value="modules" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {productModules.map(module => {
+                const TypeIcon = getTypeIcon(module.type);
+                const typeColor = getTypeColor(module.type);
+                return (
+                  <Card key={module.id} className={module.completed ? 'ring-2 ring-green-500' : ''}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{module.title}</CardTitle>
+                          <CardDescription>{module.description}</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`bg-${typeColor}-100 text-${typeColor}-700`}>
+                            <TypeIcon className="h-3 w-3 mr-1" />
+                            {module.type}
+                          </Badge>
+                          {module.completed && (
+                            <CheckCircle className="h-6 w-6 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span>{formatDuration(module.duration)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span>{module.lessons} lessons</span>
+                        </div>
+                        <Badge className={getDifficultyColor(module.difficulty)}>
+                          {module.difficulty}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Progress</span>
+                          <span className="font-medium">{module.progress}%</span>
+                        </div>
+                        <Progress value={module.progress} className="h-2" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Topics Covered</p>
+                        <div className="flex flex-wrap gap-1">
+                          {module.topics.map((topic, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full" disabled={module.completed}>
+                        {module.completed ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Completed
+                          </>
+                        ) : module.progress > 0 ? (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Continue
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Module
+                          </>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* Frameworks Tab */}
+          <TabsContent value="frameworks" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {productFrameworks.map(framework => {
+                const Icon = framework.icon;
+                return (
+                  <Card key={framework.id}>
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 bg-${framework.color}-100 rounded-lg`}>
+                          <Icon className={`h-5 w-5 text-${framework.color}-600`} />
+                        </div>
+                        <div>
+                          <CardTitle>{framework.name}</CardTitle>
+                          <CardDescription>{framework.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Steps</p>
+                          <p className="font-bold">{framework.steps}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Duration</p>
+                          <p className="font-bold">{framework.duration}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Best For</p>
+                        <p className="text-sm text-gray-600">{framework.useCase}</p>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full">
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        Learn Framework
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default EducationProduct;
+
+

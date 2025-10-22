@@ -3,7 +3,7 @@
  * Maps Holland codes to optimal startup roles
  */
 
-import { StartupRole, RIASECScores, RoleMapping } from '../../models/riasec.model';
+import { StartupRole, RIASECScores, RoleMapping } from '../../models/riasec.model.ts';
 
 /**
  * Comprehensive mapping of RIASEC codes to startup roles

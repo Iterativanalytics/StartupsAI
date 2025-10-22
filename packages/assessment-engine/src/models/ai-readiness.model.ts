@@ -3,7 +3,7 @@
  * Evaluates founder's readiness to leverage AI in their startup
  */
 
-import { LikertScale, DifficultyLevel, ImpactLevel } from './common.model';
+import { LikertScale, DifficultyLevel, ImpactLevel } from './common.model.ts';
 
 export type AIDimension = 'digital_competence' | 'ai_awareness' | 'adoption_mindset' | 'implementation_confidence';
 export type AIReadinessLevel = 'beginner' | 'intermediate' | 'advanced' | 'ai_native';

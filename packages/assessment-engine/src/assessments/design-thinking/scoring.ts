@@ -1,4 +1,4 @@
-import { dtQuestions } from './questions';
+import { dtQuestions } from './questions.ts';
 
 export interface AssessmentResponse {
   questionId: string;

@@ -3,7 +3,7 @@
  * Applied to entrepreneurial contexts
  */
 
-import { LikertScale, TraitLevel, SeverityLevel, Mitigation, CofounderRequirement, WarningTrait } from './common.model';
+import { LikertScale, TraitLevel, SeverityLevel, Mitigation, CofounderRequirement, WarningTrait } from './common.model.ts';
 
 export type BigFiveTrait = 'O' | 'C' | 'E' | 'A' | 'N';
 

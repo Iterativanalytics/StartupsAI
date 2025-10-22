@@ -3,7 +3,7 @@
  * Based on Holland's RIASEC theory applied to startup contexts
  */
 
-import { LikertScale, SeverityLevel, CofounderRequirement, WarningTrait } from './common.model';
+import { LikertScale, SeverityLevel, CofounderRequirement, WarningTrait } from './common.model.ts';
 
 export type RIASECCategory = 'R' | 'I' | 'A' | 'S' | 'E' | 'C';
 

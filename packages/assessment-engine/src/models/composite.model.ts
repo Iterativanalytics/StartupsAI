@@ -3,11 +3,11 @@
  * Integration of all assessment dimensions
  */
 
-import { RIASECProfile } from './riasec.model';
-import { BigFiveProfile, BlindSpot, FounderArchetype } from './big-five.model';
-import { AIReadinessProfile, LearningPath } from './ai-readiness.model';
-import { DTReadinessProfile } from '../assessments/design-thinking/scoring';
-import { PriorityLevel, SeverityLevel } from './common.model';
+import { RIASECProfile } from './riasec.model.ts';
+import { BigFiveProfile, BlindSpot, FounderArchetype } from './big-five.model.ts';
+import { AIReadinessProfile, LearningPath } from './ai-readiness.model.ts';
+import { DTReadinessProfile } from '../assessments/design-thinking/scoring.ts';
+import { PriorityLevel, SeverityLevel } from './common.model.ts';
 
 export interface AssessmentBundle {
   riasec: RIASECProfile;

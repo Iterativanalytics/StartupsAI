@@ -3,7 +3,7 @@
  * 60 questions (10 per dimension)
  */
 
-import { RIASECQuestion, RIASECCategory } from '../../models/riasec.model';
+import { RIASECQuestion, RIASECCategory } from '../../models/riasec.model.ts';
 
 export const RIASEC_QUESTIONS: RIASECQuestion[] = [
   // Realistic (R) - Hands-on, practical, technical (10 questions)

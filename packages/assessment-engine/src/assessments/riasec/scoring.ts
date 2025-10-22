@@ -2,9 +2,9 @@
  * RIASEC Scoring Algorithm
  */
 
-import { AssessmentResponse } from '../../models/common.model';
-import { RIASECScores, RIASECCategory } from '../../models/riasec.model';
-import { RIASEC_QUESTIONS } from './questionnaire';
+import { AssessmentResponse } from '../../models/common.model.ts';
+import { RIASECScores, RIASECCategory } from '../../models/riasec.model.ts';
+import { RIASEC_QUESTIONS } from './questionnaire.ts';
 
 export class RIASECScorer {
   /**

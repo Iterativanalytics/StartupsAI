@@ -76,7 +76,7 @@ export class RIASECAssessment {
 }
 
 // Export everything from this module
-export * from './questionnaire';
-export * from './scoring';
-export * from './interpretation';
-export * from './startup-mapping';
+export * from './questionnaire.ts';
+export * from './scoring.ts';
+export * from './interpretation.ts';
+export * from './startup-mapping.ts';

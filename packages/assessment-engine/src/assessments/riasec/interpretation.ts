@@ -3,9 +3,9 @@
  * Maps RIASEC scores to startup-relevant insights
  */
 
-import { RIASECScores, RIASECProfile, RIASECInterpretation, StartupFit, WorkEnvironmentPreferences } from '../../models/riasec.model';
-import { RIASECScorer } from './scoring';
-import { getStartupRoles } from './startup-mapping';
+import { RIASECScores, RIASECProfile, RIASECInterpretation, StartupFit, WorkEnvironmentPreferences } from '../../models/riasec.model.ts';
+import { RIASECScorer } from './scoring.ts';
+import { getStartupRoles } from './startup-mapping.ts';
 
 export class RIASECInterpreter {
   private scorer: RIASECScorer;

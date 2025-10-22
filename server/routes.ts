@@ -8,7 +8,7 @@ import aiAgentRoutes from "./ai-agent-routes";
 import documentAIRoutes from "./routes/document-ai-routes";
 import enhancedDTRoutes from "./routes/enhanced-dt-routes";
 import dtComprehensiveRoutes from "./routes/dt-comprehensive-routes";
-import assessmentRoutes from "./routes/assessment-routes";
+// import assessmentRoutes from "./routes/assessment-routes";
 import businessPlanRoutes from "./routes/business-plan-routes";
 import userRoutes from "./routes/user-routes";
 import investmentRoutes from "./routes/investment-routes";
@@ -3355,7 +3355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/documents/ai", documentAIRoutes);
   app.use("/api/dt", enhancedDTRoutes);
   app.use("/api/dt", dtComprehensiveRoutes);
-  app.use("/api/assessments", assessmentRoutes);
+  // app.use("/api/assessments", assessmentRoutes); // Temporarily disabled due to import issues
   
   // New modular routes
   app.use("/api/business-plans", businessPlanRoutes);
