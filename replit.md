@@ -52,7 +52,20 @@ The app features a sophisticated glassmorphism design with:
 
 ## Development
 
-The application runs on port 5000 with hot module reloading enabled. The backend serves the API endpoints while Vite handles the frontend development server.
+The application runs on port 5000 with hot module reloading enabled. The backend Express server serves the API endpoints and uses Vite middleware to handle the frontend with HMR (Hot Module Reloading) support.
+
+### Running the Application
+
+1. The server starts automatically via the configured workflow
+2. Access the application at the webview URL (port 5000)
+3. The server logs show initialization progress and any errors
+
+### Configuration
+
+- **PORT**: 5000 (configured in .env)
+- **MongoDB**: Disabled by default (connection string commented out in .env)
+- **Vite**: Configured for Replit environment with HMR over WSS on port 443
+- **Backend API**: Proxied through `/api` routes
 
 ### Key Routes
 - `/` - Dashboard

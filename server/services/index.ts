@@ -20,6 +20,15 @@ import { initializeAutomationEngine, getAutomationEngine } from './proactive-aut
 export async function initializeAllServices() {
   console.log('🚀 Initializing all services...');
   
+  // Check if MongoDB is configured
+  const mongoConfigured = !!process.env.MONGODB_CONNECTION_STRING;
+  
+  if (!mongoConfigured) {
+    console.log('ℹ️ MongoDB not configured - skipping database services');
+    console.log('ℹ️ To enable database services, set MONGODB_CONNECTION_STRING environment variable');
+    return null;
+  }
+  
   try {
     // Initialize database services
     const agentDb = await initializeAgentDatabase();
