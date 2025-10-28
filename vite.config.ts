@@ -19,6 +19,9 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    allowedHosts: [
+      "a86ead68-e489-4e32-8376-4d122e85feca-00-1yjv3u0gsta2d.janeway.replit.dev",
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
