@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ApplicationForm } from '../../../types';
+import { ApplicationForm } from '@/types-hub';
 import { Search, Filter, Briefcase, Award, Rocket, Trophy, ArrowRight, Calendar } from 'lucide-react';
 
 interface FastTrackModeProps {

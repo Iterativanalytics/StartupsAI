@@ -1,5 +1,5 @@
 import React from 'react';
-import { Insight } from '../../types';
+import { Insight } from '@/types-hub';
 import { AlertTriangle, TrendingUp, ShieldAlert, Badge, Sparkles } from 'lucide-react';
 
 interface InsightsFeedProps {

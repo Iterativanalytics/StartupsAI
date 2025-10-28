@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Zap, ArrowRight, Loader2, Bot, Lightbulb, TrendingUp, BarChart2, CheckCircle, UploadCloud, File, Trash2 } from 'lucide-react';
-import { Assumption, DeckStyle, ToastType, User, EntrepreneurStage } from '../../../types';
+import { Assumption, DeckStyle, ToastType, User, EntrepreneurStage } from '@/types-hub';
 import { Type } from "@google/genai";
-import { DECK_STYLES } from '../constants';
+import { DECK_STYLES } from '@/constants-hub';
 import { useDeckProject } from '../DecksApp';
-import { useGeminiGenerator } from '../../../hooks/useGeminiGenerator';
+import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 
 interface FastTrackModeProps {
   showToast: (message: string, type: ToastType) => void;

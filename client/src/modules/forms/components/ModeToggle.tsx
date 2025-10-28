@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Zap } from 'lucide-react';
-import { Mode } from '../../../types';
+import { Mode } from '@/types-hub';
 
 interface ModeToggleProps {
   mode: Mode;

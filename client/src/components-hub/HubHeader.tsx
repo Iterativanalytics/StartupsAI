@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, Presentation, FileSignature, FormInput, Sparkles, User as UserIcon } from 'lucide-react';
-import { HubModule, User } from '../types';
+import { HubModule, User } from '@/types-hub';
 
 interface HubHeaderProps {
   activeHub: HubModule;

@@ -25,6 +25,7 @@
     "@azure/msal-browser": "^4.24.0",
     "@azure/msal-node": "^3.8.0",
     "@eslint/js": "^9.38.0",
+    "@google/genai": "^1.27.0",
     "@hookform/resolvers": "^3.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@radix-ui/react-accordion": "^1.2.1",

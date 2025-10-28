@@ -1,7 +1,7 @@
 import { useState } from 'react';
 // FIX: Changed GenerateContentRequest to GenerateContentParameters as it is deprecated.
 import { GoogleGenAI, GenerateContentParameters } from '@google/genai';
-import { ToastType } from '../types';
+import { ToastType } from '@/types-hub';
 
 interface UseGeminiGeneratorReturn {
   isLoading: boolean;

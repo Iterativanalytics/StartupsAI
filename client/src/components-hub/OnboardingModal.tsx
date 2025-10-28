@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, X, ArrowLeft, Loader2 } from 'lucide-react';
-import { Persona, EntrepreneurStage, CompositeProfile, CoFounderPersonality } from '../types';
+import { Persona, EntrepreneurStage, CompositeProfile, CoFounderPersonality } from '@/types-hub';
 import PersonaSelector from './PersonaSelector';
 import EntrepreneurStageSelector from './EntrepreneurStageSelector';
 import AssessmentRunner from './assessment/AssessmentRunner';

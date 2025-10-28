@@ -1,5 +1,5 @@
 import React from 'react';
-import { CoFounderPersonality, WhatsAppSettings, ToastType } from '../../types';
+import { CoFounderPersonality, WhatsAppSettings, ToastType } from '@/types-hub';
 import { SlidersHorizontal, Smartphone } from 'lucide-react';
 
 interface PersonalitySettingsProps {

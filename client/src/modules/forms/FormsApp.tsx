@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Mode, ApplicationForm, ToastType, User } from '../../types';
+import { Mode, ApplicationForm, ToastType, User } from '@/types-hub';
 import ApplicationFillerPage from './pages/ApplicationFillerPage';
 import ApplicationsListPage from './pages/ApplicationsListPage';
 import ModeToggle from './components/ModeToggle';
 import { MOCK_APPLICATIONS } from './constants';
-import { createProjectContext } from '../../contexts/ProjectContext';
+import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
 // The "Project" for Forms is the application being filled.
 export const { ProjectProvider: FormProjectProvider, useProject: useFormProject } = createProjectContext<ApplicationForm>();

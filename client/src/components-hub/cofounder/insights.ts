@@ -1,4 +1,4 @@
-import { CompositeProfile, Insight, Goal } from '../../types';
+import { CompositeProfile, Insight, Goal } from '@/types-hub';
 
 export const generateInsights = (profile: CompositeProfile, goals: Goal[]): Insight[] => {
     const insights: Insight[] = [];

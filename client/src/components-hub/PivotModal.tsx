@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { GitBranch } from 'lucide-react';
-import { PivotType } from '../types';
+import { PivotType } from '@/types-hub';
 
 interface PivotModalProps {
   isOpen: boolean;

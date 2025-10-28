@@ -1,5 +1,5 @@
 import { Search, Target, Lightbulb, TestTube, BarChart3, TrendingUp } from 'lucide-react';
-import { Phases, Tools, PlanCompetitorRow, PricingTier, RevenueStream, Assumption } from '../../types';
+import { Phases, Tools, PlanCompetitorRow, PricingTier, RevenueStream, Assumption } from '@/types-hub';
 
 export const PLAN_PHASES: Phases = {
   discover: {

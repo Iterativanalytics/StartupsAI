@@ -5,7 +5,7 @@ import {
   PricingTier,
   RevenueStream,
   DeckStyle,
-} from '../../types';
+} from '@/types-hub';
 import {
   Users,
   Target,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CompositeProfile } from '../../types';
+import { CompositeProfile } from '@/types-hub';
 import AssessmentResults from './AssessmentResults';
 import { Activity } from 'lucide-react';
 

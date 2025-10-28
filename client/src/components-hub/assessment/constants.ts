@@ -1,4 +1,4 @@
-import { FounderArchetype } from '../../types';
+import { FounderArchetype } from '@/types-hub';
 
 export const ASSESSMENT_QUESTIONS = [
   // RIASEC Questions (Sample - 1 per category for brevity)

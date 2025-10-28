@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { Assumption } from '../types';
+import { Assumption } from '@/types-hub';
 
 interface AssumptionDashboardProps {
     assumptions: Assumption[];

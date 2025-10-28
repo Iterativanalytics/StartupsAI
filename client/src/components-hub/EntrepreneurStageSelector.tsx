@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lightbulb, Rocket, BarChart } from 'lucide-react';
-import { EntrepreneurStage } from '../types';
+import { EntrepreneurStage } from '@/types-hub';
 
 interface EntrepreneurStageSelectorProps {
     onSelect: (stage: EntrepreneurStage) => void;

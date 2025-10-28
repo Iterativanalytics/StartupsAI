@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Goal } from '../../types';
+import { Goal } from '@/types-hub';
 import { Target, PlusCircle, Award } from 'lucide-react';
 
 interface GoalTrackerProps {

@@ -25,6 +25,15 @@ A comprehensive startup ecosystem platform built with React, TypeScript, and Exp
 - **Accelerator**: Intensive 12-week programs for existing startups (6-10% equity)
 - **Incubator**: Long-term nurturing with flexible support (0-10% equity)
 
+### Documents Hub (New!)
+- **IterativPlans**: AI-powered business plan creation with Fast-Track and Validated modes
+- **IterativDecks**: Pitch deck generation with multiple presentation styles
+- **IterativProposals**: Grant and investment proposal builder
+- **IterativForms**: Application filler for accelerators, grants, and competitions
+- **Co-Founder AI Agent**: Virtual co-founder with customizable personality and vested interest gamification
+- **WhatsApp Integration**: Real-time notifications and milestone tracking
+- **Onboarding System**: Persona-based assessment (RIASEC, Big Five, AI Readiness) with founder archetype matching
+
 ### Additional Tools
 - **Education**: Educational resources and workshops
 - **Programs**: Startup programs and cohort management
@@ -69,6 +78,7 @@ The application runs on port 5000 with hot module reloading enabled. The backend
 
 ### Key Routes
 - `/` - Dashboard
+- `/documents-hub` - **NEW**: Unified Documents Hub (Plans, Decks, Proposals, Forms)
 - `/ecosystem` - Ecosystem hub with model comparison
 - `/venture-studio` - Venture studio management
 - `/accelerator` - Accelerator programs
@@ -79,6 +89,16 @@ The application runs on port 5000 with hot module reloading enabled. The backend
 
 ## Recent Updates
 
+### IterativStartups 1.0 - Documents Hub Integration (Latest)
+- **Four Unified Modules**: Integrated IterativPlans, IterativDecks, IterativProposals, and IterativForms into a central hub
+- **Co-Founder AI Agent**: Virtual co-founder with personality customization, vested interest mechanics, and multi-mode conversation
+- **Smart Onboarding**: RIASEC, Big Five, and AI Readiness assessments with founder archetype matching
+- **WhatsApp Notifications**: Real-time alerts for high-priority insights, goal updates, and weekly summaries
+- **Modular Architecture**: Clean separation with modules, contexts, and shared components
+- **Google Gemini Integration**: AI content generation across all document types
+- **Assumption Dashboard**: Cross-module assumption tracking and validation
+
+### Previous Updates
 - **Enhanced Landing Experience**: Smart onboarding flow with role-based personalization for entrepreneurs, investors, lenders, grantors, and partners
 - **Improved User Journey Flows**: Multi-step assessment and customized dashboard generation based on user type and goals  
 - **Advanced Ecosystem Hub**: AI-powered ecosystem matcher and global program directory with 500+ partner programs

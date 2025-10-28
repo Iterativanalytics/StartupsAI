@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import FastTrackMode from './pages/FastTrackMode';
 import ValidatedMode from './pages/ValidatedMode';
 import ModeToggle from './components/ModeToggle';
-import { Mode, ToastType, User } from '../../types';
-import { createProjectContext } from '../../contexts/ProjectContext';
+import { Mode, ToastType, User } from '@/types-hub';
+import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
 // Create a specific context for Decks, where the project content is a string (Markdown)
 export const { ProjectProvider: DeckProjectProvider, useProject: useDeckProject } = createProjectContext<string>();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Persona } from '../types';
+import { Persona } from '@/types-hub';
 import { Rocket, Building2, TrendingUp, Landmark } from 'lucide-react';
 
 interface PersonaSelectorProps {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Mode, ToastType, User } from '../../types';
+import { Mode, ToastType, User } from '@/types-hub';
 import ProposalsPage from './pages/ValidatedMode';
 import FastTrackMode from './pages/FastTrackMode';
 import ModeToggle from './components/ModeToggle';
-import { createProjectContext } from '../../contexts/ProjectContext';
+import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
 // Create a specific context for Proposals, where the content is a string (Markdown)
 export const { ProjectProvider: ProposalProjectProvider, useProject: useProposalProject } = createProjectContext<string>();

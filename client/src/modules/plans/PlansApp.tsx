@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Mode, ToastType, BusinessPlan, User, CoFounderPersonality } from '../../types';
+import { Mode, ToastType, BusinessPlan, User, CoFounderPersonality } from '@/types-hub';
 import ValidatedMode from './pages/ValidatedMode';
 import FastTrackMode from './pages/FastTrackMode';
 import ModeToggle from './components/ModeToggle';
-import { createProjectContext } from '../../contexts/ProjectContext';
+import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
 // Create a specific context for Plans using the new structured BusinessPlan type
 export const { ProjectProvider: PlanProjectProvider, useProject: usePlanProject } = createProjectContext<BusinessPlan>();

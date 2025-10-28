@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrainCircuit, Zap, Scale, Lightbulb, CheckSquare } from 'lucide-react';
-import { ConversationMode } from '../../types';
+import { ConversationMode } from '@/types-hub';
 
 interface ConversationModeSelectorProps {
     activeMode: ConversationMode;

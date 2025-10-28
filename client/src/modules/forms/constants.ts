@@ -1,4 +1,4 @@
-import { ApplicationForm, SimpleBusinessPlanData } from '../../types';
+import { ApplicationForm, SimpleBusinessPlanData } from '@/types-hub';
 
 export const MOCK_BUSINESS_PLAN: SimpleBusinessPlanData = {
   companyName: 'IterativStartups Inc.',

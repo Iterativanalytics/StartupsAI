@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, X, Loader2, Globe } from 'lucide-react';
-import { Tool, ToastType } from '../types';
-import { useGeminiGenerator } from '../hooks/useGeminiGenerator';
+import { Tool, ToastType } from '@/types-hub';
+import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 // FIX: Changed GenerateContentRequest to GenerateContentParameters as it is deprecated.
 import { GenerateContentParameters } from '@google/genai';
 

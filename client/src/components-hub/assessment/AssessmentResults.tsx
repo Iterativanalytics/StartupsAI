@@ -1,5 +1,5 @@
 import React from 'react';
-import { CompositeProfile } from '../../types';
+import { CompositeProfile } from '@/types-hub';
 import RadarChart from '../charts/RadarChart';
 import { Sparkles, Check, AlertTriangle } from 'lucide-react';
 

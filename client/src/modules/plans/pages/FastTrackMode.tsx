@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Zap, Bot, Lightbulb, TrendingUp, BarChart2, CheckCircle, ArrowRight, Loader2, UploadCloud, BrainCircuit, File, Trash2 } from 'lucide-react';
-import { ToastType, User, BusinessPlan, Assumption } from '../../../types';
+import { ToastType, User, BusinessPlan, Assumption } from '@/types-hub';
 import { usePlanProject } from '../PlansApp';
-import { useGeminiGenerator } from '../../../hooks/useGeminiGenerator';
+import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 import { Type } from '@google/genai';
 import { sections } from '../components/editorConstants';
 

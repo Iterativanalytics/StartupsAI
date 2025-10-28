@@ -44,12 +44,12 @@ export default function DocumentsHub() {
   const [vestedInterest, setVestedInterest] = useState(0.1);
 
   useEffect(() => {
-    if (user.loggedIn) {
-      const timer = setInterval(() => {
-        setVestedInterest(prev => prev + 0.001);
-      }, 1000 * 60);
-      return () => clearInterval(timer);
-    }
+    if (!user.loggedIn) return;
+    
+    const timer = setInterval(() => {
+      setVestedInterest(prev => prev + 0.001);
+    }, 1000 * 60);
+    return () => clearInterval(timer);
   }, [user.loggedIn]);
 
   const addToast = useCallback((message: string, type: ToastType, onClick?: () => void) => {

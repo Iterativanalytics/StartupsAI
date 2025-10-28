@@ -1,4 +1,4 @@
-import { RIASECScore, BigFiveScore, AIReadinessScore, CompositeProfile, FounderArchetype, CoFounderPersonality } from '../../types';
+import { RIASECScore, BigFiveScore, AIReadinessScore, CompositeProfile, FounderArchetype, CoFounderPersonality } from '@/types-hub';
 import { FOUNDER_ARCHETYPES } from './constants';
 
 // NOTE: In a real app, scoring would be more complex, potentially reversing scores for certain questions.

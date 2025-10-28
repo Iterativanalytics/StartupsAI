@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Toast from './Toast';
-import { ToastMessage } from '../types';
+import { ToastMessage } from '@/types-hub';
 
 interface ToasterProps {
     toasts: ToastMessage[];

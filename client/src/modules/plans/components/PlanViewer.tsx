@@ -4,7 +4,7 @@ import {
   Printer, FileDown, Check, ChevronLeft, ChevronRight, Grid3x3
 } from 'lucide-react';
 import { sections } from './editorConstants';
-import { Project, BusinessPlan } from '../../../types';
+import { Project, BusinessPlan } from '@/types-hub';
 
 interface PlanViewerProps {
     project: Project<BusinessPlan>;

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Loader2, ArrowLeft, Check, CheckCheck } from 'lucide-react';
-import { ToastType, ChatMessage, User, CoFounderPersonality, ConversationMode } from '../../types';
-import { useGeminiGenerator } from '../../hooks/useGeminiGenerator';
+import { ToastType, ChatMessage, User, CoFounderPersonality, ConversationMode } from '@/types-hub';
+import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 // FIX: Changed GenerateContentRequest to GenerateContentParameters as it is deprecated.
 import { GenerateContentParameters } from '@google/genai';
 import { agentConfigs, getSystemPrompt } from './CoFounderHub';

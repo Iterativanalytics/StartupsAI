@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User as UserIcon, Loader2, Sparkles, LayoutDashboard, Target as TargetIcon, Settings, BrainCircuit, Activity, Building, TrendingUp, Landmark, Smartphone } from 'lucide-react';
-import { ToastType, ChatMessage, User, CoFounderPersonality, Insight, Goal, ConversationMode, WhatsAppSettings, Persona, AgentConfig } from '../../types';
-import { useGeminiGenerator } from '../../hooks/useGeminiGenerator';
+import { ToastType, ChatMessage, User, CoFounderPersonality, Insight, Goal, ConversationMode, WhatsAppSettings, Persona, AgentConfig } from '@/types-hub';
+import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 // FIX: Changed GenerateContentRequest to GenerateContentParameters as it is deprecated.
 import { GenerateContentParameters } from '@google/genai';
 import ConversationModeSelector from './ConversationModeSelector';
