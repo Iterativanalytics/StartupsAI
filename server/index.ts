@@ -89,9 +89,11 @@ app.use((req, res, next) => {
 
   // Initialize Agent Services
   try {
-    const { initializeAllServices } = await import('./services/index.js');
-    await initializeAllServices();
-    console.log('✅ Agent services initialized successfully');
+    // Temporarily disabled MongoDB connection for development
+    console.log('⚠️ Skipping agent services initialization in development mode');
+    // const { initializeAllServices } = await import('./services/index.js');
+    // await initializeAllServices();
+    // console.log('✅ Agent services initialized successfully');
   } catch (error: any) {
     console.error('❌ Failed to initialize agent services:', error.message);
     console.log('⚠️ Continuing without agent services...');

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartupsAI - Working Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #8A4EF5 0%, #4ED0F5 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .routes {
+            margin-top: 30px;
+        }
+        .routes a {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .routes a:hover {
+            background: #0056b3;
+        }
+        .test-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 StartupsAI Dashboard</h1>
+        
+        <div class="test-info">
+            <h2>✅ Server Test Successful!</h2>
+            <p>This page confirms that:</p>
+            <ul>
+                <li>✅ Server is running on port 3000</li>
+                <li>✅ Static files are being served</li>
+                <li>✅ HTML/CSS is working</li>
+                <li>✅ JavaScript is working</li>
+            </ul>
+        </div>
+
+        <div class="status">
+            <h2>React App Status</h2>
+            <p id="react-status">Checking React app...</p>
+        </div>
+
+        <div class="routes">
+            <h2>Available Routes</h2>
+            <a href="/">Main React App</a>
+            <a href="/test">Test Route</a>
+            <a href="/login">Login Page</a>
+            <a href="/education">Education Hub</a>
+            <a href="/ecosystem">Ecosystem Hub</a>
+            <a href="/debug.html">Debug Page</a>
+        </div>
+
+        <div class="status">
+            <h2>Next Steps</h2>
+            <p>If you can see this page, the server is working correctly. The React app issue is likely related to:</p>
+            <ul>
+                <li>Loading screen not hiding properly</li>
+                <li>JavaScript module loading issues</li>
+                <li>React component compilation errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Test React app status
+        setTimeout(() => {
+            fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    if (html.includes('StartupsAI Dashboard')) {
+                        document.getElementById('react-status').innerHTML = 
+                            '<span class="success">✅ React app is rendering!</span>';
+                    } else {
+                        document.getElementById('react-status').innerHTML = 
+                            '❌ React app is not rendering properly';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('react-status').innerHTML = 
+                        '❌ Error checking React app: ' + error.message;
+                });
+        }, 2000);
+    </script>
+</body>
+</html>

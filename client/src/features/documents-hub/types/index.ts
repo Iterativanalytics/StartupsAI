@@ -139,3 +139,19 @@ export interface AISuggestion {
 
 // Hub Module Types
 export type HubModule = 'plans' | 'decks' | 'proposals' | 'forms';
+
+// Proposal Types
+export interface ProposalTemplate {
+  id: string;
+  name: string;
+  type: 'consulting' | 'partnership' | 'service' | 'product';
+  description: string;
+  sections: string[];
+}
+
+export interface ProposalSection {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+}

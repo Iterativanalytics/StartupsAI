@@ -1,11 +1,13 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import "./index.css";
 
-console.log("🚀 Starting React app...");
+console.log("Starting React app...");
 
 // Force hide loading screen
 const loadingScreen = document.getElementById("loading-screen");
 if (loadingScreen) {
+  console.log("Hiding loading screen...");
   console.log("📱 Hiding loading screen...");
   loadingScreen.style.display = "none";
 } else {
@@ -25,6 +27,6 @@ if (!rootElement) {
     console.log("✅ React app rendered successfully!");
   } catch (error) {
     console.error("❌ Error rendering React app:", error);
-    rootElement.innerHTML = '<div style="padding: 20px; color: red;">Error rendering React app: ' + error.message + '</div>';
+    rootElement.innerHTML = '<div style="padding: 20px; color: red;">Error rendering React app: ' + (error as Error).message + '</div>';
   }
 }

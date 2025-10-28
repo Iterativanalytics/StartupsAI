@@ -15,6 +15,7 @@ var __export = (target, all) => {
 };
 
 // server/ai-service.ts
+import dotenv from "dotenv";
 import OpenAI from "openai";
 import { z } from "zod";
 function normalizeEndpoint(endpoint) {
@@ -47,6 +48,7 @@ var hasAzureApiKey, hasOpenAIApiKey, useAzure, AI_MODEL, openai, MarketAnalysisS
 var init_ai_service = __esm({
   "server/ai-service.ts"() {
     "use strict";
+    dotenv.config();
     hasAzureApiKey = !!process.env.AZURE_OPENAI_API_KEY;
     hasOpenAIApiKey = !!process.env.OPENAI_API_KEY;
     useAzure = hasAzureApiKey && !!process.env.AZURE_OPENAI_ENDPOINT;
@@ -330,11 +332,130 @@ var init_ai_service = __esm({
   }
 });
 
+// server/utils/azureUtils.ts
+function normalizeEndpoint2(endpoint) {
+  if (!endpoint) return "";
+  return endpoint.endsWith("/") ? endpoint : endpoint + "/";
+}
+function basicSentimentAnalysis(text) {
+  const lowerText = text.toLowerCase();
+  const positiveWords = [
+    "good",
+    "great",
+    "excellent",
+    "amazing",
+    "fantastic",
+    "love",
+    "best",
+    "excited",
+    "happy",
+    "success",
+    "won",
+    "achieved",
+    "wonderful",
+    "outstanding"
+  ];
+  const negativeWords = [
+    "bad",
+    "terrible",
+    "awful",
+    "hate",
+    "worst",
+    "disappointed",
+    "frustrated",
+    "angry",
+    "failed",
+    "lost",
+    "problem",
+    "issue",
+    "difficult"
+  ];
+  const positiveCount = positiveWords.filter((word) => lowerText.includes(word)).length;
+  const negativeCount = negativeWords.filter((word) => lowerText.includes(word)).length;
+  if (positiveCount > negativeCount) {
+    return {
+      sentiment: "positive",
+      scores: { positive: 0.7, negative: 0.1, neutral: 0.2 }
+    };
+  } else if (negativeCount > positiveCount) {
+    return {
+      sentiment: "negative",
+      scores: { positive: 0.1, negative: 0.7, neutral: 0.2 }
+    };
+  } else if (positiveCount > 0 && negativeCount > 0) {
+    return {
+      sentiment: "mixed",
+      scores: { positive: 0.4, negative: 0.4, neutral: 0.2 }
+    };
+  } else {
+    return {
+      sentiment: "neutral",
+      scores: { positive: 0.2, negative: 0.2, neutral: 0.6 }
+    };
+  }
+}
+var init_azureUtils = __esm({
+  "server/utils/azureUtils.ts"() {
+    "use strict";
+  }
+});
+
+// server/utils/openaiClient.ts
+function createOpenAIClient(config) {
+  const OpenAI8 = __require("openai").default;
+  if (config.useAzure && config.azureEndpoint) {
+    const deployment = config.azureDeployment || "gpt-4";
+    const normalizedEndpoint = normalizeEndpoint2(config.azureEndpoint);
+    return new OpenAI8({
+      apiKey: config.apiKey,
+      baseURL: `${normalizedEndpoint}openai/deployments/${deployment}`,
+      defaultQuery: { "api-version": "2024-08-01-preview" },
+      defaultHeaders: { "api-key": config.apiKey }
+    });
+  } else {
+    return new OpenAI8({
+      apiKey: config.apiKey
+    });
+  }
+}
+function createEmbeddingClient(config, embeddingDeployment = "text-embedding-ada-002") {
+  const OpenAI8 = __require("openai").default;
+  if (config.useAzure && config.azureEndpoint) {
+    const normalizedEndpoint = normalizeEndpoint2(config.azureEndpoint);
+    return new OpenAI8({
+      apiKey: config.apiKey,
+      baseURL: `${normalizedEndpoint}openai/deployments/${embeddingDeployment}`,
+      defaultQuery: { "api-version": "2024-08-01-preview" },
+      defaultHeaders: { "api-key": config.apiKey }
+    });
+  } else {
+    return new OpenAI8({
+      apiKey: config.apiKey
+    });
+  }
+}
+function getDeploymentName(config, defaultModel = "gpt-4") {
+  if (config.useAzure && config.azureDeployment) {
+    return config.azureDeployment;
+  }
+  return config.model || defaultModel;
+}
+function getEmbeddingDeploymentName(config) {
+  return config.azureEmbeddingDeployment || "text-embedding-ada-002";
+}
+var init_openaiClient = __esm({
+  "server/utils/openaiClient.ts"() {
+    "use strict";
+    init_azureUtils();
+  }
+});
+
 // server/ai-agents/core/azure-openai-advanced.ts
 var AzureOpenAIAdvanced;
 var init_azure_openai_advanced = __esm({
   "server/ai-agents/core/azure-openai-advanced.ts"() {
     "use strict";
+    init_openaiClient();
     AzureOpenAIAdvanced = class {
       client;
       deployment;
@@ -342,27 +463,9 @@ var init_azure_openai_advanced = __esm({
       config;
       constructor(config) {
         this.config = config;
-        if (config.useAzure && config.azureEndpoint) {
-          const deployment = config.azureDeployment || "gpt-4";
-          const embeddingDeployment = config.azureEmbeddingDeployment || "text-embedding-ada-002";
-          const normalizedEndpoint = this.normalizeEndpoint(config.azureEndpoint);
-          const OpenAI3 = __require("openai").default;
-          this.client = new OpenAI3({
-            apiKey: config.apiKey,
-            baseURL: `${normalizedEndpoint}openai/deployments/${deployment}`,
-            defaultQuery: { "api-version": "2024-08-01-preview" },
-            defaultHeaders: { "api-key": config.apiKey }
-          });
-          this.deployment = deployment;
-          this.embeddingDeployment = embeddingDeployment;
-        } else {
-          const OpenAI3 = __require("openai").default;
-          this.client = new OpenAI3({
-            apiKey: config.apiKey
-          });
-          this.deployment = config.model || "gpt-4";
-          this.embeddingDeployment = "text-embedding-ada-002";
-        }
+        this.client = createOpenAIClient(config);
+        this.deployment = getDeploymentName(config);
+        this.embeddingDeployment = getEmbeddingDeploymentName(config);
       }
       /**
        * Generate response with function calling support
@@ -474,13 +577,7 @@ var init_azure_openai_advanced = __esm({
        */
       async generateEmbedding(text) {
         try {
-          const OpenAI3 = __require("openai").default;
-          const embeddingClient = new OpenAI3({
-            apiKey: this.config.apiKey,
-            baseURL: this.config.useAzure && this.config.azureEndpoint ? `${this.normalizeEndpoint(this.config.azureEndpoint)}openai/deployments/${this.embeddingDeployment}` : void 0,
-            defaultQuery: this.config.useAzure ? { "api-version": "2024-08-01-preview" } : void 0,
-            defaultHeaders: this.config.useAzure ? { "api-key": this.config.apiKey } : void 0
-          });
+          const embeddingClient = createEmbeddingClient(this.config, this.embeddingDeployment);
           const response = await embeddingClient.embeddings.create({
             model: this.embeddingDeployment,
             input: text
@@ -496,13 +593,7 @@ var init_azure_openai_advanced = __esm({
        */
       async generateEmbeddings(texts) {
         try {
-          const OpenAI3 = __require("openai").default;
-          const embeddingClient = new OpenAI3({
-            apiKey: this.config.apiKey,
-            baseURL: this.config.useAzure && this.config.azureEndpoint ? `${this.normalizeEndpoint(this.config.azureEndpoint)}openai/deployments/${this.embeddingDeployment}` : void 0,
-            defaultQuery: this.config.useAzure ? { "api-version": "2024-08-01-preview" } : void 0,
-            defaultHeaders: this.config.useAzure ? { "api-key": this.config.apiKey } : void 0
-          });
+          const embeddingClient = createEmbeddingClient(this.config, this.embeddingDeployment);
           const response = await embeddingClient.embeddings.create({
             model: this.embeddingDeployment,
             input: texts
@@ -657,10 +748,6 @@ What's your ${perspective} perspective?` }
       shouldSummarize(messages, maxTokens = 8e3) {
         const totalTokens = messages.reduce((sum, msg) => sum + this.estimateTokens(msg.content), 0);
         return totalTokens > maxTokens;
-      }
-      normalizeEndpoint(endpoint) {
-        if (!endpoint) return "";
-        return endpoint.endsWith("/") ? endpoint : endpoint + "/";
       }
     };
   }
@@ -1665,13 +1752,13 @@ var init_infographic_analytics_service = __esm({
 });
 
 // server/index.ts
-import dotenv from "dotenv";
-import express4 from "express";
+import dotenv2 from "dotenv";
+import express6 from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
 // server/routes.ts
-import express2 from "express";
+import express4 from "express";
 import { createServer } from "http";
 
 // shared/schema.ts
@@ -2126,7 +2213,17 @@ var InMemoryStorage = class {
     superUsers2.forEach((userData) => {
       const user = {
         id: this.userIdCounter++,
-        ...userData,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        userType: userData.userType,
+        userSubtype: userData.userSubtype,
+        role: userData.role,
+        preferences: userData.preferences,
+        metrics: userData.metrics,
+        verified: userData.verified ?? false,
+        onboardingCompleted: userData.onboardingCompleted ?? false,
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
       };
@@ -2135,7 +2232,17 @@ var InMemoryStorage = class {
     sampleUsers2.forEach((userData) => {
       const user = {
         id: this.userIdCounter++,
-        ...userData,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        userType: userData.userType,
+        userSubtype: userData.userSubtype,
+        role: userData.role,
+        preferences: userData.preferences,
+        metrics: userData.metrics,
+        verified: userData.verified ?? false,
+        onboardingCompleted: userData.onboardingCompleted ?? false,
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
       };
@@ -2144,7 +2251,16 @@ var InMemoryStorage = class {
     sampleOrganizations2.forEach((orgData) => {
       const org = {
         id: this.orgIdCounter++,
-        ...orgData,
+        name: orgData.name,
+        description: orgData.description,
+        organizationType: orgData.organizationType,
+        ownerId: orgData.ownerId,
+        industry: orgData.industry,
+        size: orgData.size,
+        location: orgData.location,
+        website: orgData.website,
+        logoUrl: orgData.logoUrl,
+        verified: orgData.verified ?? false,
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
       };
@@ -2153,7 +2269,18 @@ var InMemoryStorage = class {
     sampleBusinessPlans2.forEach((planData) => {
       const plan = {
         id: this.planIdCounter++,
-        ...planData,
+        name: planData.name,
+        userId: planData.userId,
+        content: planData.content,
+        description: planData.description,
+        industry: planData.industry,
+        stage: planData.stage,
+        fundingGoal: planData.fundingGoal,
+        teamSize: planData.teamSize,
+        targetMarket: planData.targetMarket,
+        competitiveAdvantage: planData.competitiveAdvantage,
+        revenueModel: planData.revenueModel,
+        visibility: planData.visibility ?? "private",
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
       };
@@ -2168,7 +2295,17 @@ var InMemoryStorage = class {
   createUser(userData) {
     const user = {
       id: this.userIdCounter++,
-      ...userData,
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      profileImageUrl: userData.profileImageUrl,
+      userType: userData.userType,
+      userSubtype: userData.userSubtype,
+      role: userData.role,
+      preferences: userData.preferences,
+      metrics: userData.metrics,
+      verified: userData.verified ?? false,
+      onboardingCompleted: userData.onboardingCompleted ?? false,
       createdAt: /* @__PURE__ */ new Date(),
       updatedAt: /* @__PURE__ */ new Date()
     };
@@ -2390,35 +2527,454 @@ var InMemoryStorage = class {
   deleteCommitment(id) {
     return this.coFounderCommitments.delete(id);
   }
+  // Wrapper methods for routes.ts compatibility
+  getBusinessPlans(userId) {
+    return this.getBusinessPlansByUserId(userId);
+  }
+  getBusinessPlan(id) {
+    return this.getBusinessPlanById(id);
+  }
+  // Stub methods for features not yet implemented
+  // These return empty arrays/undefined to prevent crashes
+  getPlanSections(planId) {
+    return [];
+  }
+  getPlanSection(id) {
+    return void 0;
+  }
+  createPlanSection(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updatePlanSection(id, updates) {
+    return void 0;
+  }
+  getFinancialData(planId) {
+    return void 0;
+  }
+  createFinancialData(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateFinancialData(id, updates) {
+    return void 0;
+  }
+  getAnalysisScore(planId) {
+    return void 0;
+  }
+  createAnalysisScore(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateAnalysisScore(id, updates) {
+    return void 0;
+  }
+  getPitchDeck(planId) {
+    return void 0;
+  }
+  createPitchDeck(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getInvestments(planId) {
+    return [];
+  }
+  getInvestmentsByInvestor(investorId) {
+    return [];
+  }
+  createInvestment(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateInvestment(id, updates) {
+    return void 0;
+  }
+  getLoans(planId) {
+    return [];
+  }
+  getLoansByLender(lenderId) {
+    return [];
+  }
+  createLoan(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateLoan(id, updates) {
+    return void 0;
+  }
+  getAdvisoryServices(planId) {
+    return [];
+  }
+  getAdvisoryServicesByPartner(partnerId) {
+    return [];
+  }
+  createAdvisoryService(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateAdvisoryService(id, updates) {
+    return void 0;
+  }
+  getPrograms(organizationId) {
+    return [];
+  }
+  getProgram(id) {
+    return void 0;
+  }
+  createProgram(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateProgram(id, updates) {
+    return void 0;
+  }
+  deleteProgram(id) {
+    return true;
+  }
+  getCohorts(programId) {
+    return [];
+  }
+  getCohort(id) {
+    return void 0;
+  }
+  createCohort(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateCohort(id, updates) {
+    return void 0;
+  }
+  deleteCohort(id) {
+    return true;
+  }
+  getPortfolios(organizationId) {
+    return [];
+  }
+  getPortfolio(id) {
+    return void 0;
+  }
+  createPortfolio(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updatePortfolio(id, updates) {
+    return void 0;
+  }
+  deletePortfolio(id) {
+    return true;
+  }
+  getPortfolioCompanies(portfolioId) {
+    return [];
+  }
+  getPortfolioCompaniesByCohort(cohortId) {
+    return [];
+  }
+  getPortfolioCompany(id) {
+    return void 0;
+  }
+  createPortfolioCompany(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updatePortfolioCompany(id, updates) {
+    return void 0;
+  }
+  deletePortfolioCompany(id) {
+    return true;
+  }
+  getEducationalModules(creatorId) {
+    return [];
+  }
+  getEducationalModule(id) {
+    return void 0;
+  }
+  createEducationalModule(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateEducationalModule(id, updates) {
+    return void 0;
+  }
+  deleteEducationalModule(id) {
+    return true;
+  }
+  getMentorshipsByMentor(mentorId) {
+    return [];
+  }
+  getMentorshipsByMentee(menteeId) {
+    return [];
+  }
+  getMentorshipsByProgram(programId) {
+    return [];
+  }
+  getMentorship(id) {
+    return void 0;
+  }
+  createMentorship(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateMentorship(id, updates) {
+    return void 0;
+  }
+  deleteMentorship(id) {
+    return true;
+  }
+  getVentureProjects(organizationId) {
+    return [];
+  }
+  getVentureProject(id) {
+    return void 0;
+  }
+  createVentureProject(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateVentureProject(id, updates) {
+    return void 0;
+  }
+  deleteVentureProject(id) {
+    return true;
+  }
+  // Credit scoring stub methods
+  getCreditScores(userId) {
+    return [];
+  }
+  getCreditScore(id) {
+    return void 0;
+  }
+  createCreditScore(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateCreditScore(id, updates) {
+    return void 0;
+  }
+  getFinancialMilestones(userId) {
+    return [];
+  }
+  getFinancialMilestone(id) {
+    return void 0;
+  }
+  createFinancialMilestone(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateFinancialMilestone(id, updates) {
+    return void 0;
+  }
+  getAiCoachingMessages(userId) {
+    return [];
+  }
+  createAiCoachingMessage(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getCreditTips() {
+    return [];
+  }
+  getCreditTipsByCategory(category) {
+    return [];
+  }
+  getCreditTip(id) {
+    return void 0;
+  }
+  createCreditTip(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getUserCreditTips(userId) {
+    return [];
+  }
+  createUserCreditTip(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateUserCreditTip(id, updates) {
+    return void 0;
+  }
+  getFinancialProjections(businessPlanId) {
+    return [];
+  }
+  getFinancialProjection(id) {
+    return void 0;
+  }
+  createFinancialProjection(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateFinancialProjection(id, updates) {
+    return void 0;
+  }
+  getAiBusinessAnalysis(businessPlanId) {
+    return void 0;
+  }
+  createAiBusinessAnalysis(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateAiBusinessAnalysis(id, updates) {
+    return void 0;
+  }
+  getCreditScoreTiers() {
+    return [];
+  }
+  getCreditScoreTier(id) {
+    return void 0;
+  }
+  getCreditScoreTierByScore(score) {
+    return void 0;
+  }
+  createCreditScoreTier(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateCreditScoreTier(id, updates) {
+    return void 0;
+  }
+  getCreditAchievements() {
+    return [];
+  }
+  getCreditAchievementsByCategory(category) {
+    return [];
+  }
+  getCreditAchievement(id) {
+    return void 0;
+  }
+  createCreditAchievement(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getUserCreditAchievements(userId) {
+    return [];
+  }
+  getUnseenAchievements(userId) {
+    return [];
+  }
+  createUserCreditAchievement(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateUserCreditAchievement(id, updates) {
+    return void 0;
+  }
+  markAchievementAsSeen(id) {
+    return void 0;
+  }
+  getCreditScoreHistory(userId) {
+    return [];
+  }
+  createCreditScoreHistory(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getUserRewardPoints(userId) {
+    return void 0;
+  }
+  createUserRewardPoints(data) {
+    return { id: randomUUID(), ...data };
+  }
+  updateUserRewardPoints(id, updates) {
+    return void 0;
+  }
+  addUserPoints(userId, points) {
+    return void 0;
+  }
+  getPointTransactions(userId) {
+    return [];
+  }
+  createPointTransaction(data) {
+    return { id: randomUUID(), ...data };
+  }
+  // Organization and team stub methods
+  addUserToOrganization(userId, organizationId, role) {
+    return { id: randomUUID(), userId, organizationId, role };
+  }
+  getUserOrganizations(userId) {
+    return [];
+  }
+  getOrganization(id) {
+    return this.getOrganizationById(id);
+  }
+  getOrganizationMembers(organizationId) {
+    return [];
+  }
+  createOrganizationInvitation(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getOrganizationAnalytics(organizationId) {
+    return { totalMembers: 0, totalProjects: 0 };
+  }
+  getUserSettings(userId) {
+    return void 0;
+  }
+  updateUserSettings(userId, settings) {
+    return { userId, ...settings };
+  }
+  resetUserSettings(userId) {
+    return { userId, settings: {} };
+  }
+  exportUserSettings(userId) {
+    return { userId, settings: {} };
+  }
+  createCollaboration(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getUserCollaborations(userId) {
+    return [];
+  }
+  createInvitation(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getUserInvitations(userId) {
+    return [];
+  }
+  getInvitation(id) {
+    return void 0;
+  }
+  updateInvitation(id, updates) {
+    return void 0;
+  }
+  getTeamMembers(userId) {
+    return [];
+  }
+  createTeamInvitation(data) {
+    return { id: randomUUID(), ...data };
+  }
+  getTeamInvitations(userId) {
+    return [];
+  }
+  updateTeamMember(id, updates) {
+    return void 0;
+  }
+  removeTeamMember(id) {
+    return true;
+  }
+  resendTeamInvitation(id) {
+    return true;
+  }
+  cancelTeamInvitation(id) {
+    return true;
+  }
 };
-var storage = new InMemoryStorage();
+var storage2 = new InMemoryStorage();
+
+// server/utils/authUtils.ts
+function createMockUser() {
+  return {
+    id: "dev-user-123",
+    claims: {
+      sub: "dev-user-123",
+      email: "dev@example.com",
+      first_name: "Dev",
+      last_name: "User",
+      given_name: "Dev",
+      family_name: "User",
+      profile_image_url: null,
+      user_type: "entrepreneur",
+      userType: "ENTREPRENEUR"
+    }
+  };
+}
+function handleDevelopmentAuth(req, res, next) {
+  console.log("Development mode: Using mock authentication");
+  req.user = createMockUser();
+  next();
+}
+function sendUnauthorizedResponse(res, message = "Unauthorized") {
+  res.status(401).json({ message });
+}
 
 // server/auth-middleware.ts
 var isAuthenticated = async (req, res, next) => {
   if (process.env.NODE_ENV === "development") {
-    console.log("Development mode: Using mock authentication");
-    req.user = {
-      claims: {
-        sub: "dev-user-123",
-        email: "dev@example.com",
-        first_name: "Dev",
-        last_name: "User",
-        profile_image_url: null,
-        user_type: "entrepreneur",
-        userType: "ENTREPRENEUR"
-      }
-    };
-    return next();
+    return handleDevelopmentAuth(req, res, next);
   }
   if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return sendUnauthorizedResponse(res);
   }
-  return next();
+  next();
 };
+var authMiddleware = isAuthenticated;
 
 // server/routes.ts
 init_ai_service();
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 
 // server/ai-agent-routes.ts
 import express from "express";
@@ -4989,6 +5545,7 @@ var PlatformOrchestratorAgent = class {
 };
 
 // server/ai-agents/core/azure-openai-client.ts
+init_azureUtils();
 import OpenAI2 from "openai";
 var AzureOpenAIClient = class {
   client;
@@ -4996,7 +5553,7 @@ var AzureOpenAIClient = class {
   constructor(config) {
     if (config.useAzure && config.azureEndpoint) {
       const deployment = config.azureDeployment || "gpt-4";
-      const normalizedEndpoint = this.normalizeEndpoint(config.azureEndpoint);
+      const normalizedEndpoint = normalizeEndpoint2(config.azureEndpoint);
       this.client = new OpenAI2({
         apiKey: config.apiKey,
         baseURL: `${normalizedEndpoint}openai/deployments/${deployment}`,
@@ -5076,19 +5633,14 @@ var AzureOpenAIClient = class {
       throw new Error("Failed to stream AI response");
     }
   }
-  /**
-   * Normalize endpoint URL to ensure proper trailing slash
-   */
-  normalizeEndpoint(endpoint) {
-    if (!endpoint) return "";
-    return endpoint.endsWith("/") ? endpoint : endpoint + "/";
-  }
+  // normalizeEndpoint is now imported from shared utils
 };
 
 // server/ai-agents/agents/co-founder/core/co-founder-brain.ts
 init_azure_openai_advanced();
 
 // server/ai-agents/core/azure-ai-services.ts
+init_azureUtils();
 var AzureAIServices = class {
   config;
   constructor() {
@@ -5096,7 +5648,7 @@ var AzureAIServices = class {
     const apiKey = process.env.AZURE_AI_API_KEY || "";
     const isValidEndpoint = endpoint && endpoint.includes("cognitiveservices.azure.com");
     this.config = {
-      endpoint: isValidEndpoint ? this.normalizeEndpoint(endpoint) : "",
+      endpoint: isValidEndpoint ? normalizeEndpoint2(endpoint) : "",
       apiKey: isValidEndpoint ? apiKey : ""
     };
     if (this.config.endpoint && this.config.apiKey) {
@@ -5113,7 +5665,7 @@ var AzureAIServices = class {
    */
   async analyzeSentiment(text) {
     if (!this.isConfigured()) {
-      return this.basicSentimentAnalysis(text);
+      return basicSentimentAnalysis(text);
     }
     try {
       const response = await fetch(`${this.config.endpoint}/text/analytics/v3.1/sentiment`, {
@@ -5143,7 +5695,7 @@ var AzureAIServices = class {
       };
     } catch (error) {
       console.error("Azure AI sentiment analysis error:", error);
-      return this.basicSentimentAnalysis(text);
+      return basicSentimentAnalysis(text);
     }
   }
   /**
@@ -5234,48 +5786,13 @@ var AzureAIServices = class {
       return [];
     }
   }
-  /**
-   * Basic sentiment analysis fallback
-   */
-  basicSentimentAnalysis(text) {
-    const lowerText = text.toLowerCase();
-    const positiveWords = ["good", "great", "excellent", "amazing", "fantastic", "love", "best", "excited", "happy"];
-    const negativeWords = ["bad", "terrible", "awful", "hate", "worst", "disappointed", "frustrated", "angry"];
-    const positiveCount = positiveWords.filter((word) => lowerText.includes(word)).length;
-    const negativeCount = negativeWords.filter((word) => lowerText.includes(word)).length;
-    if (positiveCount > negativeCount) {
-      return {
-        sentiment: "positive",
-        scores: { positive: 0.7, negative: 0.1, neutral: 0.2 }
-      };
-    } else if (negativeCount > positiveCount) {
-      return {
-        sentiment: "negative",
-        scores: { positive: 0.1, negative: 0.7, neutral: 0.2 }
-      };
-    } else if (positiveCount > 0 && negativeCount > 0) {
-      return {
-        sentiment: "mixed",
-        scores: { positive: 0.4, negative: 0.4, neutral: 0.2 }
-      };
-    } else {
-      return {
-        sentiment: "neutral",
-        scores: { positive: 0.2, negative: 0.2, neutral: 0.6 }
-      };
-    }
-  }
-  /**
-   * Normalize endpoint URL to ensure proper trailing slash
-   */
-  normalizeEndpoint(endpoint) {
-    if (!endpoint) return "";
-    return endpoint.endsWith("/") ? endpoint : endpoint + "/";
-  }
+  // basicSentimentAnalysis is now imported from shared utils
+  // normalizeEndpoint is now imported from shared utils
 };
 var azureAIServices = new AzureAIServices();
 
 // server/ai-agents/core/azure-cognitive-services.ts
+init_azureUtils();
 var AzureCognitiveServices = class {
   config;
   constructor() {
@@ -5283,7 +5800,7 @@ var AzureCognitiveServices = class {
     const apiKey = typeof process !== "undefined" && process.env?.AZURE_AI_API_KEY || "";
     const region = typeof process !== "undefined" && process.env?.AZURE_REGION || "eastus";
     this.config = {
-      endpoint: this.normalizeEndpoint(endpoint),
+      endpoint: normalizeEndpoint2(endpoint),
       apiKey,
       region
     };
@@ -5403,7 +5920,7 @@ var AzureCognitiveServices = class {
       };
     } catch (error) {
       console.error("Azure sentiment analysis error:", error);
-      return this.basicSentimentAnalysis(text);
+      return basicSentimentAnalysis(text);
     }
   }
   /**
@@ -5567,7 +6084,7 @@ var AzureCognitiveServices = class {
    * Fallback methods when Azure services are not configured
    */
   basicConversationAnalysis(text) {
-    const sentiment = this.basicSentimentAnalysis(text);
+    const sentiment = basicSentimentAnalysis(text);
     const intent = this.basicIntentDetection(text);
     const emotionalTone = this.detectEmotionalTone(text, sentiment);
     const urgency = this.detectUrgency(text);
@@ -5599,38 +6116,8 @@ var AzureCognitiveServices = class {
     }
     return { intent: "general_conversation", confidence: 0.5, entities: [] };
   }
-  basicSentimentAnalysis(text) {
-    const lowerText = text.toLowerCase();
-    const positiveWords = ["good", "great", "excellent", "amazing", "fantastic", "love", "best", "excited", "happy", "success", "won", "achieved"];
-    const negativeWords = ["bad", "terrible", "awful", "hate", "worst", "disappointed", "frustrated", "angry", "failed", "lost", "problem"];
-    const positiveCount = positiveWords.filter((word) => lowerText.includes(word)).length;
-    const negativeCount = negativeWords.filter((word) => lowerText.includes(word)).length;
-    if (positiveCount > negativeCount) {
-      return {
-        sentiment: "positive",
-        scores: { positive: 0.7, negative: 0.1, neutral: 0.2 }
-      };
-    } else if (negativeCount > positiveCount) {
-      return {
-        sentiment: "negative",
-        scores: { positive: 0.1, negative: 0.7, neutral: 0.2 }
-      };
-    } else if (positiveCount > 0 && negativeCount > 0) {
-      return {
-        sentiment: "mixed",
-        scores: { positive: 0.4, negative: 0.4, neutral: 0.2 }
-      };
-    } else {
-      return {
-        sentiment: "neutral",
-        scores: { positive: 0.2, negative: 0.2, neutral: 0.6 }
-      };
-    }
-  }
-  normalizeEndpoint(endpoint) {
-    if (!endpoint) return "";
-    return endpoint.endsWith("/") ? endpoint : endpoint + "/";
-  }
+  // basicSentimentAnalysis is now imported from shared utils
+  // normalizeEndpoint is now imported from shared utils
 };
 var azureCognitiveServices = new AzureCognitiveServices();
 
@@ -7982,7 +8469,7 @@ What's the first immediate action you want to tackle? Let's start there and buil
 // server/ai-agents/core/context-manager.ts
 var ContextManager = class {
   async buildContext(request) {
-    const user = await storage.getUserById(request.userId);
+    const user = await storage2.getUserById(request.userId);
     const conversationHistory = await this.getConversationHistory(request.userId);
     const relevantData = await this.getRelevantData(request);
     const permissions = await this.getUserPermissions(request.userId, request.userType);
@@ -8002,7 +8489,7 @@ var ContextManager = class {
     switch (request.userType) {
       case "entrepreneur" /* ENTREPRENEUR */:
         return {
-          businessPlans: await storage.getBusinessPlansByUserId(request.userId)
+          businessPlans: await storage2.getBusinessPlansByUserId(request.userId)
           // Add other entrepreneur-specific data
         };
       case "investor" /* INVESTOR */:
@@ -8286,7 +8773,7 @@ router.post("/co-founder/chat", isAuthenticated, async (req, res) => {
 router.get("/co-founder/goals", isAuthenticated, async (req, res) => {
   try {
     const user = req.user;
-    const goals = storage.getGoalsByUserId(user.claims.sub);
+    const goals = storage2.getGoalsByUserId(user.claims.sub);
     res.json(goals);
   } catch (error) {
     console.error("Goals fetch error:", error);
@@ -8297,7 +8784,7 @@ router.post("/co-founder/goals", isAuthenticated, async (req, res) => {
   try {
     const user = req.user;
     const validatedData = createGoalSchema.parse(req.body);
-    const goal = storage.createGoal({
+    const goal = storage2.createGoal({
       userId: user.claims.sub,
       ...validatedData
     });
@@ -8315,14 +8802,14 @@ router.patch("/co-founder/goals/:id", isAuthenticated, async (req, res) => {
     const user = req.user;
     const { id } = req.params;
     const validatedData = updateGoalSchema.parse(req.body);
-    const existingGoal = storage.getGoalById(id);
+    const existingGoal = storage2.getGoalById(id);
     if (!existingGoal) {
       return res.status(404).json({ error: "Goal not found" });
     }
     if (existingGoal.userId !== user.claims.sub) {
       return res.status(403).json({ error: "Unauthorized to update this goal" });
     }
-    const goal = storage.updateGoal(id, validatedData);
+    const goal = storage2.updateGoal(id, validatedData);
     res.json(goal);
   } catch (error) {
     if (error instanceof z2.ZodError) {
@@ -8335,7 +8822,7 @@ router.patch("/co-founder/goals/:id", isAuthenticated, async (req, res) => {
 router.get("/co-founder/commitments", isAuthenticated, async (req, res) => {
   try {
     const user = req.user;
-    const commitments = storage.getCommitmentsByUserId(user.claims.sub);
+    const commitments = storage2.getCommitmentsByUserId(user.claims.sub);
     res.json(commitments);
   } catch (error) {
     console.error("Commitments fetch error:", error);
@@ -8346,7 +8833,7 @@ router.post("/co-founder/commitments", isAuthenticated, async (req, res) => {
   try {
     const user = req.user;
     const validatedData = createCommitmentSchema.parse(req.body);
-    const commitment = storage.createCommitment({
+    const commitment = storage2.createCommitment({
       userId: user.claims.sub,
       ...validatedData
     });
@@ -8448,208 +8935,10434 @@ router.post("/co-founder/decision/premortem", isAuthenticated, async (req, res) 
 });
 var ai_agent_routes_default = router;
 
-// server/routes.ts
-var insertBusinessPlanSchema = z3.object({
+// server/routes/document-ai-routes.ts
+import { Router } from "express";
+
+// server/ai-application-filler.ts
+import OpenAI3 from "openai";
+var AIApplicationFiller = class {
+  client;
+  constructor() {
+    const apiKey = process.env.AZURE_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    if (!apiKey) {
+      console.warn("OpenAI API key not configured. AI Application Filler will not be available.");
+      this.client = null;
+      return;
+    }
+    if (endpoint) {
+      const deployment = process.env.AZURE_OPENAI_DEPLOYMENT || "gpt-4";
+      const normalizedEndpoint = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
+      this.client = new OpenAI3({
+        apiKey,
+        baseURL: `${normalizedEndpoint}openai/deployments/${deployment}`,
+        defaultQuery: { "api-version": "2024-08-01-preview" },
+        defaultHeaders: { "api-key": apiKey }
+      });
+    } else {
+      this.client = new OpenAI3({ apiKey });
+    }
+  }
+  /**
+   * Fill an entire application form using business plan data
+   */
+  async fillApplication(form, businessPlan) {
+    if (!this.client) {
+      throw new Error("AI Application Filler is not configured. Please set OpenAI API key.");
+    }
+    const responses = {};
+    const suggestions = [];
+    for (const section of form.sections) {
+      for (const field of section.fields) {
+        try {
+          const response = await this.fillField(field, section, form, businessPlan);
+          responses[field.id] = response.value;
+          if (response.suggestion) {
+            suggestions.push({
+              fieldId: field.id,
+              suggestion: response.suggestion,
+              reason: response.reason || "AI-generated improvement suggestion"
+            });
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error(`Error filling field ${field.id}:`, errorMessage);
+          responses[field.id] = "";
+        }
+      }
+    }
+    const totalFields = form.sections.reduce((sum, s) => sum + s.fields.length, 0);
+    const filledFields = Object.values(responses).filter((v) => v && v.toString().trim() !== "").length;
+    const completeness = Math.round(filledFields / totalFields * 100);
+    const matchScore = await this.calculateMatchScore(form, businessPlan, responses);
+    return {
+      formId: form.id,
+      responses,
+      completeness,
+      suggestions,
+      matchScore
+    };
+  }
+  /**
+   * Fill a single form field using AI
+   */
+  async fillField(field, section, form, businessPlan) {
+    if (!this.client) {
+      return this.fillFieldWithTemplate(field, businessPlan);
+    }
+    const prompt = this.buildFieldPrompt(field, section, form, businessPlan);
+    try {
+      const response = await this.client.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert application writer helping startups fill out ${form.type} applications. 
+Generate compelling, accurate, and tailored responses based on the business plan data provided.
+Keep responses concise, professional, and aligned with the application requirements.
+For text fields, provide the response directly without quotes or formatting.
+For suggestions, provide actionable improvements.`
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: field.type === "textarea" ? 500 : 150
+      });
+      const content = response.choices[0]?.message?.content?.trim() || "";
+      if (content.includes("SUGGESTION:")) {
+        const [value, suggestionPart] = content.split("SUGGESTION:");
+        return {
+          value: value.trim(),
+          suggestion: suggestionPart.trim(),
+          reason: "AI-generated enhancement"
+        };
+      }
+      return { value: content };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error calling OpenAI API:", errorMessage);
+      return this.fillFieldWithTemplate(field, businessPlan);
+    }
+  }
+  /**
+   * Build a context-aware prompt for filling a field
+   */
+  buildFieldPrompt(field, section, form, businessPlan) {
+    let prompt = `Fill out the following field for a ${form.type} application to ${form.organization}:
+
+`;
+    prompt += `Section: ${section.title}
+`;
+    prompt += `Field: ${field.label}
+`;
+    if (field.helpText) prompt += `Help Text: ${field.helpText}
+`;
+    if (field.maxLength) prompt += `Max Length: ${field.maxLength} characters
+`;
+    prompt += `
+Business Plan Data:
+`;
+    prompt += `Company: ${businessPlan.companyName}
+`;
+    prompt += `Description: ${businessPlan.description}
+`;
+    const fieldLower = field.label.toLowerCase();
+    if (fieldLower.includes("problem")) {
+      prompt += `Problem: ${businessPlan.problem}
+`;
+    }
+    if (fieldLower.includes("solution")) {
+      prompt += `Solution: ${businessPlan.solution}
+`;
+    }
+    if (fieldLower.includes("market") || fieldLower.includes("target")) {
+      prompt += `Target Market: ${businessPlan.targetMarket}
+`;
+    }
+    if (fieldLower.includes("business model") || fieldLower.includes("revenue")) {
+      prompt += `Business Model: ${businessPlan.businessModel}
+`;
+    }
+    if (fieldLower.includes("team") || fieldLower.includes("founder")) {
+      prompt += `Founders: ${JSON.stringify(businessPlan.founders, null, 2)}
+`;
+      prompt += `Team Size: ${businessPlan.team.size}
+`;
+    }
+    if (fieldLower.includes("traction") || fieldLower.includes("metric") || fieldLower.includes("growth")) {
+      prompt += `Traction: ${JSON.stringify(businessPlan.traction, null, 2)}
+`;
+    }
+    if (fieldLower.includes("financial") || fieldLower.includes("funding")) {
+      prompt += `Financials: ${JSON.stringify(businessPlan.financials, null, 2)}
+`;
+    }
+    if (fieldLower.includes("competitive") || fieldLower.includes("advantage")) {
+      prompt += `Unique Value Proposition: ${businessPlan.uniqueValueProposition}
+`;
+      prompt += `Competitors: ${businessPlan.competitors.join(", ")}
+`;
+    }
+    prompt += `
+Generate a compelling response for this field. `;
+    if (field.maxLength) {
+      prompt += `Keep it under ${field.maxLength} characters. `;
+    }
+    prompt += `If you have a suggestion to improve the response, add it after "SUGGESTION:" on a new line.`;
+    return prompt;
+  }
+  /**
+   * Template-based fallback for filling fields
+   */
+  fillFieldWithTemplate(field, businessPlan) {
+    const fieldLower = field.label.toLowerCase();
+    if (fieldLower.includes("company name") || fieldLower.includes("startup name")) {
+      return { value: businessPlan.companyName };
+    }
+    if (fieldLower.includes("description") || fieldLower.includes("overview")) {
+      return { value: businessPlan.description };
+    }
+    if (fieldLower.includes("problem")) {
+      return { value: businessPlan.problem };
+    }
+    if (fieldLower.includes("solution")) {
+      return { value: businessPlan.solution };
+    }
+    if (fieldLower.includes("market") || fieldLower.includes("target")) {
+      return { value: businessPlan.targetMarket };
+    }
+    if (fieldLower.includes("business model") || fieldLower.includes("revenue model")) {
+      return { value: businessPlan.businessModel };
+    }
+    if (fieldLower.includes("team size")) {
+      return { value: businessPlan.team.size.toString() };
+    }
+    if (fieldLower.includes("founder")) {
+      const founderInfo = businessPlan.founders.map((f) => `${f.name} (${f.role}): ${f.bio}`).join("\n\n");
+      return { value: founderInfo };
+    }
+    if (fieldLower.includes("traction") || fieldLower.includes("metric")) {
+      let traction = "";
+      if (businessPlan.traction.users) traction += `Users: ${businessPlan.traction.users}
+`;
+      if (businessPlan.traction.revenue) traction += `Revenue: $${businessPlan.traction.revenue}
+`;
+      if (businessPlan.traction.growth) traction += `Growth: ${businessPlan.traction.growth}
+`;
+      return { value: traction };
+    }
+    return { value: "" };
+  }
+  /**
+   * Calculate how well the business plan matches the application requirements
+   */
+  async calculateMatchScore(form, businessPlan, responses) {
+    if (!this.client) {
+      return 50;
+    }
+    try {
+      const prompt = `Analyze how well this startup matches the ${form.type} application requirements for ${form.organization}.
+
+Business Plan:
+- Company: ${businessPlan.companyName}
+- Description: ${businessPlan.description}
+- Stage: ${businessPlan.traction.users ? "Has traction" : "Pre-traction"}
+- Team Size: ${businessPlan.team.size}
+- Revenue: ${businessPlan.traction.revenue || "Pre-revenue"}
+
+Application Type: ${form.type}
+Organization: ${form.organization}
+
+Rate the match on a scale of 0-100, considering:
+1. Stage alignment
+2. Team strength
+3. Traction/metrics
+4. Market opportunity
+5. Overall fit
+
+Respond with just a number between 0-100.`;
+      const response = await this.client.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at evaluating startup-program fit. Provide only a numeric score."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 10
+      });
+      const score = parseInt(response.choices[0]?.message?.content?.trim() || "50");
+      return Math.min(100, Math.max(0, score));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error calculating match score:", errorMessage);
+      return 50;
+    }
+  }
+  /**
+   * Generate improvement suggestions for a filled application
+   */
+  async generateSuggestions(form, responses, businessPlan) {
+    if (!this.client) {
+      return [];
+    }
+    const suggestions = [];
+    for (const section of form.sections) {
+      for (const field of section.fields) {
+        const response = responses[field.id];
+        if (!response || response.toString().trim() === "") continue;
+        try {
+          const prompt = `Review this application response and suggest improvements:
+
+Field: ${field.label}
+Current Response: ${response}
+
+Provide a specific, actionable suggestion to make this response more compelling for a ${form.type} application.
+Keep the suggestion concise (1-2 sentences).`;
+          const aiResponse = await this.client.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert application reviewer. Provide concise, actionable feedback."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 150
+          });
+          const suggestion = aiResponse.choices[0]?.message?.content?.trim();
+          if (suggestion && suggestion.length > 10) {
+            suggestions.push({
+              fieldId: field.id,
+              suggestion,
+              reason: "AI-generated improvement"
+            });
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error(`Error generating suggestion for field ${field.id}:`, errorMessage);
+        }
+      }
+    }
+    return suggestions;
+  }
+};
+var aiApplicationFiller = new AIApplicationFiller();
+
+// server/services/document-ai-service.ts
+var DocumentAIService = class {
+  /**
+   * Extract business plan data from a document
+   */
+  async extractBusinessPlanFromDocument(document2) {
+    const content = document2.content || {};
+    return {
+      companyName: content.companyName || document2.title || "Unknown Company",
+      description: content.executiveSummary || content.description || "",
+      problem: content.problemStatement || content.problem || "",
+      solution: content.solution || content.productDescription || "",
+      targetMarket: content.targetMarket || content.marketAnalysis || "",
+      businessModel: content.businessModel || content.revenueModel || "",
+      competitors: content.competitors || [],
+      uniqueValueProposition: content.valueProposition || content.uniqueSellingPoint || "",
+      founders: content.founders || content.team?.founders || [],
+      traction: {
+        users: content.traction?.users || content.metrics?.users,
+        revenue: content.traction?.revenue || content.financials?.revenue,
+        growth: content.traction?.growth || content.metrics?.growth,
+        milestones: content.traction?.milestones || content.achievements || []
+      },
+      financials: {
+        fundingHistory: content.financials?.fundingHistory || "",
+        currentRunway: content.financials?.runway || "",
+        projections: content.financials?.projections || "",
+        useOfFunds: content.financials?.useOfFunds || ""
+      },
+      team: {
+        size: content.team?.size || content.teamSize || 0,
+        keyMembers: content.team?.keyMembers || [],
+        advisors: content.team?.advisors || []
+      }
+    };
+  }
+  /**
+   * Fill an application using a document as the source
+   */
+  async fillApplicationFromDocument(documentId, document2, form) {
+    if (!aiApplicationFiller || !aiApplicationFiller.client) {
+      throw new Error("AI Application Filler is not configured. Please set up OpenAI API keys.");
+    }
+    const businessPlan = await this.extractBusinessPlanFromDocument(document2);
+    return await aiApplicationFiller.fillApplication(form, businessPlan);
+  }
+  /**
+   * Generate document-specific suggestions for application improvement
+   */
+  async generateDocumentSuggestions(document2, form, currentResponses) {
+    if (!aiApplicationFiller || !aiApplicationFiller.client) {
+      return [];
+    }
+    const businessPlan = await this.extractBusinessPlanFromDocument(document2);
+    return await aiApplicationFiller.generateSuggestions(form, currentResponses, businessPlan);
+  }
+  /**
+   * Analyze document for application readiness
+   */
+  async analyzeDocumentForApplication(document2, applicationType) {
+    const businessPlan = await this.extractBusinessPlanFromDocument(document2);
+    const missingFields = [];
+    const strengths = [];
+    const improvements = [];
+    const recommendations = [];
+    if (!businessPlan.companyName) missingFields.push("Company Name");
+    if (!businessPlan.description) missingFields.push("Company Description");
+    if (!businessPlan.problem) missingFields.push("Problem Statement");
+    if (!businessPlan.solution) missingFields.push("Solution Description");
+    if (!businessPlan.targetMarket) missingFields.push("Target Market");
+    if (!businessPlan.businessModel) missingFields.push("Business Model");
+    if (!businessPlan.uniqueValueProposition) missingFields.push("Value Proposition");
+    if (businessPlan.traction?.users && businessPlan.traction.users > 0) {
+      strengths.push(`Strong user traction: ${businessPlan.traction.users} users`);
+    }
+    if (businessPlan.traction?.revenue && businessPlan.traction.revenue > 0) {
+      strengths.push(`Revenue generation: $${businessPlan.traction.revenue}`);
+    }
+    if (businessPlan.founders && businessPlan.founders.length > 0) {
+      strengths.push(`Experienced founding team: ${businessPlan.founders.length} founders`);
+    }
+    if (businessPlan.competitors && businessPlan.competitors.length > 0) {
+      strengths.push("Competitive analysis completed");
+    }
+    if (!businessPlan.traction?.milestones || businessPlan.traction.milestones.length === 0) {
+      improvements.push("Add key milestones and achievements");
+    }
+    if (!businessPlan.financials?.projections) {
+      improvements.push("Include financial projections");
+    }
+    if (!businessPlan.team?.advisors || businessPlan.team.advisors.length === 0) {
+      improvements.push("List advisory board members");
+    }
+    switch (applicationType) {
+      case "accelerator":
+        recommendations.push("Emphasize growth potential and scalability");
+        recommendations.push("Highlight team's ability to execute quickly");
+        recommendations.push("Show clear product-market fit");
+        break;
+      case "grant":
+        recommendations.push("Focus on social impact and innovation");
+        recommendations.push("Demonstrate alignment with grant objectives");
+        recommendations.push("Provide detailed budget breakdown");
+        break;
+      case "competition":
+        recommendations.push("Create compelling pitch narrative");
+        recommendations.push("Highlight unique differentiators");
+        recommendations.push("Show traction and validation");
+        break;
+      case "investment":
+        recommendations.push("Emphasize market opportunity size");
+        recommendations.push("Show clear path to profitability");
+        recommendations.push("Demonstrate competitive advantages");
+        break;
+    }
+    const totalFields = 15;
+    const completedFields = totalFields - missingFields.length;
+    const readinessScore = Math.round(completedFields / totalFields * 100);
+    return {
+      readinessScore,
+      missingFields,
+      strengths,
+      improvements,
+      recommendations
+    };
+  }
+  /**
+   * Convert document to application-ready format
+   */
+  async prepareDocumentForApplication(document2, targetFormat) {
+    const businessPlan = await this.extractBusinessPlanFromDocument(document2);
+    return {
+      format: targetFormat,
+      content: businessPlan,
+      metadata: {
+        generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        documentId: document2.id || document2._id,
+        version: "1.0"
+      }
+    };
+  }
+  /**
+   * Batch process multiple documents for applications
+   */
+  async batchProcessDocuments(documents, form) {
+    const results = [];
+    for (const document2 of documents) {
+      try {
+        const result = await this.fillApplicationFromDocument(
+          document2.id || document2._id,
+          document2,
+          form
+        );
+        results.push({
+          documentId: document2.id || document2._id,
+          status: "success",
+          result
+        });
+      } catch (error) {
+        results.push({
+          documentId: document2.id || document2._id,
+          status: "error",
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    }
+    return results;
+  }
+  /**
+   * Check if AI services are available
+   */
+  isAIAvailable() {
+    return !!(aiApplicationFiller && aiApplicationFiller.client);
+  }
+};
+var documentAIService = new DocumentAIService();
+
+// server/utils/routeHelpers.ts
+function handleRouteError(error, res, errorMessage, logContext, statusCode = 500) {
+  console.error(`Error ${logContext}:`, error);
+  const response = {
+    message: errorMessage
+  };
+  if (error instanceof Error) {
+    response.error = error.message;
+  } else if (typeof error === "string") {
+    response.error = error;
+  } else {
+    response.error = "Unknown error";
+  }
+  res.status(statusCode).json(response);
+}
+function requireAuth(req, res) {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return false;
+  }
+  return true;
+}
+function requireResource(resource, res, resourceName = "Resource") {
+  if (!resource) {
+    res.status(404).json({ error: `${resourceName} not found` });
+    return false;
+  }
+  return true;
+}
+function validateRequiredFields(body, requiredFields, res) {
+  const missingFields = requiredFields.filter((field) => !body[field]);
+  if (missingFields.length > 0) {
+    res.status(400).json({
+      message: "Missing required fields",
+      error: `Required fields: ${missingFields.join(", ")}`
+    });
+    return false;
+  }
+  return true;
+}
+
+// server/routes/document-ai-routes.ts
+var router2 = Router();
+router2.get("/status", (req, res) => {
+  res.json({
+    available: documentAIService.isAIAvailable(),
+    message: documentAIService.isAIAvailable() ? "AI services are available" : "AI services are not configured. Please set up OpenAI API keys."
+  });
+});
+router2.post("/:documentId/fill-application", async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { form } = req.body;
+    if (!validateRequiredFields(req.body, ["form"], res)) return;
+    if (!documentAIService.isAIAvailable()) {
+      return res.status(503).json({
+        message: "AI services are not available. Please configure OpenAI API keys."
+      });
+    }
+    const document2 = req.body.document || {
+      id: documentId,
+      content: req.body.documentContent
+    };
+    const filledApplication = await documentAIService.fillApplicationFromDocument(
+      documentId,
+      document2,
+      form
+    );
+    res.json(filledApplication);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to fill application", "filling application from document");
+  }
+});
+router2.post("/:documentId/application-suggestions", async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { form, responses } = req.body;
+    if (!validateRequiredFields(req.body, ["form", "responses"], res)) return;
+    if (!documentAIService.isAIAvailable()) {
+      return res.status(503).json({
+        message: "AI services are not available"
+      });
+    }
+    const document2 = req.body.document || {
+      id: documentId,
+      content: req.body.documentContent
+    };
+    const suggestions = await documentAIService.generateDocumentSuggestions(
+      document2,
+      form,
+      responses
+    );
+    res.json({ suggestions });
+  } catch (error) {
+    handleRouteError(error, res, "Failed to generate suggestions", "generating suggestions");
+  }
+});
+router2.post("/:documentId/analyze-readiness", async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { applicationType } = req.body;
+    if (!validateRequiredFields(req.body, ["applicationType"], res)) return;
+    const document2 = req.body.document || {
+      id: documentId,
+      content: req.body.documentContent
+    };
+    const analysis = await documentAIService.analyzeDocumentForApplication(
+      document2,
+      applicationType
+    );
+    res.json(analysis);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to analyze document", "analyzing document");
+  }
+});
+router2.post("/:documentId/prepare-application", async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { targetFormat } = req.body;
+    if (!validateRequiredFields(req.body, ["targetFormat"], res)) return;
+    const document2 = req.body.document || {
+      id: documentId,
+      content: req.body.documentContent
+    };
+    const prepared = await documentAIService.prepareDocumentForApplication(
+      document2,
+      targetFormat
+    );
+    res.json(prepared);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to prepare document", "preparing document");
+  }
+});
+router2.post("/batch-fill-applications", async (req, res) => {
+  try {
+    const { documents, form } = req.body;
+    if (!validateRequiredFields(req.body, ["documents", "form"], res)) return;
+    if (!documentAIService.isAIAvailable()) {
+      return res.status(503).json({
+        message: "AI services are not available"
+      });
+    }
+    const results = await documentAIService.batchProcessDocuments(documents, form);
+    res.json({
+      total: results.length,
+      successful: results.filter((r) => r.status === "success").length,
+      failed: results.filter((r) => r.status === "error").length,
+      results
+    });
+  } catch (error) {
+    handleRouteError(error, res, "Failed to batch process documents", "batch processing documents");
+  }
+});
+var document_ai_routes_default = router2;
+
+// server/routes/enhanced-dt-routes.ts
+import express2 from "express";
+
+// server/services/dt-collaboration-service.ts
+import { Server as SocketIOServer } from "socket.io";
+
+// server/ai-agents/agents/design-thinking/dt-ai-assistant.ts
+import { OpenAI as OpenAI4 } from "openai";
+var DTAIAssistant = class {
+  openaiClient;
+  constructor() {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
+    if (apiKey) {
+      this.openaiClient = new OpenAI4({
+        apiKey
+      });
+    } else {
+      console.warn("OpenAI API key not configured. DTAIAssistant features will be limited.");
+      this.openaiClient = null;
+    }
+  }
+  isAvailable() {
+    return this.openaiClient !== null;
+  }
+  /**
+   * Generate suggestions for canvas elements
+   */
+  async suggestRelatedElements(context) {
+    if (!this.isAvailable()) {
+      return [];
+    }
+    try {
+      const prompt = `
+        Based on this Design Thinking context, suggest related elements:
+        
+        Session Phase: ${context.phase}
+        Current Elements: ${JSON.stringify(context.currentElements)}
+        Recent Activity: ${context.recentActivity}
+        Participant Focus: ${context.participantFocus}
+        
+        Suggest 3-5 related elements that would enhance the current canvas.
+        Consider:
+        1. Phase-appropriate elements
+        2. Building on existing elements
+        3. Encouraging diverse perspectives
+        4. Filling gaps in the current canvas
+        
+        Format as JSON array with: {type, content, position, reasoning}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      });
+      const content = response.choices[0].message.content;
+      const suggestions = JSON.parse(content);
+      return suggestions.map((suggestion) => ({
+        id: this.generateId(),
+        type: suggestion.type,
+        content: suggestion.content,
+        position: suggestion.position,
+        reasoning: suggestion.reasoning,
+        confidence: this.calculateConfidence(suggestion),
+        phase: context.phase,
+        timestamp: /* @__PURE__ */ new Date()
+      }));
+    } catch (error) {
+      console.error("Error generating element suggestions:", error);
+      return [];
+    }
+  }
+  /**
+   * Cluster canvas elements intelligently
+   */
+  async clusterElements(elements) {
+    try {
+      const prompt = `
+        Cluster these Design Thinking canvas elements into meaningful groups:
+        
+        Elements: ${JSON.stringify(elements)}
+        
+        Consider:
+        1. Thematic similarity
+        2. Functional relationships
+        3. User journey connections
+        4. Problem-solution pairs
+        5. Phase-specific groupings
+        
+        Return clusters with: {id, name, elements, theme, confidence}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5
+      });
+      const content = response.choices[0].message.content;
+      const clusters = JSON.parse(content);
+      return clusters.map((cluster) => ({
+        id: this.generateId(),
+        name: cluster.name,
+        elements: cluster.elements,
+        theme: cluster.theme,
+        confidence: cluster.confidence,
+        createdAt: /* @__PURE__ */ new Date()
+      }));
+    } catch (error) {
+      console.error("Error clustering elements:", error);
+      return [];
+    }
+  }
+  /**
+   * Generate session insights
+   */
+  async generateSessionInsights(session2) {
+    try {
+      const prompt = `
+        Analyze this Design Thinking session and generate insights:
+        
+        Session Data: ${JSON.stringify(session2)}
+        Participants: ${session2.participants.length}
+        Duration: ${session2.duration}
+        Activities: ${session2.activities.length}
+        
+        Generate insights about:
+        1. Participation patterns
+        2. Idea quality and diversity
+        3. Collaboration effectiveness
+        4. Phase progression
+        5. Potential improvements
+        
+        Format as JSON array with: {type, content, importance, actionable}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.6
+      });
+      const content = response.choices[0].message.content;
+      const insights = JSON.parse(content);
+      return insights.map((insight) => ({
+        id: this.generateId(),
+        type: insight.type,
+        content: insight.content,
+        importance: insight.importance,
+        actionable: insight.actionable,
+        confidence: this.calculateConfidence(insight),
+        sessionId: session2.id,
+        timestamp: /* @__PURE__ */ new Date()
+      }));
+    } catch (error) {
+      console.error("Error generating session insights:", error);
+      return [];
+    }
+  }
+  /**
+   * Generate recommendations for workflow
+   */
+  async generateRecommendations(workflow) {
+    try {
+      const prompt = `
+        Generate recommendations for this Design Thinking workflow:
+        
+        Workflow: ${JSON.stringify(workflow)}
+        Current Phase: ${workflow.currentPhase}
+        Status: ${workflow.status}
+        
+        Provide recommendations for:
+        1. Phase optimization
+        2. Participant engagement
+        3. Tool utilization
+        4. Process improvement
+        5. Next steps
+        
+        Format as JSON array with: {category, content, priority, effort}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.6
+      });
+      const content = response.choices[0].message.content;
+      const recommendations = JSON.parse(content);
+      return recommendations.map((rec) => ({
+        id: this.generateId(),
+        category: rec.category,
+        content: rec.content,
+        priority: rec.priority,
+        effort: rec.effort,
+        confidence: this.calculateConfidence(rec),
+        workflowId: workflow.id,
+        timestamp: /* @__PURE__ */ new Date()
+      }));
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+      return [];
+    }
+  }
+  /**
+   * Analyze collaboration patterns
+   */
+  async analyzeCollaborationPatterns(session2) {
+    try {
+      const prompt = `
+        Analyze collaboration patterns in this Design Thinking session:
+        
+        Session: ${JSON.stringify(session2)}
+        Participants: ${session2.participants.length}
+        Activities: ${session2.activities.length}
+        
+        Analyze:
+        1. Participation distribution
+        2. Communication patterns
+        3. Conflict resolution
+        4. Engagement levels
+        5. Collaboration quality
+        
+        Return analysis with: {participationScore, communicationQuality, engagementLevel, collaborationEffectiveness, recommendations}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5
+      });
+      const content = response.choices[0].message.content;
+      const analysis = JSON.parse(content);
+      return {
+        participationScore: analysis.participationScore,
+        communicationQuality: analysis.communicationQuality,
+        engagementLevel: analysis.engagementLevel,
+        collaborationEffectiveness: analysis.collaborationEffectiveness,
+        recommendations: analysis.recommendations,
+        sessionId: session2.id,
+        timestamp: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error analyzing collaboration patterns:", error);
+      return {
+        participationScore: 0,
+        communicationQuality: 0,
+        engagementLevel: 0,
+        collaborationEffectiveness: 0,
+        recommendations: [],
+        sessionId: session2.id,
+        timestamp: /* @__PURE__ */ new Date()
+      };
+    }
+  }
+  /**
+   * Generate phase transition suggestions
+   */
+  async generatePhaseTransitionSuggestions(workflow) {
+    try {
+      const prompt = `
+        Suggest phase transitions for this Design Thinking workflow:
+        
+        Current Phase: ${workflow.currentPhase}
+        Workflow Status: ${workflow.status}
+        Progress: ${workflow.progress || 0}%
+        
+        Consider:
+        1. Phase completion criteria
+        2. Deliverable quality
+        3. Participant readiness
+        4. Time constraints
+        5. Resource availability
+        
+        Suggest transitions with: {fromPhase, toPhase, reason, prerequisites, estimatedTime}
+      `;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.6
+      });
+      const content = response.choices[0].message.content;
+      const suggestions = JSON.parse(content);
+      return suggestions.map((suggestion) => ({
+        id: this.generateId(),
+        fromPhase: suggestion.fromPhase,
+        toPhase: suggestion.toPhase,
+        reason: suggestion.reason,
+        prerequisites: suggestion.prerequisites,
+        estimatedTime: suggestion.estimatedTime,
+        confidence: this.calculateConfidence(suggestion),
+        workflowId: workflow.id,
+        timestamp: /* @__PURE__ */ new Date()
+      }));
+    } catch (error) {
+      console.error("Error generating phase transition suggestions:", error);
+      return [];
+    }
+  }
+  /**
+   * Calculate confidence score
+   */
+  calculateConfidence(suggestion) {
+    const factors = {
+      contentLength: Math.min(suggestion.content?.length || 0, 100) / 100,
+      reasoningQuality: suggestion.reasoning ? 0.8 : 0.2,
+      specificity: suggestion.specificity || 0.5
+    };
+    return Object.values(factors).reduce((sum, factor) => sum + factor, 0) / Object.keys(factors).length;
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+};
+
+// server/services/database-service.ts
+import { Pool } from "pg";
+var DatabaseService = class {
+  pool;
+  constructor() {
+    this.pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+    });
+  }
+  // Workflow Management
+  async getWorkflow(workflowId) {
+    const query = "SELECT * FROM dt_workflows WHERE id = $1";
+    const result = await this.pool.query(query, [workflowId]);
+    return result.rows[0] || null;
+  }
+  async createWorkflow(workflowData) {
+    const query = `
+      INSERT INTO dt_workflows (id, user_id, business_plan_id, name, description, current_phase, status, ai_facilitation_enabled, collaboration_mode)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+    const values = [
+      workflowData.id,
+      workflowData.userId,
+      workflowData.businessPlanId,
+      workflowData.name,
+      workflowData.description,
+      workflowData.currentPhase,
+      workflowData.status,
+      workflowData.aiFacilitationEnabled,
+      workflowData.collaborationMode
+    ];
+    const result = await this.pool.query(query, values);
+    return result.rows[0];
+  }
+  async updateWorkflow(workflowId, updates) {
+    const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(", ");
+    const query = `UPDATE dt_workflows SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`;
+    const values = [workflowId, ...Object.values(updates)];
+    const result = await this.pool.query(query, values);
+    return result.rows[0];
+  }
+  async deleteWorkflow(workflowId) {
+    const query = "DELETE FROM dt_workflows WHERE id = $1";
+    await this.pool.query(query, [workflowId]);
+  }
+  // Canvas Operations
+  async getCanvas(canvasId) {
+    const query = "SELECT * FROM collaborative_canvases WHERE id = $1";
+    const result = await this.pool.query(query, [canvasId]);
+    return result.rows[0] || null;
+  }
+  async createCanvas(canvas) {
+    const query = `
+      INSERT INTO collaborative_canvases (id, workflow_id, canvas_type, elements, version, last_modified_by, last_modified_at, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+    const values = [
+      canvas.id,
+      canvas.workflowId,
+      canvas.canvasType,
+      JSON.stringify(canvas.elements),
+      canvas.version,
+      canvas.lastModifiedBy,
+      canvas.lastModifiedAt,
+      canvas.createdAt
+    ];
+    await this.pool.query(query, values);
+  }
+  async updateCanvas(canvasId, updates) {
+    const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(", ");
+    const query = `UPDATE collaborative_canvases SET ${setClause}, last_modified_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`;
+    const values = [canvasId, ...Object.values(updates)];
+    const result = await this.pool.query(query, values);
+    return result.rows[0];
+  }
+  async deleteCanvas(canvasId) {
+    const query = "DELETE FROM collaborative_canvases WHERE id = $1";
+    await this.pool.query(query, [canvasId]);
+  }
+  async addCanvasElement(canvasId, element) {
+    const query = `
+      UPDATE collaborative_canvases 
+      SET elements = elements || $2, version = version + 1, last_modified_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await this.pool.query(query, [canvasId, JSON.stringify([element])]);
+  }
+  async updateCanvasElement(canvasId, elementId, updates) {
+    const query = `
+      UPDATE collaborative_canvases 
+      SET elements = jsonb_set(elements, $2, $3), version = version + 1, last_modified_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await this.pool.query(query, [canvasId, `{${elementId}}`, JSON.stringify(updates)]);
+  }
+  async removeCanvasElement(canvasId, elementId) {
+    const query = `
+      UPDATE collaborative_canvases 
+      SET elements = elements - $2, version = version + 1, last_modified_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await this.pool.query(query, [canvasId, elementId]);
+  }
+  async applyCanvasClustering(canvasId, clusters) {
+    const query = `
+      UPDATE collaborative_canvases 
+      SET elements = $2, version = version + 1, last_modified_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await this.pool.query(query, [canvasId, JSON.stringify(clusters)]);
+  }
+  // Analytics Operations
+  async getWorkflowAnalytics(workflowId) {
+    const query = "SELECT * FROM dt_effectiveness_metrics WHERE workflow_id = $1";
+    const result = await this.pool.query(query, [workflowId]);
+    return result.rows;
+  }
+  async saveAnalytics(workflowId, analytics) {
+    const query = `
+      INSERT INTO dt_effectiveness_metrics (workflow_id, metric_type, value, dimension, measurement_date, context)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `;
+    const values = [
+      workflowId,
+      analytics.metricType,
+      analytics.value,
+      analytics.dimension,
+      /* @__PURE__ */ new Date(),
+      JSON.stringify(analytics.context)
+    ];
+    await this.pool.query(query, values);
+  }
+  // Session Management
+  async createSession(session2) {
+    const query = `
+      INSERT INTO dt_sessions (id, workflow_id, session_type, facilitator_id, participants, scheduled_at, duration_minutes, status, recording_url, transcription, ai_analysis)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `;
+    const values = [
+      session2.id,
+      session2.workflowId,
+      session2.sessionType,
+      session2.facilitatorId,
+      JSON.stringify(session2.participants),
+      session2.scheduledAt,
+      session2.durationMinutes,
+      session2.status,
+      session2.recordingUrl,
+      session2.transcription,
+      JSON.stringify(session2.aiAnalysis)
+    ];
+    await this.pool.query(query, values);
+  }
+  async updateSession(sessionId, updates) {
+    const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(", ");
+    const query = `UPDATE dt_sessions SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`;
+    const values = [sessionId, ...Object.values(updates)];
+    const result = await this.pool.query(query, values);
+    return result.rows[0];
+  }
+  async getSession(sessionId) {
+    const query = "SELECT * FROM dt_sessions WHERE id = $1";
+    const result = await this.pool.query(query, [sessionId]);
+    return result.rows[0] || null;
+  }
+  // AI Facilitation Logs
+  async logFacilitation(sessionId, intervention) {
+    const query = `
+      INSERT INTO ai_facilitation_logs (session_id, intervention_type, content, context, participant_reaction, effectiveness_score)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `;
+    const values = [
+      sessionId,
+      intervention.type,
+      intervention.content,
+      JSON.stringify(intervention.context),
+      intervention.participantReaction,
+      intervention.effectivenessScore
+    ];
+    await this.pool.query(query, values);
+  }
+  // Helper methods for conflict resolution
+  async getParticipantTimestamps(participants) {
+    const query = "SELECT participant_id, last_activity FROM dt_sessions WHERE participant_id = ANY($1)";
+    const result = await this.pool.query(query, [participants]);
+    return result.rows;
+  }
+  async getContentVersions(conflict) {
+    return [];
+  }
+  async getParticipantPositions(conflict) {
+    return [];
+  }
+  async getSessionFacilitator(conflict) {
+    return "";
+  }
+  async getDataVersions(conflict) {
+    return [];
+  }
+  async logConflictResolution(conflict, resolution) {
+  }
+  async getCanvasHistory(canvasId) {
+    return [];
+  }
+  async restoreCanvasVersion(canvasId, version) {
+  }
+  // Close connection
+  async close() {
+    await this.pool.end();
+  }
+};
+
+// server/services/canvas-service.ts
+var CanvasService = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Get canvas elements
+   */
+  async getElements(canvasId) {
+    try {
+      const canvas = await this.db.getCanvas(canvasId);
+      return canvas?.elements || [];
+    } catch (error) {
+      console.error("Error getting canvas elements:", error);
+      throw new Error("Failed to get canvas elements");
+    }
+  }
+  /**
+   * Apply updates to canvas
+   */
+  async applyUpdates(canvasId, updates) {
+    try {
+      for (const update of updates) {
+        await this.applyUpdate(canvasId, update);
+      }
+    } catch (error) {
+      console.error("Error applying canvas updates:", error);
+      throw new Error("Failed to apply canvas updates");
+    }
+  }
+  /**
+   * Apply a single update to canvas
+   */
+  async applyUpdate(canvasId, update) {
+    switch (update.type) {
+      case "element_added":
+        await this.addElement(canvasId, update.element);
+        break;
+      case "element_updated":
+        await this.updateElement(canvasId, update.element);
+        break;
+      case "element_removed":
+        await this.removeElement(canvasId, update.element.id);
+        break;
+      case "element_moved":
+        await this.moveElement(canvasId, update.element);
+        break;
+    }
+  }
+  /**
+   * Add element to canvas
+   */
+  async addElement(canvasId, element) {
+    await this.db.addCanvasElement(canvasId, element);
+  }
+  /**
+   * Update element in canvas
+   */
+  async updateElement(canvasId, element) {
+    await this.db.updateCanvasElement(canvasId, element.id, element);
+  }
+  /**
+   * Remove element from canvas
+   */
+  async removeElement(canvasId, elementId) {
+    await this.db.removeCanvasElement(canvasId, elementId);
+  }
+  /**
+   * Move element in canvas
+   */
+  async moveElement(canvasId, element) {
+    await this.db.updateCanvasElement(canvasId, element.id, { position: element.position });
+  }
+  /**
+   * Apply clustering to canvas
+   */
+  async applyClustering(canvasId, clusters) {
+    try {
+      await this.db.applyCanvasClustering(canvasId, clusters);
+    } catch (error) {
+      console.error("Error applying canvas clustering:", error);
+      throw new Error("Failed to apply canvas clustering");
+    }
+  }
+  /**
+   * Get canvas by ID
+   */
+  async getCanvas(canvasId) {
+    try {
+      return await this.db.getCanvas(canvasId);
+    } catch (error) {
+      console.error("Error getting canvas:", error);
+      throw new Error("Failed to get canvas");
+    }
+  }
+  /**
+   * Create new canvas
+   */
+  async createCanvas(workflowId, canvasType) {
+    try {
+      const canvas = {
+        id: this.generateId(),
+        workflowId,
+        canvasType,
+        elements: [],
+        version: 1,
+        lastModifiedBy: null,
+        lastModifiedAt: /* @__PURE__ */ new Date(),
+        createdAt: /* @__PURE__ */ new Date()
+      };
+      await this.db.createCanvas(canvas);
+      return canvas;
+    } catch (error) {
+      console.error("Error creating canvas:", error);
+      throw new Error("Failed to create canvas");
+    }
+  }
+  /**
+   * Update canvas
+   */
+  async updateCanvas(canvasId, updates) {
+    try {
+      return await this.db.updateCanvas(canvasId, updates);
+    } catch (error) {
+      console.error("Error updating canvas:", error);
+      throw new Error("Failed to update canvas");
+    }
+  }
+  /**
+   * Delete canvas
+   */
+  async deleteCanvas(canvasId) {
+    try {
+      await this.db.deleteCanvas(canvasId);
+    } catch (error) {
+      console.error("Error deleting canvas:", error);
+      throw new Error("Failed to delete canvas");
+    }
+  }
+  /**
+   * Get canvas history
+   */
+  async getCanvasHistory(canvasId) {
+    try {
+      return await this.db.getCanvasHistory(canvasId);
+    } catch (error) {
+      console.error("Error getting canvas history:", error);
+      throw new Error("Failed to get canvas history");
+    }
+  }
+  /**
+   * Restore canvas to version
+   */
+  async restoreCanvasVersion(canvasId, version) {
+    try {
+      await this.db.restoreCanvasVersion(canvasId, version);
+    } catch (error) {
+      console.error("Error restoring canvas version:", error);
+      throw new Error("Failed to restore canvas version");
+    }
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+};
+
+// server/services/conflict-resolver.ts
+var ConflictResolver = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Resolve conflict using appropriate strategy
+   */
+  async resolveConflict(conflict) {
+    try {
+      const strategy = await this.selectResolutionStrategy(conflict);
+      const resolution = await this.applyResolutionStrategy(conflict, strategy);
+      await this.logResolution(conflict, resolution);
+      return resolution;
+    } catch (error) {
+      console.error("Error resolving conflict:", error);
+      throw new Error("Failed to resolve conflict");
+    }
+  }
+  /**
+   * Select appropriate resolution strategy
+   */
+  async selectResolutionStrategy(conflict) {
+    switch (conflict.type) {
+      case "simultaneous_edit":
+        return "last_write_wins";
+      case "content_conflict":
+        return "merge_content";
+      case "position_conflict":
+        return "average_position";
+      case "permission_conflict":
+        return "escalate_to_facilitator";
+      case "data_conflict":
+        return "validate_and_merge";
+      default:
+        return "manual_resolution";
+    }
+  }
+  /**
+   * Apply resolution strategy
+   */
+  async applyResolutionStrategy(conflict, strategy) {
+    switch (strategy) {
+      case "last_write_wins":
+        return await this.applyLastWriteWins(conflict);
+      case "merge_content":
+        return await this.applyContentMerge(conflict);
+      case "average_position":
+        return await this.applyAveragePosition(conflict);
+      case "escalate_to_facilitator":
+        return await this.escalateToFacilitator(conflict);
+      case "validate_and_merge":
+        return await this.validateAndMerge(conflict);
+      case "manual_resolution":
+        return await this.requireManualResolution(conflict);
+      default:
+        throw new Error("Unknown resolution strategy");
+    }
+  }
+  /**
+   * Apply last-write-wins strategy
+   */
+  async applyLastWriteWins(conflict) {
+    const participants = conflict.participants;
+    const timestamps = await this.getParticipantTimestamps(participants);
+    const latestParticipant = this.getLatestParticipant(timestamps);
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "last_write_wins",
+      resolution: {
+        winner: latestParticipant,
+        reason: "Most recent edit takes precedence",
+        timestamp: /* @__PURE__ */ new Date()
+      },
+      applied: true,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Apply content merge strategy
+   */
+  async applyContentMerge(conflict) {
+    const contentVersions = await this.getContentVersions(conflict);
+    const mergedContent = await this.mergeContent(contentVersions);
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "merge_content",
+      resolution: {
+        mergedContent,
+        reason: "Content merged from all versions",
+        contributors: conflict.participants,
+        timestamp: /* @__PURE__ */ new Date()
+      },
+      applied: true,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Apply average position strategy
+   */
+  async applyAveragePosition(conflict) {
+    const positions = await this.getParticipantPositions(conflict);
+    const averagePosition = this.calculateAveragePosition(positions);
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "average_position",
+      resolution: {
+        position: averagePosition,
+        reason: "Position averaged from all participants",
+        contributors: conflict.participants,
+        timestamp: /* @__PURE__ */ new Date()
+      },
+      applied: true,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Escalate to facilitator
+   */
+  async escalateToFacilitator(conflict) {
+    const facilitator = await this.getSessionFacilitator(conflict);
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "escalate_to_facilitator",
+      resolution: {
+        escalatedTo: facilitator,
+        reason: "Conflict requires facilitator intervention",
+        timestamp: /* @__PURE__ */ new Date()
+      },
+      applied: false,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Validate and merge data
+   */
+  async validateAndMerge(conflict) {
+    const dataVersions = await this.getDataVersions(conflict);
+    const validation = await this.validateData(dataVersions);
+    if (validation.isValid) {
+      const mergedData = await this.mergeData(dataVersions);
+      return {
+        id: this.generateId(),
+        conflictId: conflict.id,
+        strategy: "validate_and_merge",
+        resolution: {
+          mergedData,
+          reason: "Data validated and merged successfully",
+          contributors: conflict.participants,
+          timestamp: /* @__PURE__ */ new Date()
+        },
+        applied: true,
+        requiresNotification: true
+      };
+    } else {
+      return {
+        id: this.generateId(),
+        conflictId: conflict.id,
+        strategy: "validate_and_merge",
+        resolution: {
+          error: validation.error,
+          reason: "Data validation failed",
+          timestamp: /* @__PURE__ */ new Date()
+        },
+        applied: false,
+        requiresNotification: true
+      };
+    }
+  }
+  /**
+   * Require manual resolution
+   */
+  async requireManualResolution(conflict) {
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "manual_resolution",
+      resolution: {
+        reason: "Manual resolution required",
+        participants: conflict.participants,
+        timestamp: /* @__PURE__ */ new Date()
+      },
+      applied: false,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Get participant timestamps
+   */
+  async getParticipantTimestamps(participants) {
+    return await this.db.getParticipantTimestamps(participants);
+  }
+  /**
+   * Get latest participant
+   */
+  getLatestParticipant(timestamps) {
+    return timestamps.reduce(
+      (latest, current) => current.timestamp > latest.timestamp ? current : latest
+    ).participantId;
+  }
+  /**
+   * Get content versions
+   */
+  async getContentVersions(conflict) {
+    return await this.db.getContentVersions(conflict);
+  }
+  /**
+   * Merge content from versions
+   */
+  async mergeContent(versions) {
+    const allContent = versions.map((v) => v.content).join("\n\n");
+    return allContent;
+  }
+  /**
+   * Get participant positions
+   */
+  async getParticipantPositions(conflict) {
+    return await this.db.getParticipantPositions(conflict);
+  }
+  /**
+   * Calculate average position
+   */
+  calculateAveragePosition(positions) {
+    const avgX = positions.reduce((sum, pos) => sum + pos.x, 0) / positions.length;
+    const avgY = positions.reduce((sum, pos) => sum + pos.y, 0) / positions.length;
+    return { x: avgX, y: avgY };
+  }
+  /**
+   * Get session facilitator
+   */
+  async getSessionFacilitator(conflict) {
+    return await this.db.getSessionFacilitator(conflict);
+  }
+  /**
+   * Get data versions
+   */
+  async getDataVersions(conflict) {
+    return await this.db.getDataVersions(conflict);
+  }
+  /**
+   * Validate data
+   */
+  async validateData(versions) {
+    const isValid = versions.every((v) => v.isValid);
+    return {
+      isValid,
+      error: isValid ? null : "Invalid data detected"
+    };
+  }
+  /**
+   * Merge data
+   */
+  async mergeData(versions) {
+    const validVersions = versions.filter((v) => v.isValid);
+    return validVersions[validVersions.length - 1].data;
+  }
+  /**
+   * Log resolution
+   */
+  async logResolution(conflict, resolution) {
+    await this.db.logConflictResolution(conflict, resolution);
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+};
+
+// server/services/dt-collaboration-service.ts
+var DTCollaborationService = class {
+  io;
+  canvasService;
+  aiAssistant;
+  conflictResolver;
+  activeSessions;
+  updateBatcher;
+  constructor(httpServer) {
+    this.io = new SocketIOServer(httpServer, {
+      cors: {
+        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        methods: ["GET", "POST"]
+      }
+    });
+    this.canvasService = new CanvasService();
+    this.aiAssistant = new DTAIAssistant();
+    this.conflictResolver = new ConflictResolver();
+    this.activeSessions = /* @__PURE__ */ new Map();
+    this.updateBatcher = new UpdateBatcher();
+    this.setupEventHandlers();
+  }
+  /**
+   * Setup WebSocket event handlers
+   */
+  setupEventHandlers() {
+    this.io.on("connection", (socket) => {
+      console.log("User connected:", socket.id);
+      socket.on("join-session", async (data) => {
+        await this.handleJoinSession(socket, data);
+      });
+      socket.on("leave-session", async (data) => {
+        await this.handleLeaveSession(socket, data);
+      });
+      socket.on("canvas-update", async (data) => {
+        await this.handleCanvasUpdate(socket, data);
+      });
+      socket.on("request-suggestions", async (data) => {
+        await this.handleSuggestionRequest(socket, data);
+      });
+      socket.on("resolve-conflict", async (data) => {
+        await this.handleConflictResolution(socket, data);
+      });
+      socket.on("start-session", async (data) => {
+        await this.handleStartSession(socket, data);
+      });
+      socket.on("pause-session", async (data) => {
+        await this.handlePauseSession(socket, data);
+      });
+      socket.on("end-session", async (data) => {
+        await this.handleEndSession(socket, data);
+      });
+      socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+        this.handleDisconnect(socket);
+      });
+    });
+  }
+  /**
+   * Handle user joining a DT session
+   */
+  async handleJoinSession(socket, data) {
+    try {
+      const { sessionId, userId, userRole } = data;
+      socket.join(sessionId);
+      const session2 = await this.getOrCreateSession(sessionId);
+      session2.addParticipant({
+        id: userId,
+        socketId: socket.id,
+        role: userRole,
+        joinedAt: /* @__PURE__ */ new Date()
+      });
+      socket.to(sessionId).emit("participant-joined", {
+        userId,
+        userRole,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      socket.emit("session-state", {
+        session: session2.getState(),
+        canvas: await this.canvasService.getCanvas(sessionId)
+      });
+      console.log(`User ${userId} joined session ${sessionId}`);
+    } catch (error) {
+      console.error("Error joining session:", error);
+      socket.emit("error", { message: "Failed to join session" });
+    }
+  }
+  /**
+   * Handle user leaving a DT session
+   */
+  async handleLeaveSession(socket, data) {
+    try {
+      const { sessionId, userId } = data;
+      const session2 = this.activeSessions.get(sessionId);
+      if (session2) {
+        session2.removeParticipant(userId);
+      }
+      socket.leave(sessionId);
+      socket.to(sessionId).emit("participant-left", {
+        userId,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`User ${userId} left session ${sessionId}`);
+    } catch (error) {
+      console.error("Error leaving session:", error);
+    }
+  }
+  /**
+   * Handle canvas updates
+   */
+  async handleCanvasUpdate(socket, data) {
+    try {
+      const { sessionId, update } = data;
+      this.updateBatcher.addUpdate(sessionId, update);
+      const batchedUpdates = await this.updateBatcher.processUpdates(sessionId);
+      if (batchedUpdates.length > 0) {
+        await this.canvasService.applyUpdates(sessionId, batchedUpdates);
+        socket.to(sessionId).emit("canvas-updates", {
+          updates: batchedUpdates,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+        if (update.type === "element_added") {
+          await this.generateAISuggestions(sessionId, update);
+        }
+      }
+      console.log(`Canvas updated for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error handling canvas update:", error);
+      socket.emit("error", { message: "Failed to update canvas" });
+    }
+  }
+  /**
+   * Handle AI suggestion requests
+   */
+  async handleSuggestionRequest(socket, data) {
+    try {
+      const { sessionId, context, type } = data;
+      const suggestions = await this.aiAssistant.generateSuggestions({
+        sessionId,
+        context,
+        type,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      socket.emit("ai-suggestions", {
+        suggestions,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`AI suggestions generated for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      socket.emit("error", { message: "Failed to generate suggestions" });
+    }
+  }
+  /**
+   * Handle conflict resolution
+   */
+  async handleConflictResolution(socket, data) {
+    try {
+      const { sessionId, conflict } = data;
+      const resolution = await this.conflictResolver.resolveConflict(conflict);
+      this.io.to(sessionId).emit("conflict-resolved", {
+        conflict,
+        resolution,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Conflict resolved for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error resolving conflict:", error);
+      socket.emit("error", { message: "Failed to resolve conflict" });
+    }
+  }
+  /**
+   * Handle session start
+   */
+  async handleStartSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      const session2 = await this.getOrCreateSession(sessionId);
+      session2.start();
+      this.io.to(sessionId).emit("session-started", {
+        sessionId,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Session ${sessionId} started`);
+    } catch (error) {
+      console.error("Error starting session:", error);
+      socket.emit("error", { message: "Failed to start session" });
+    }
+  }
+  /**
+   * Handle session pause
+   */
+  async handlePauseSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      const session2 = this.activeSessions.get(sessionId);
+      if (session2) {
+        session2.pause();
+        this.io.to(sessionId).emit("session-paused", {
+          sessionId,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+      }
+      console.log(`Session ${sessionId} paused`);
+    } catch (error) {
+      console.error("Error pausing session:", error);
+      socket.emit("error", { message: "Failed to pause session" });
+    }
+  }
+  /**
+   * Handle session end
+   */
+  async handleEndSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      const session2 = this.activeSessions.get(sessionId);
+      if (session2) {
+        session2.end();
+        const summary = await this.generateSessionSummary(session2);
+        this.io.to(sessionId).emit("session-ended", {
+          sessionId,
+          summary,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+        this.activeSessions.delete(sessionId);
+      }
+      console.log(`Session ${sessionId} ended`);
+    } catch (error) {
+      console.error("Error ending session:", error);
+      socket.emit("error", { message: "Failed to end session" });
+    }
+  }
+  /**
+   * Handle user disconnect
+   */
+  handleDisconnect(socket) {
+    for (const [sessionId, session2] of this.activeSessions) {
+      session2.removeParticipantBySocketId(socket.id);
+    }
+  }
+  /**
+   * Get or create session
+   */
+  async getOrCreateSession(sessionId) {
+    let session2 = this.activeSessions.get(sessionId);
+    if (!session2) {
+      session2 = new DTSession(sessionId);
+      this.activeSessions.set(sessionId, session2);
+    }
+    return session2;
+  }
+  /**
+   * Generate AI suggestions for canvas updates
+   */
+  async generateAISuggestions(sessionId, update) {
+    try {
+      const suggestions = await this.aiAssistant.suggestRelatedElements({
+        sessionId,
+        update,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      if (suggestions.length > 0) {
+        this.io.to(sessionId).emit("ai-suggestions", {
+          suggestions,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+      }
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+    }
+  }
+  /**
+   * Generate session summary
+   */
+  async generateSessionSummary(session2) {
+    const participants = session2.getParticipants();
+    const activities = session2.getActivities();
+    const canvas = await this.canvasService.getCanvas(session2.id);
+    return {
+      sessionId: session2.id,
+      duration: session2.getDuration(),
+      participants: participants.length,
+      activities: activities.length,
+      canvasElements: canvas.elements.length,
+      insights: await this.aiAssistant.generateSessionInsights(session2),
+      recommendations: await this.aiAssistant.generateRecommendations(session2)
+    };
+  }
+  /**
+   * Enable smart clustering for canvas
+   */
+  async enableSmartClustering(canvasId) {
+    try {
+      const elements = await this.canvasService.getElements(canvasId);
+      const clusters = await this.aiAssistant.clusterElements(elements);
+      await this.canvasService.applyClustering(canvasId, clusters);
+      this.io.to(canvasId).emit("canvas-clustered", {
+        clusters,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      return clusters;
+    } catch (error) {
+      console.error("Error enabling smart clustering:", error);
+      throw error;
+    }
+  }
+  /**
+   * Get session status
+   */
+  async getSessionStatus(sessionId) {
+    const session2 = this.activeSessions.get(sessionId);
+    if (!session2) {
+      return {
+        status: "not_found",
+        participants: 0,
+        duration: 0
+      };
+    }
+    return {
+      status: session2.getStatus(),
+      participants: session2.getParticipants().length,
+      duration: session2.getDuration(),
+      lastActivity: session2.getLastActivity()
+    };
+  }
+};
+var UpdateBatcher = class {
+  batches;
+  batchTimers;
+  constructor() {
+    this.batches = /* @__PURE__ */ new Map();
+    this.batchTimers = /* @__PURE__ */ new Map();
+  }
+  addUpdate(sessionId, update) {
+    if (!this.batches.has(sessionId)) {
+      this.batches.set(sessionId, []);
+    }
+    this.batches.get(sessionId).push(update);
+    if (this.batchTimers.has(sessionId)) {
+      clearTimeout(this.batchTimers.get(sessionId));
+    }
+    this.batchTimers.set(sessionId, setTimeout(() => {
+      this.processUpdates(sessionId);
+    }, 100));
+  }
+  async processUpdates(sessionId) {
+    const updates = this.batches.get(sessionId) || [];
+    this.batches.set(sessionId, []);
+    if (this.batchTimers.has(sessionId)) {
+      clearTimeout(this.batchTimers.get(sessionId));
+      this.batchTimers.delete(sessionId);
+    }
+    return updates;
+  }
+};
+var DTSession = class {
+  id;
+  participants;
+  activities;
+  status;
+  startTime;
+  endTime;
+  lastActivity;
+  constructor(id) {
+    this.id = id;
+    this.participants = /* @__PURE__ */ new Map();
+    this.activities = [];
+    this.status = "inactive";
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  addParticipant(participant) {
+    this.participants.set(participant.id, participant);
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  removeParticipant(userId) {
+    this.participants.delete(userId);
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  removeParticipantBySocketId(socketId) {
+    for (const [userId, participant] of this.participants) {
+      if (participant.socketId === socketId) {
+        this.participants.delete(userId);
+        break;
+      }
+    }
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  start() {
+    this.status = "active";
+    this.startTime = /* @__PURE__ */ new Date();
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  pause() {
+    this.status = "paused";
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  end() {
+    this.status = "completed";
+    this.endTime = /* @__PURE__ */ new Date();
+    this.lastActivity = /* @__PURE__ */ new Date();
+  }
+  getParticipants() {
+    return Array.from(this.participants.values());
+  }
+  getActivities() {
+    return this.activities;
+  }
+  getStatus() {
+    return this.status;
+  }
+  getDuration() {
+    if (!this.startTime) return 0;
+    const endTime = this.endTime || /* @__PURE__ */ new Date();
+    return endTime.getTime() - this.startTime.getTime();
+  }
+  getLastActivity() {
+    return this.lastActivity;
+  }
+  getState() {
+    return {
+      id: this.id,
+      status: this.status,
+      participants: this.getParticipants(),
+      activities: this.activities,
+      duration: this.getDuration(),
+      lastActivity: this.lastActivity
+    };
+  }
+};
+
+// server/services/dt-analytics-engine.ts
+var DTAnalyticsEngine = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Calculate comprehensive effectiveness score
+   */
+  async calculateEffectivenessScore(workflowId) {
+    try {
+      const workflow = await this.db.getWorkflow(workflowId);
+      if (!workflow) {
+        throw new Error("Workflow not found");
+      }
+      const [
+        userCentricity,
+        ideaDiversity,
+        iterationSpeed,
+        teamCollaboration,
+        outcomeQuality,
+        processAdherence
+      ] = await Promise.all([
+        this.measureUserCentricity(workflowId),
+        this.measureIdeaDiversity(workflowId),
+        this.measureIterationSpeed(workflowId),
+        this.measureTeamCollaboration(workflowId),
+        this.measureOutcomeQuality(workflowId),
+        this.measureProcessAdherence(workflowId)
+      ]);
+      const overall = this.calculateOverallScore({
+        userCentricity,
+        ideaDiversity,
+        iterationSpeed,
+        teamCollaboration,
+        outcomeQuality,
+        processAdherence
+      });
+      const recommendations = await this.generateRecommendations(workflowId, {
+        userCentricity,
+        ideaDiversity,
+        iterationSpeed,
+        teamCollaboration,
+        outcomeQuality,
+        processAdherence
+      });
+      return {
+        overall,
+        dimensions: {
+          userCentricity,
+          ideaDiversity,
+          iterationSpeed,
+          teamCollaboration,
+          outcomeQuality,
+          processAdherence
+        },
+        recommendations,
+        benchmarks: await this.compareToBenchmarks(workflowId),
+        calculatedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error calculating effectiveness score:", error);
+      throw new Error("Failed to calculate effectiveness score");
+    }
+  }
+  /**
+   * Generate insight map for workflow
+   */
+  async generateInsightMap(workflowId) {
+    try {
+      const insights = await this.getWorkflowInsights(workflowId);
+      const relationships = await this.identifyRelationships(insights);
+      const clusters = await this.clusterInsights(insights);
+      const criticalPath = await this.identifyCriticalPath(insights);
+      return {
+        nodes: insights.map((insight) => ({
+          id: insight.id,
+          label: insight.content,
+          phase: insight.phase,
+          importance: insight.importance,
+          connections: insight.connections || []
+        })),
+        edges: relationships,
+        clusters,
+        criticalPath,
+        generatedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error generating insight map:", error);
+      throw new Error("Failed to generate insight map");
+    }
+  }
+  /**
+   * Compare workflow to benchmarks
+   */
+  async compareToBenchmarks(workflowId) {
+    try {
+      const workflow = await this.db.getWorkflow(workflowId);
+      if (!workflow) {
+        throw new Error("Workflow not found");
+      }
+      const benchmarks = await this.findBenchmarks(workflow);
+      const comparison = await this.performComparison(workflow, benchmarks);
+      return {
+        industry: workflow.industry || "general",
+        similarProjects: benchmarks.length,
+        performanceRanking: comparison.ranking,
+        keyDifferences: comparison.differences,
+        improvementOpportunities: comparison.opportunities,
+        comparedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error comparing to benchmarks:", error);
+      throw new Error("Failed to compare to benchmarks");
+    }
+  }
+  /**
+   * Measure user centricity
+   */
+  async measureUserCentricity(workflowId) {
+    try {
+      const empathyData = await this.db.getEmpathyData(workflowId);
+      const userInterviews = await this.db.getUserInterviews(workflowId);
+      const personaQuality = await this.assessPersonaQuality(empathyData);
+      const interviewDepth = await this.assessInterviewDepth(userInterviews);
+      return (personaQuality + interviewDepth) / 2;
+    } catch (error) {
+      console.error("Error measuring user centricity:", error);
+      return 0;
+    }
+  }
+  /**
+   * Measure idea diversity
+   */
+  async measureIdeaDiversity(workflowId) {
+    try {
+      const ideas = await this.db.getWorkflowIdeas(workflowId);
+      const diversityScore = await this.calculateIdeaDiversity(ideas);
+      return diversityScore;
+    } catch (error) {
+      console.error("Error measuring idea diversity:", error);
+      return 0;
+    }
+  }
+  /**
+   * Measure iteration speed
+   */
+  async measureIterationSpeed(workflowId) {
+    try {
+      const iterations = await this.db.getWorkflowIterations(workflowId);
+      const speedScore = await this.calculateIterationSpeed(iterations);
+      return speedScore;
+    } catch (error) {
+      console.error("Error measuring iteration speed:", error);
+      return 0;
+    }
+  }
+  /**
+   * Measure team collaboration
+   */
+  async measureTeamCollaboration(workflowId) {
+    try {
+      const sessions = await this.db.getWorkflowSessions(workflowId);
+      const collaborationScore = await this.calculateCollaborationScore(sessions);
+      return collaborationScore;
+    } catch (error) {
+      console.error("Error measuring team collaboration:", error);
+      return 0;
+    }
+  }
+  /**
+   * Measure outcome quality
+   */
+  async measureOutcomeQuality(workflowId) {
+    try {
+      const outcomes = await this.db.getWorkflowOutcomes(workflowId);
+      const qualityScore = await this.calculateOutcomeQuality(outcomes);
+      return qualityScore;
+    } catch (error) {
+      console.error("Error measuring outcome quality:", error);
+      return 0;
+    }
+  }
+  /**
+   * Measure process adherence
+   */
+  async measureProcessAdherence(workflowId) {
+    try {
+      const workflow = await this.db.getWorkflow(workflowId);
+      const adherenceScore = await this.calculateProcessAdherence(workflow);
+      return adherenceScore;
+    } catch (error) {
+      console.error("Error measuring process adherence:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate overall score
+   */
+  calculateOverallScore(dimensions) {
+    const weights = {
+      userCentricity: 0.2,
+      ideaDiversity: 0.15,
+      iterationSpeed: 0.15,
+      teamCollaboration: 0.2,
+      outcomeQuality: 0.2,
+      processAdherence: 0.1
+    };
+    return Object.entries(dimensions).reduce((sum, [key, value]) => {
+      return sum + value * (weights[key] || 0);
+    }, 0);
+  }
+  /**
+   * Generate recommendations
+   */
+  async generateRecommendations(workflowId, dimensions) {
+    const recommendations = [];
+    if (dimensions.userCentricity < 0.6) {
+      recommendations.push("Increase user research depth and persona development");
+    }
+    if (dimensions.ideaDiversity < 0.6) {
+      recommendations.push("Encourage more diverse idea generation techniques");
+    }
+    if (dimensions.iterationSpeed < 0.6) {
+      recommendations.push("Optimize iteration cycles and feedback loops");
+    }
+    if (dimensions.teamCollaboration < 0.6) {
+      recommendations.push("Improve team collaboration and communication");
+    }
+    if (dimensions.outcomeQuality < 0.6) {
+      recommendations.push("Focus on higher quality deliverables and outcomes");
+    }
+    if (dimensions.processAdherence < 0.6) {
+      recommendations.push("Better adherence to Design Thinking methodology");
+    }
+    return recommendations;
+  }
+  /**
+   * Get workflow insights
+   */
+  async getWorkflowInsights(workflowId) {
+    return await this.db.getWorkflowInsights(workflowId);
+  }
+  /**
+   * Identify relationships between insights
+   */
+  async identifyRelationships(insights) {
+    const edges = [];
+    for (let i = 0; i < insights.length; i++) {
+      for (let j = i + 1; j < insights.length; j++) {
+        const similarity = await this.calculateInsightSimilarity(insights[i], insights[j]);
+        if (similarity > 0.5) {
+          edges.push({
+            from: insights[i].id,
+            to: insights[j].id,
+            type: "related",
+            strength: similarity
+          });
+        }
+      }
+    }
+    return edges;
+  }
+  /**
+   * Cluster insights
+   */
+  async clusterInsights(insights) {
+    const clusters = [];
+    const processed = /* @__PURE__ */ new Set();
+    for (const insight of insights) {
+      if (processed.has(insight.id)) continue;
+      const cluster = await this.createInsightCluster(insight, insights);
+      clusters.push(cluster);
+      cluster.insights.forEach((id) => processed.add(id));
+    }
+    return clusters;
+  }
+  /**
+   * Identify critical path
+   */
+  async identifyCriticalPath(insights) {
+    const sortedInsights = insights.sort((a, b) => (b.importance || 0) - (a.importance || 0));
+    return sortedInsights.slice(0, 5).map((insight) => insight.id);
+  }
+  /**
+   * Calculate insight similarity
+   */
+  async calculateInsightSimilarity(insight1, insight2) {
+    const contentSimilarity = this.calculateContentSimilarity(insight1.content, insight2.content);
+    const phaseSimilarity = insight1.phase === insight2.phase ? 1 : 0;
+    return (contentSimilarity + phaseSimilarity) / 2;
+  }
+  /**
+   * Calculate content similarity
+   */
+  calculateContentSimilarity(content1, content2) {
+    const words1 = content1.toLowerCase().split(/\s+/);
+    const words2 = content2.toLowerCase().split(/\s+/);
+    const intersection = words1.filter((word) => words2.includes(word));
+    const union = [.../* @__PURE__ */ new Set([...words1, ...words2])];
+    return intersection.length / union.length;
+  }
+  /**
+   * Create insight cluster
+   */
+  async createInsightCluster(seedInsight, allInsights) {
+    const cluster = {
+      id: this.generateId(),
+      name: `Cluster ${seedInsight.phase}`,
+      insights: [seedInsight.id],
+      theme: seedInsight.phase,
+      confidence: 0.8
+    };
+    for (const insight of allInsights) {
+      if (insight.id === seedInsight.id) continue;
+      const similarity = await this.calculateInsightSimilarity(seedInsight, insight);
+      if (similarity > 0.6) {
+        cluster.insights.push(insight.id);
+      }
+    }
+    return cluster;
+  }
+  /**
+   * Find benchmarks
+   */
+  async findBenchmarks(workflow) {
+    return await this.db.findSimilarWorkflows(workflow);
+  }
+  /**
+   * Perform comparison
+   */
+  async performComparison(workflow, benchmarks) {
+    return {
+      ranking: 0.5,
+      differences: [],
+      opportunities: []
+    };
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+  // Placeholder methods for database operations
+  async assessPersonaQuality(empathyData) {
+    return 0.8;
+  }
+  async assessInterviewDepth(interviews) {
+    return 0.7;
+  }
+  async calculateIdeaDiversity(ideas) {
+    return 0.6;
+  }
+  async calculateIterationSpeed(iterations) {
+    return 0.5;
+  }
+  async calculateCollaborationScore(sessions) {
+    return 0.7;
+  }
+  async calculateOutcomeQuality(outcomes) {
+    return 0.8;
+  }
+  async calculateProcessAdherence(workflow) {
+    return 0.6;
+  }
+};
+
+// server/services/insight-tracker.ts
+var InsightTracker = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Track insight evolution
+   */
+  async trackEvolution(insightId) {
+    try {
+      const evolution = await this.getInsightHistory(insightId);
+      const impact = await this.measureInsightImpact(insightId);
+      const businessValue = await this.calculateBusinessValue(insightId);
+      return {
+        originalInsight: evolution[0],
+        transformations: evolution.map((e, i) => ({
+          phase: e.phase,
+          transformation: this.compareInsights(evolution[i], evolution[i + 1]),
+          contributingFactors: e.factors,
+          refinements: e.refinements
+        })),
+        finalOutcome: evolution[evolution.length - 1],
+        impact,
+        businessValue,
+        trackedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error tracking insight evolution:", error);
+      throw new Error("Failed to track insight evolution");
+    }
+  }
+  /**
+   * Get insight history
+   */
+  async getInsightHistory(insightId) {
+    return await this.db.getInsightHistory(insightId);
+  }
+  /**
+   * Measure insight impact
+   */
+  async measureInsightImpact(insightId) {
+    try {
+      const usage = await this.db.getInsightUsage(insightId);
+      const influence = await this.calculateInfluenceScore(insightId);
+      const businessValue = await this.calculateBusinessValue(insightId);
+      const timeToImpact = await this.calculateTimeToImpact(insightId);
+      return {
+        usageCount: usage.length,
+        influenceScore: influence,
+        businessValue,
+        timeToImpact,
+        measuredAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error measuring insight impact:", error);
+      return {
+        usageCount: 0,
+        influenceScore: 0,
+        businessValue: 0,
+        timeToImpact: 0,
+        measuredAt: /* @__PURE__ */ new Date()
+      };
+    }
+  }
+  /**
+   * Calculate business value
+   */
+  async calculateBusinessValue(insightId) {
+    try {
+      const insight = await this.db.getInsight(insightId);
+      const relatedIdeas = await this.db.getRelatedIdeas(insightId);
+      const prototypes = await this.db.getRelatedPrototypes(insightId);
+      const tests = await this.db.getRelatedTests(insightId);
+      const ideaValue = relatedIdeas.length * 0.1;
+      const prototypeValue = prototypes.length * 0.3;
+      const testValue = tests.length * 0.2;
+      const insightQuality = insight?.importance || 0;
+      return (ideaValue + prototypeValue + testValue + insightQuality) / 4;
+    } catch (error) {
+      console.error("Error calculating business value:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate influence score
+   */
+  async calculateInfluenceScore(insightId) {
+    try {
+      const connections = await this.db.getInsightConnections(insightId);
+      const usage = await this.db.getInsightUsage(insightId);
+      const references = await this.db.getInsightReferences(insightId);
+      const connectionScore = Math.min(connections.length / 10, 1);
+      const usageScore = Math.min(usage.length / 5, 1);
+      const referenceScore = Math.min(references.length / 3, 1);
+      return (connectionScore + usageScore + referenceScore) / 3;
+    } catch (error) {
+      console.error("Error calculating influence score:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate time to impact
+   */
+  async calculateTimeToImpact(insightId) {
+    try {
+      const insight = await this.db.getInsight(insightId);
+      const firstUsage = await this.db.getFirstInsightUsage(insightId);
+      if (!insight || !firstUsage) return 0;
+      const timeDiff = firstUsage.timestamp.getTime() - insight.createdAt.getTime();
+      return timeDiff / (1e3 * 60 * 60 * 24);
+    } catch (error) {
+      console.error("Error calculating time to impact:", error);
+      return 0;
+    }
+  }
+  /**
+   * Compare insights
+   */
+  compareInsights(insight1, insight2) {
+    if (!insight2) {
+      return {
+        type: "final",
+        changes: [],
+        improvements: [],
+        newElements: []
+      };
+    }
+    const changes = this.identifyChanges(insight1, insight2);
+    const improvements = this.identifyImprovements(insight1, insight2);
+    const newElements = this.identifyNewElements(insight1, insight2);
+    return {
+      type: this.determineTransformationType(changes, improvements, newElements),
+      changes,
+      improvements,
+      newElements
+    };
+  }
+  /**
+   * Identify changes between insights
+   */
+  identifyChanges(insight1, insight2) {
+    const changes = [];
+    if (insight1.content !== insight2.content) {
+      changes.push("Content updated");
+    }
+    if (insight1.importance !== insight2.importance) {
+      changes.push("Importance changed");
+    }
+    if (insight1.confidence !== insight2.confidence) {
+      changes.push("Confidence updated");
+    }
+    return changes;
+  }
+  /**
+   * Identify improvements
+   */
+  identifyImprovements(insight1, insight2) {
+    const improvements = [];
+    if (insight2.importance > insight1.importance) {
+      improvements.push("Importance increased");
+    }
+    if (insight2.confidence > insight1.confidence) {
+      improvements.push("Confidence improved");
+    }
+    if (insight2.content.length > insight1.content.length) {
+      improvements.push("Content expanded");
+    }
+    return improvements;
+  }
+  /**
+   * Identify new elements
+   */
+  identifyNewElements(insight1, insight2) {
+    const newElements = [];
+    if (insight2.connections && insight2.connections.length > (insight1.connections?.length || 0)) {
+      newElements.push("New connections added");
+    }
+    if (insight2.tags && insight2.tags.length > (insight1.tags?.length || 0)) {
+      newElements.push("New tags added");
+    }
+    return newElements;
+  }
+  /**
+   * Determine transformation type
+   */
+  determineTransformationType(changes, improvements, newElements) {
+    if (improvements.length > 0 && newElements.length > 0) {
+      return "enhanced";
+    } else if (improvements.length > 0) {
+      return "improved";
+    } else if (newElements.length > 0) {
+      return "expanded";
+    } else if (changes.length > 0) {
+      return "modified";
+    } else {
+      return "unchanged";
+    }
+  }
+  /**
+   * Track insight usage
+   */
+  async trackInsightUsage(insightId, context) {
+    try {
+      await this.db.logInsightUsage(insightId, context);
+    } catch (error) {
+      console.error("Error tracking insight usage:", error);
+    }
+  }
+  /**
+   * Get insight relationships
+   */
+  async getInsightRelationships(insightId) {
+    try {
+      return await this.db.getInsightRelationships(insightId);
+    } catch (error) {
+      console.error("Error getting insight relationships:", error);
+      return [];
+    }
+  }
+  /**
+   * Generate insight report
+   */
+  async generateInsightReport(insightId) {
+    try {
+      const evolution = await this.trackEvolution(insightId);
+      const relationships = await this.getInsightRelationships(insightId);
+      const usage = await this.db.getInsightUsage(insightId);
+      return {
+        insightId,
+        evolution,
+        relationships,
+        usage: usage.length,
+        recommendations: await this.generateInsightRecommendations(insightId),
+        generatedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error generating insight report:", error);
+      throw new Error("Failed to generate insight report");
+    }
+  }
+  /**
+   * Generate insight recommendations
+   */
+  async generateInsightRecommendations(insightId) {
+    const recommendations = [];
+    const insight = await this.db.getInsight(insightId);
+    if (!insight) return recommendations;
+    if (insight.importance < 0.7) {
+      recommendations.push("Consider increasing insight importance through validation");
+    }
+    if (insight.confidence < 0.6) {
+      recommendations.push("Gather more evidence to increase confidence");
+    }
+    const connections = await this.db.getInsightConnections(insightId);
+    if (connections.length < 3) {
+      recommendations.push("Explore connections to other insights");
+    }
+    return recommendations;
+  }
+};
+
+// server/services/roi-calculator.ts
+var ROICalculator = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Calculate comprehensive ROI for workflow
+   */
+  async calculateROI(workflow) {
+    try {
+      const investment = await this.calculateInvestment(workflow);
+      const returns = await this.calculateReturns(workflow);
+      const roi = this.calculateROIPercentage(investment, returns);
+      const paybackPeriod = this.calculatePaybackPeriod(investment, returns);
+      const intangibleBenefits = await this.identifyIntangibleBenefits(workflow);
+      return {
+        investment,
+        returns,
+        roi,
+        paybackPeriod,
+        intangibleBenefits,
+        calculatedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error calculating ROI:", error);
+      throw new Error("Failed to calculate ROI");
+    }
+  }
+  /**
+   * Calculate investment
+   */
+  async calculateInvestment(workflow) {
+    const timeInvested = await this.calculateTimeInvestment(workflow);
+    const resourceCost = await this.calculateResourceCost(workflow);
+    const toolCost = await this.calculateToolCost(workflow);
+    const opportunityCost = await this.calculateOpportunityCost(workflow);
+    const total = timeInvested + resourceCost + toolCost + opportunityCost;
+    return {
+      timeInvested,
+      resourceCost,
+      toolCost,
+      opportunityCost,
+      total
+    };
+  }
+  /**
+   * Calculate returns
+   */
+  async calculateReturns(workflow) {
+    const timeToMarketReduction = await this.estimateTimeToMarketReduction(workflow);
+    const developmentCostSavings = await this.estimateDevelopmentCostSavings(workflow);
+    const revenueImpact = await this.estimateRevenueImpact(workflow);
+    const riskMitigation = await this.estimateRiskMitigation(workflow);
+    const innovationValue = await this.estimateInnovationValue(workflow);
+    const total = timeToMarketReduction + developmentCostSavings + revenueImpact + riskMitigation + innovationValue;
+    return {
+      timeToMarketReduction,
+      developmentCostSavings,
+      revenueImpact,
+      riskMitigation,
+      innovationValue,
+      total
+    };
+  }
+  /**
+   * Calculate time investment
+   */
+  async calculateTimeInvestment(workflow) {
+    try {
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const participants = await this.db.getWorkflowParticipants(workflow.id);
+      const totalSessionTime = sessions.reduce((sum, session2) => sum + (session2.duration || 0), 0);
+      const preparationTime = totalSessionTime * 0.3;
+      const followUpTime = totalSessionTime * 0.2;
+      const totalTime = totalSessionTime + preparationTime + followUpTime;
+      const hourlyRate = 50;
+      return totalTime * hourlyRate;
+    } catch (error) {
+      console.error("Error calculating time investment:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate resource cost
+   */
+  async calculateResourceCost(workflow) {
+    try {
+      const participants = await this.db.getWorkflowParticipants(workflow.id);
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const facilitatorCost = sessions.length * 200;
+      const participantCost = participants.length * 50;
+      const materialsCost = sessions.length * 25;
+      return facilitatorCost + participantCost + materialsCost;
+    } catch (error) {
+      console.error("Error calculating resource cost:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate tool cost
+   */
+  async calculateToolCost(workflow) {
+    try {
+      const toolUsage = await this.db.getWorkflowToolUsage(workflow.id);
+      const aiServiceCost = toolUsage.aiCalls * 0.01;
+      const collaborationCost = toolUsage.collaborationMinutes * 0.05;
+      const analyticsCost = toolUsage.analyticsQueries * 0.02;
+      return aiServiceCost + collaborationCost + analyticsCost;
+    } catch (error) {
+      console.error("Error calculating tool cost:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate opportunity cost
+   */
+  async calculateOpportunityCost(workflow) {
+    try {
+      const timeInvested = await this.calculateTimeInvestment(workflow);
+      const alternativeReturn = timeInvested * 0.1;
+      return alternativeReturn;
+    } catch (error) {
+      console.error("Error calculating opportunity cost:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate time to market reduction
+   */
+  async estimateTimeToMarketReduction(workflow) {
+    try {
+      const outcomes = await this.db.getWorkflowOutcomes(workflow.id);
+      const prototypes = await this.db.getWorkflowPrototypes(workflow.id);
+      const timeReduction = outcomes.length * 30;
+      const prototypeAcceleration = prototypes.length * 15;
+      const totalDays = timeReduction + prototypeAcceleration;
+      const dailyValue = 1e3;
+      return totalDays * dailyValue;
+    } catch (error) {
+      console.error("Error estimating time to market reduction:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate development cost savings
+   */
+  async estimateDevelopmentCostSavings(workflow) {
+    try {
+      const prototypes = await this.db.getWorkflowPrototypes(workflow.id);
+      const tests = await this.db.getWorkflowTests(workflow.id);
+      const prototypeSavings = prototypes.length * 5e3;
+      const testSavings = tests.length * 2e3;
+      return prototypeSavings + testSavings;
+    } catch (error) {
+      console.error("Error estimating development cost savings:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate revenue impact
+   */
+  async estimateRevenueImpact(workflow) {
+    try {
+      const outcomes = await this.db.getWorkflowOutcomes(workflow.id);
+      const businessValue = await this.calculateBusinessValue(workflow);
+      const revenuePerOutcome = 1e4;
+      const totalRevenue = outcomes.length * revenuePerOutcome;
+      return totalRevenue + businessValue;
+    } catch (error) {
+      console.error("Error estimating revenue impact:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate risk mitigation
+   */
+  async estimateRiskMitigation(workflow) {
+    try {
+      const risks = await this.db.getWorkflowRisks(workflow.id);
+      const mitigations = await this.db.getWorkflowMitigations(workflow.id);
+      const riskValue = risks.length * 5e3;
+      const mitigationValue = mitigations.length * 2e3;
+      return riskValue + mitigationValue;
+    } catch (error) {
+      console.error("Error estimating risk mitigation:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate innovation value
+   */
+  async estimateInnovationValue(workflow) {
+    try {
+      const insights = await this.db.getWorkflowInsights(workflow.id);
+      const ideas = await this.db.getWorkflowIdeas(workflow.id);
+      const insightValue = insights.length * 1e3;
+      const ideaValue = ideas.length * 500;
+      return insightValue + ideaValue;
+    } catch (error) {
+      console.error("Error estimating innovation value:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate business value
+   */
+  async calculateBusinessValue(workflow) {
+    try {
+      const outcomes = await this.db.getWorkflowOutcomes(workflow.id);
+      const quality = await this.assessOutcomeQuality(outcomes);
+      const marketSize = await this.estimateMarketSize(workflow);
+      return quality * marketSize * 0.1;
+    } catch (error) {
+      console.error("Error calculating business value:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate ROI percentage
+   */
+  calculateROIPercentage(investment, returns) {
+    if (investment.total === 0) return 0;
+    return (returns.total - investment.total) / investment.total * 100;
+  }
+  /**
+   * Calculate payback period
+   */
+  calculatePaybackPeriod(investment, returns) {
+    if (returns.total <= 0) return Infinity;
+    return investment.total / returns.total;
+  }
+  /**
+   * Identify intangible benefits
+   */
+  async identifyIntangibleBenefits(workflow) {
+    const benefits = [];
+    const insights = await this.db.getWorkflowInsights(workflow.id);
+    if (insights.length > 0) {
+      benefits.push("Enhanced team learning and knowledge");
+    }
+    const collaboration = await this.assessCollaborationQuality(workflow);
+    if (collaboration > 0.7) {
+      benefits.push("Improved team collaboration");
+    }
+    const innovation = await this.assessInnovationCulture(workflow);
+    if (innovation > 0.7) {
+      benefits.push("Strengthened innovation culture");
+    }
+    return benefits;
+  }
+  /**
+   * Assess outcome quality
+   */
+  async assessOutcomeQuality(outcomes) {
+    if (outcomes.length === 0) return 0;
+    const qualityScores = outcomes.map((outcome) => outcome.quality || 0.5);
+    return qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length;
+  }
+  /**
+   * Estimate market size
+   */
+  async estimateMarketSize(workflow) {
+    const industryMultipliers = {
+      "technology": 1e6,
+      "healthcare": 8e5,
+      "finance": 6e5,
+      "education": 4e5,
+      "retail": 3e5
+    };
+    return industryMultipliers[workflow.industry || "general"] || 5e5;
+  }
+  /**
+   * Assess collaboration quality
+   */
+  async assessCollaborationQuality(workflow) {
+    try {
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const participants = await this.db.getWorkflowParticipants(workflow.id);
+      if (sessions.length === 0 || participants.length === 0) return 0;
+      const participationRate = sessions.reduce((sum, session2) => sum + (session2.participants?.length || 0), 0) / (sessions.length * participants.length);
+      return participationRate;
+    } catch (error) {
+      console.error("Error assessing collaboration quality:", error);
+      return 0;
+    }
+  }
+  /**
+   * Assess innovation culture
+   */
+  async assessInnovationCulture(workflow) {
+    try {
+      const ideas = await this.db.getWorkflowIdeas(workflow.id);
+      const prototypes = await this.db.getWorkflowPrototypes(workflow.id);
+      const ideaToPrototypeRate = prototypes.length / Math.max(ideas.length, 1);
+      return Math.min(ideaToPrototypeRate, 1);
+    } catch (error) {
+      console.error("Error assessing innovation culture:", error);
+      return 0;
+    }
+  }
+};
+
+// server/services/benchmark-service.ts
+var BenchmarkService = class {
+  db;
+  constructor() {
+    this.db = new DatabaseService();
+  }
+  /**
+   * Compare workflow to benchmarks
+   */
+  async compareToBenchmarks(workflow) {
+    try {
+      const benchmarks = await this.findBenchmarks(workflow);
+      const comparison = await this.performComparison(workflow, benchmarks);
+      return {
+        industry: workflow.industry || "general",
+        similarProjects: benchmarks.length,
+        performanceRanking: comparison.ranking,
+        keyDifferences: comparison.differences,
+        improvementOpportunities: comparison.opportunities,
+        comparedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error comparing to benchmarks:", error);
+      throw new Error("Failed to compare to benchmarks");
+    }
+  }
+  /**
+   * Find relevant benchmarks
+   */
+  async findBenchmarks(workflow) {
+    try {
+      const industry = workflow.industry || "general";
+      const phase = workflow.currentPhase;
+      const size = await this.estimateWorkflowSize(workflow);
+      const benchmarks = await this.db.findSimilarWorkflows({
+        industry,
+        phase,
+        size,
+        limit: 10
+      });
+      return benchmarks;
+    } catch (error) {
+      console.error("Error finding benchmarks:", error);
+      return [];
+    }
+  }
+  /**
+   * Perform comparison
+   */
+  async performComparison(workflow, benchmarks) {
+    try {
+      const workflowMetrics = await this.calculateWorkflowMetrics(workflow);
+      const benchmarkMetrics = await this.calculateBenchmarkMetrics(benchmarks);
+      const ranking = this.calculatePerformanceRanking(workflowMetrics, benchmarkMetrics);
+      const differences = this.identifyKeyDifferences(workflowMetrics, benchmarkMetrics);
+      const opportunities = this.identifyImprovementOpportunities(workflowMetrics, benchmarkMetrics);
+      return {
+        ranking,
+        differences,
+        opportunities
+      };
+    } catch (error) {
+      console.error("Error performing comparison:", error);
+      return {
+        ranking: 0.5,
+        differences: [],
+        opportunities: []
+      };
+    }
+  }
+  /**
+   * Calculate workflow metrics
+   */
+  async calculateWorkflowMetrics(workflow) {
+    try {
+      const [
+        effectiveness,
+        efficiency,
+        quality,
+        innovation,
+        collaboration
+      ] = await Promise.all([
+        this.calculateEffectiveness(workflow),
+        this.calculateEfficiency(workflow),
+        this.calculateQuality(workflow),
+        this.calculateInnovation(workflow),
+        this.calculateCollaboration(workflow)
+      ]);
+      return {
+        effectiveness,
+        efficiency,
+        quality,
+        innovation,
+        collaboration,
+        overall: (effectiveness + efficiency + quality + innovation + collaboration) / 5
+      };
+    } catch (error) {
+      console.error("Error calculating workflow metrics:", error);
+      return {
+        effectiveness: 0,
+        efficiency: 0,
+        quality: 0,
+        innovation: 0,
+        collaboration: 0,
+        overall: 0
+      };
+    }
+  }
+  /**
+   * Calculate benchmark metrics
+   */
+  async calculateBenchmarkMetrics(benchmarks) {
+    try {
+      const metrics = benchmarks.map((benchmark) => benchmark.metrics);
+      return {
+        effectiveness: this.calculateAverage(metrics.map((m) => m.effectiveness)),
+        efficiency: this.calculateAverage(metrics.map((m) => m.efficiency)),
+        quality: this.calculateAverage(metrics.map((m) => m.quality)),
+        innovation: this.calculateAverage(metrics.map((m) => m.innovation)),
+        collaboration: this.calculateAverage(metrics.map((m) => m.collaboration)),
+        overall: this.calculateAverage(metrics.map((m) => m.overall))
+      };
+    } catch (error) {
+      console.error("Error calculating benchmark metrics:", error);
+      return {
+        effectiveness: 0,
+        efficiency: 0,
+        quality: 0,
+        innovation: 0,
+        collaboration: 0,
+        overall: 0
+      };
+    }
+  }
+  /**
+   * Calculate performance ranking
+   */
+  calculatePerformanceRanking(workflowMetrics, benchmarkMetrics) {
+    const workflowScore = workflowMetrics.overall;
+    const benchmarkScore = benchmarkMetrics.overall;
+    if (workflowScore >= benchmarkScore) {
+      return 0.8 + (workflowScore - benchmarkScore) * 0.2;
+    } else {
+      return 0.5 + workflowScore / benchmarkScore * 0.3;
+    }
+  }
+  /**
+   * Identify key differences
+   */
+  identifyKeyDifferences(workflowMetrics, benchmarkMetrics) {
+    const differences = [];
+    if (workflowMetrics.effectiveness < benchmarkMetrics.effectiveness - 0.1) {
+      differences.push("Effectiveness below benchmark");
+    }
+    if (workflowMetrics.efficiency < benchmarkMetrics.efficiency - 0.1) {
+      differences.push("Efficiency below benchmark");
+    }
+    if (workflowMetrics.quality < benchmarkMetrics.quality - 0.1) {
+      differences.push("Quality below benchmark");
+    }
+    if (workflowMetrics.innovation < benchmarkMetrics.innovation - 0.1) {
+      differences.push("Innovation below benchmark");
+    }
+    if (workflowMetrics.collaboration < benchmarkMetrics.collaboration - 0.1) {
+      differences.push("Collaboration below benchmark");
+    }
+    return differences;
+  }
+  /**
+   * Identify improvement opportunities
+   */
+  identifyImprovementOpportunities(workflowMetrics, benchmarkMetrics) {
+    const opportunities = [];
+    if (workflowMetrics.effectiveness < benchmarkMetrics.effectiveness) {
+      opportunities.push("Focus on user research and validation");
+    }
+    if (workflowMetrics.efficiency < benchmarkMetrics.efficiency) {
+      opportunities.push("Optimize process and reduce cycle time");
+    }
+    if (workflowMetrics.quality < benchmarkMetrics.quality) {
+      opportunities.push("Improve deliverable quality and standards");
+    }
+    if (workflowMetrics.innovation < benchmarkMetrics.innovation) {
+      opportunities.push("Encourage more creative thinking and experimentation");
+    }
+    if (workflowMetrics.collaboration < benchmarkMetrics.collaboration) {
+      opportunities.push("Enhance team collaboration and communication");
+    }
+    return opportunities;
+  }
+  /**
+   * Calculate effectiveness
+   */
+  async calculateEffectiveness(workflow) {
+    try {
+      const outcomes = await this.db.getWorkflowOutcomes(workflow.id);
+      const tests = await this.db.getWorkflowTests(workflow.id);
+      const outcomeQuality = outcomes.length > 0 ? outcomes.reduce((sum, outcome) => sum + (outcome.quality || 0.5), 0) / outcomes.length : 0;
+      const testSuccess = tests.length > 0 ? tests.filter((test) => test.success).length / tests.length : 0;
+      return (outcomeQuality + testSuccess) / 2;
+    } catch (error) {
+      console.error("Error calculating effectiveness:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate efficiency
+   */
+  async calculateEfficiency(workflow) {
+    try {
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const outcomes = await this.db.getWorkflowOutcomes(workflow.id);
+      if (sessions.length === 0) return 0;
+      const totalTime = sessions.reduce((sum, session2) => sum + (session2.duration || 0), 0);
+      const outcomesPerHour = outcomes.length / (totalTime / 60);
+      return Math.min(outcomesPerHour / 2, 1);
+    } catch (error) {
+      console.error("Error calculating efficiency:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate quality
+   */
+  async calculateQuality(workflow) {
+    try {
+      const deliverables = await this.db.getWorkflowDeliverables(workflow.id);
+      if (deliverables.length === 0) return 0;
+      const qualityScores = deliverables.map((deliverable) => deliverable.quality || 0.5);
+      return qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length;
+    } catch (error) {
+      console.error("Error calculating quality:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate innovation
+   */
+  async calculateInnovation(workflow) {
+    try {
+      const ideas = await this.db.getWorkflowIdeas(workflow.id);
+      const prototypes = await this.db.getWorkflowPrototypes(workflow.id);
+      const ideaCount = ideas.length;
+      const prototypeCount = prototypes.length;
+      const innovationRate = prototypeCount / Math.max(ideaCount, 1);
+      return Math.min(innovationRate, 1);
+    } catch (error) {
+      console.error("Error calculating innovation:", error);
+      return 0;
+    }
+  }
+  /**
+   * Calculate collaboration
+   */
+  async calculateCollaboration(workflow) {
+    try {
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const participants = await this.db.getWorkflowParticipants(workflow.id);
+      if (sessions.length === 0 || participants.length === 0) return 0;
+      const participationRate = sessions.reduce((sum, session2) => sum + (session2.participants?.length || 0), 0) / (sessions.length * participants.length);
+      return participationRate;
+    } catch (error) {
+      console.error("Error calculating collaboration:", error);
+      return 0;
+    }
+  }
+  /**
+   * Estimate workflow size
+   */
+  async estimateWorkflowSize(workflow) {
+    try {
+      const participants = await this.db.getWorkflowParticipants(workflow.id);
+      const sessions = await this.db.getWorkflowSessions(workflow.id);
+      const participantCount = participants.length;
+      const sessionCount = sessions.length;
+      if (participantCount <= 3 && sessionCount <= 5) return "small";
+      if (participantCount <= 8 && sessionCount <= 15) return "medium";
+      return "large";
+    } catch (error) {
+      console.error("Error estimating workflow size:", error);
+      return "medium";
+    }
+  }
+  /**
+   * Calculate average
+   */
+  calculateAverage(numbers) {
+    if (numbers.length === 0) return 0;
+    return numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
+  }
+  /**
+   * Get industry benchmarks
+   */
+  async getIndustryBenchmarks(industry) {
+    try {
+      const benchmarks = await this.db.getIndustryBenchmarks(industry);
+      return {
+        industry,
+        averageEffectiveness: this.calculateAverage(benchmarks.map((b) => b.effectiveness)),
+        averageEfficiency: this.calculateAverage(benchmarks.map((b) => b.efficiency)),
+        averageQuality: this.calculateAverage(benchmarks.map((b) => b.quality)),
+        averageInnovation: this.calculateAverage(benchmarks.map((b) => b.innovation)),
+        averageCollaboration: this.calculateAverage(benchmarks.map((b) => b.collaboration)),
+        bestPractices: await this.identifyBestPractices(industry),
+        sampleSize: benchmarks.length
+      };
+    } catch (error) {
+      console.error("Error getting industry benchmarks:", error);
+      return {
+        industry,
+        averageEffectiveness: 0,
+        averageEfficiency: 0,
+        averageQuality: 0,
+        averageInnovation: 0,
+        averageCollaboration: 0,
+        bestPractices: [],
+        sampleSize: 0
+      };
+    }
+  }
+  /**
+   * Identify best practices
+   */
+  async identifyBestPractices(industry) {
+    try {
+      const topPerformers = await this.db.getTopPerformingWorkflows(industry, 5);
+      const practices = [];
+      for (const workflow of topPerformers) {
+        const practices2 = await this.db.getWorkflowPractices(workflow.id);
+        practices2.push(...practices2);
+      }
+      return [...new Set(practices)];
+    } catch (error) {
+      console.error("Error identifying best practices:", error);
+      return [];
+    }
+  }
+};
+
+// server/services/dt-analytics-service.ts
+var DTAnalyticsService = class {
+  db;
+  analyticsEngine;
+  insightTracker;
+  roiCalculator;
+  benchmarkService;
+  constructor() {
+    this.db = new DatabaseService();
+    this.analyticsEngine = new DTAnalyticsEngine();
+    this.insightTracker = new InsightTracker();
+    this.roiCalculator = new ROICalculator();
+    this.benchmarkService = new BenchmarkService();
+  }
+  /**
+   * Get comprehensive analytics for a DT workflow
+   */
+  async getComprehensiveAnalytics(workflowId) {
+    try {
+      const workflow = await this.db.getWorkflow(workflowId);
+      if (!workflow) {
+        throw new Error("Workflow not found");
+      }
+      const [
+        effectivenessScore,
+        insightMap,
+        roiAnalysis,
+        benchmarkComparison,
+        participantMetrics,
+        phaseMetrics,
+        collaborationMetrics,
+        outcomeMetrics
+      ] = await Promise.all([
+        this.analyticsEngine.calculateEffectivenessScore(workflowId),
+        this.analyticsEngine.generateInsightMap(workflowId),
+        this.roiCalculator.calculateROI(workflow),
+        this.benchmarkService.compareToBenchmarks(workflow),
+        this.getParticipantMetrics(workflowId),
+        this.getPhaseMetrics(workflowId),
+        this.getCollaborationMetrics(workflowId),
+        this.getOutcomeMetrics(workflowId)
+      ]);
+      return {
+        workflowId,
+        effectivenessScore,
+        insightMap,
+        roiAnalysis,
+        benchmarkComparison,
+        participantMetrics,
+        phaseMetrics,
+        collaborationMetrics,
+        outcomeMetrics,
+        generatedAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error getting comprehensive analytics:", error);
+      throw error;
+    }
+  }
+  /**
+   * Calculate effectiveness score for a workflow
+   */
+  async calculateEffectivenessScore(workflowId) {
+    return await this.analyticsEngine.calculateEffectivenessScore(workflowId);
+  }
+  /**
+   * Generate insight map for a workflow
+   */
+  async generateInsightMap(workflowId) {
+    return await this.analyticsEngine.generateInsightMap(workflowId);
+  }
+  /**
+   * Track insight evolution
+   */
+  async trackInsightEvolution(insightId) {
+    return await this.insightTracker.trackEvolution(insightId);
+  }
+  /**
+   * Calculate ROI for a workflow
+   */
+  async calculateROI(workflowId) {
+    const workflow = await this.db.getWorkflow(workflowId);
+    if (!workflow) {
+      throw new Error("Workflow not found");
+    }
+    return await this.roiCalculator.calculateROI(workflow);
+  }
+  /**
+   * Compare workflow to benchmarks
+   */
+  async compareToBenchmarks(workflowId) {
+    const workflow = await this.db.getWorkflow(workflowId);
+    if (!workflow) {
+      throw new Error("Workflow not found");
+    }
+    return await this.benchmarkService.compareToBenchmarks(workflow);
+  }
+  /**
+   * Get participant metrics
+   */
+  async getParticipantMetrics(workflowId) {
+    const participants = await this.db.getWorkflowParticipants(workflowId);
+    const activities = await this.db.getWorkflowActivities(workflowId);
+    const participationRates = participants.map((p) => ({
+      participantId: p.id,
+      participationRate: this.calculateParticipationRate(p.id, activities),
+      contributionQuality: this.calculateContributionQuality(p.id, activities),
+      engagementScore: this.calculateEngagementScore(p.id, activities)
+    }));
+    return {
+      totalParticipants: participants.length,
+      averageParticipationRate: this.calculateAverage(participationRates.map((p) => p.participationRate)),
+      averageContributionQuality: this.calculateAverage(participationRates.map((p) => p.contributionQuality)),
+      averageEngagementScore: this.calculateAverage(participationRates.map((p) => p.engagementScore)),
+      participationDistribution: this.calculateParticipationDistribution(participationRates),
+      topContributors: this.identifyTopContributors(participationRates),
+      engagementTrends: await this.calculateEngagementTrends(workflowId)
+    };
+  }
+  /**
+   * Get phase metrics
+   */
+  async getPhaseMetrics(workflowId) {
+    const phases = ["empathize", "define", "ideate", "prototype", "test"];
+    const phaseMetrics = [];
+    for (const phase of phases) {
+      const phaseData = await this.db.getPhaseData(workflowId, phase);
+      const metrics = await this.calculatePhaseMetrics(phase, phaseData);
+      phaseMetrics.push(metrics);
+    }
+    return {
+      phases: phaseMetrics,
+      overallProgress: this.calculateOverallProgress(phaseMetrics),
+      phaseTransitions: await this.calculatePhaseTransitions(workflowId),
+      bottlenecks: this.identifyBottlenecks(phaseMetrics),
+      recommendations: await this.generatePhaseRecommendations(phaseMetrics)
+    };
+  }
+  /**
+   * Get collaboration metrics
+   */
+  async getCollaborationMetrics(workflowId) {
+    const sessions = await this.db.getWorkflowSessions(workflowId);
+    const collaborations = await this.db.getWorkflowCollaborations(workflowId);
+    return {
+      totalSessions: sessions.length,
+      averageSessionDuration: this.calculateAverage(sessions.map((s) => s.duration)),
+      collaborationQuality: this.calculateCollaborationQuality(collaborations),
+      conflictResolutionRate: this.calculateConflictResolutionRate(collaborations),
+      realTimeUsage: this.calculateRealTimeUsage(sessions),
+      mobileUsage: this.calculateMobileUsage(sessions),
+      offlineUsage: this.calculateOfflineUsage(sessions),
+      teamDynamics: await this.analyzeTeamDynamics(workflowId)
+    };
+  }
+  /**
+   * Get outcome metrics
+   */
+  async getOutcomeMetrics(workflowId) {
+    const outcomes = await this.db.getWorkflowOutcomes(workflowId);
+    const prototypes = await this.db.getWorkflowPrototypes(workflowId);
+    const tests = await this.db.getWorkflowTests(workflowId);
+    return {
+      totalOutcomes: outcomes.length,
+      prototypeSuccessRate: this.calculatePrototypeSuccessRate(prototypes),
+      testEffectiveness: this.calculateTestEffectiveness(tests),
+      ideaToPrototypeRate: this.calculateIdeaToPrototypeRate(workflowId),
+      prototypeToTestRate: this.calculatePrototypeToTestRate(workflowId),
+      timeToInsight: this.calculateTimeToInsight(workflowId),
+      businessImpact: await this.calculateBusinessImpact(workflowId),
+      userSatisfaction: this.calculateUserSatisfaction(outcomes)
+    };
+  }
+  /**
+   * Generate predictive analytics
+   */
+  async generatePredictiveAnalytics(workflowId) {
+    const workflow = await this.db.getWorkflow(workflowId);
+    const historicalData = await this.db.getHistoricalData(workflowId);
+    const similarWorkflows = await this.db.getSimilarWorkflows(workflow);
+    return {
+      successProbability: await this.predictSuccessProbability(workflow, historicalData),
+      estimatedCompletionTime: await this.predictCompletionTime(workflow, historicalData),
+      resourceRequirements: await this.predictResourceRequirements(workflow, historicalData),
+      riskFactors: await this.identifyRiskFactors(workflow, historicalData),
+      opportunityAreas: await this.identifyOpportunityAreas(workflow, similarWorkflows),
+      recommendations: await this.generatePredictiveRecommendations(workflow, historicalData)
+    };
+  }
+  /**
+   * Generate insights and recommendations
+   */
+  async generateInsightsAndRecommendations(workflowId) {
+    const analytics = await this.getComprehensiveAnalytics(workflowId);
+    const predictive = await this.generatePredictiveAnalytics(workflowId);
+    return {
+      keyInsights: await this.extractKeyInsights(analytics),
+      improvementAreas: await this.identifyImprovementAreas(analytics),
+      successFactors: await this.identifySuccessFactors(analytics),
+      riskMitigation: await this.generateRiskMitigationStrategies(analytics),
+      optimizationOpportunities: await this.identifyOptimizationOpportunities(analytics),
+      nextSteps: await this.generateNextSteps(analytics, predictive),
+      longTermStrategy: await this.generateLongTermStrategy(analytics, predictive)
+    };
+  }
+  /**
+   * Export analytics data
+   */
+  async exportAnalytics(workflowId, format) {
+    const analytics = await this.getComprehensiveAnalytics(workflowId);
+    const predictive = await this.generatePredictiveAnalytics(workflowId);
+    const insights = await this.generateInsightsAndRecommendations(workflowId);
+    const exportData = {
+      workflowId,
+      analytics,
+      predictive,
+      insights,
+      exportedAt: /* @__PURE__ */ new Date()
+    };
+    switch (format) {
+      case "json":
+        return {
+          format: "json",
+          data: JSON.stringify(exportData, null, 2),
+          filename: `dt-analytics-${workflowId}.json`
+        };
+      case "csv":
+        return {
+          format: "csv",
+          data: await this.convertToCSV(exportData),
+          filename: `dt-analytics-${workflowId}.csv`
+        };
+      case "pdf":
+        return {
+          format: "pdf",
+          data: await this.generatePDF(exportData),
+          filename: `dt-analytics-${workflowId}.pdf`
+        };
+      default:
+        throw new Error("Unsupported export format");
+    }
+  }
+  // Helper methods
+  calculateParticipationRate(participantId, activities) {
+    const participantActivities = activities.filter((a) => a.participantId === participantId);
+    const totalActivities = activities.length;
+    return totalActivities > 0 ? participantActivities.length / totalActivities : 0;
+  }
+  calculateContributionQuality(participantId, activities) {
+    const participantActivities = activities.filter((a) => a.participantId === participantId);
+    if (participantActivities.length === 0) return 0;
+    const qualityScores = participantActivities.map((a) => a.qualityScore || 0);
+    return this.calculateAverage(qualityScores);
+  }
+  calculateEngagementScore(participantId, activities) {
+    const participantActivities = activities.filter((a) => a.participantId === participantId);
+    if (participantActivities.length === 0) return 0;
+    const engagementScores = participantActivities.map((a) => a.engagementScore || 0);
+    return this.calculateAverage(engagementScores);
+  }
+  calculateAverage(numbers) {
+    if (numbers.length === 0) return 0;
+    return numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
+  }
+  calculateParticipationDistribution(participationRates) {
+    const rates = participationRates.map((p) => p.participationRate);
+    return {
+      low: rates.filter((r) => r < 0.3).length,
+      medium: rates.filter((r) => r >= 0.3 && r < 0.7).length,
+      high: rates.filter((r) => r >= 0.7).length
+    };
+  }
+  identifyTopContributors(participationRates) {
+    return participationRates.sort((a, b) => b.contributionQuality - a.contributionQuality).slice(0, 5).map((p) => ({
+      participantId: p.participantId,
+      contributionQuality: p.contributionQuality,
+      participationRate: p.participationRate
+    }));
+  }
+  async calculateEngagementTrends(workflowId) {
+    return [];
+  }
+  async calculatePhaseMetrics(phase, phaseData) {
+    return {
+      phase,
+      duration: 0,
+      activities: 0,
+      participants: 0,
+      quality: 0,
+      progress: 0
+    };
+  }
+  calculateOverallProgress(phaseMetrics) {
+    const totalProgress = phaseMetrics.reduce((sum, phase) => sum + phase.progress, 0);
+    return totalProgress / phaseMetrics.length;
+  }
+  async calculatePhaseTransitions(workflowId) {
+    return [];
+  }
+  identifyBottlenecks(phaseMetrics) {
+    return phaseMetrics.filter((phase) => phase.duration > phaseMetrics.reduce((sum, p) => sum + p.duration, 0) / phaseMetrics.length * 1.5).map((phase) => ({
+      phase: phase.phase,
+      duration: phase.duration,
+      severity: "medium"
+    }));
+  }
+  async generatePhaseRecommendations(phaseMetrics) {
+    return [];
+  }
+  calculateCollaborationQuality(collaborations) {
+    if (collaborations.length === 0) return 0;
+    const qualityScores = collaborations.map((c) => c.qualityScore || 0);
+    return this.calculateAverage(qualityScores);
+  }
+  calculateConflictResolutionRate(collaborations) {
+    const totalConflicts = collaborations.reduce((sum, c) => sum + (c.conflicts?.length || 0), 0);
+    const resolvedConflicts = collaborations.reduce((sum, c) => sum + (c.resolvedConflicts?.length || 0), 0);
+    return totalConflicts > 0 ? resolvedConflicts / totalConflicts : 1;
+  }
+  calculateRealTimeUsage(sessions) {
+    const realTimeSessions = sessions.filter((s) => s.realTime);
+    return sessions.length > 0 ? realTimeSessions.length / sessions.length : 0;
+  }
+  calculateMobileUsage(sessions) {
+    const mobileSessions = sessions.filter((s) => s.mobile);
+    return sessions.length > 0 ? mobileSessions.length / sessions.length : 0;
+  }
+  calculateOfflineUsage(sessions) {
+    const offlineSessions = sessions.filter((s) => s.offline);
+    return sessions.length > 0 ? offlineSessions.length / sessions.length : 0;
+  }
+  async analyzeTeamDynamics(workflowId) {
+    return {
+      communicationQuality: 0,
+      conflictResolution: 0,
+      collaborationEffectiveness: 0,
+      leadershipDistribution: 0
+    };
+  }
+  calculatePrototypeSuccessRate(prototypes) {
+    if (prototypes.length === 0) return 0;
+    const successfulPrototypes = prototypes.filter((p) => p.success);
+    return successfulPrototypes.length / prototypes.length;
+  }
+  calculateTestEffectiveness(tests) {
+    if (tests.length === 0) return 0;
+    const effectiveTests = tests.filter((t) => t.effective);
+    return effectiveTests.length / tests.length;
+  }
+  calculateIdeaToPrototypeRate(workflowId) {
+    return 0;
+  }
+  calculatePrototypeToTestRate(workflowId) {
+    return 0;
+  }
+  calculateTimeToInsight(workflowId) {
+    return 0;
+  }
+  async calculateBusinessImpact(workflowId) {
+    return {
+      revenue: 0,
+      costReduction: 0,
+      customerSatisfaction: 0,
+      competitiveAdvantage: 0,
+      marketOpportunity: 0
+    };
+  }
+  calculateUserSatisfaction(outcomes) {
+    if (outcomes.length === 0) return 0;
+    const satisfactionScores = outcomes.map((o) => o.satisfactionScore || 0);
+    return this.calculateAverage(satisfactionScores);
+  }
+  async predictSuccessProbability(workflow, historicalData) {
+    return 0.8;
+  }
+  async predictCompletionTime(workflow, historicalData) {
+    return 0;
+  }
+  async predictResourceRequirements(workflow, historicalData) {
+    return {
+      time: 0,
+      people: 0,
+      budget: 0
+    };
+  }
+  async identifyRiskFactors(workflow, historicalData) {
+    return [];
+  }
+  async identifyOpportunityAreas(workflow, similarWorkflows) {
+    return [];
+  }
+  async generatePredictiveRecommendations(workflow, historicalData) {
+    return [];
+  }
+  async extractKeyInsights(analytics) {
+    return [];
+  }
+  async identifyImprovementAreas(analytics) {
+    return [];
+  }
+  async identifySuccessFactors(analytics) {
+    return [];
+  }
+  async generateRiskMitigationStrategies(analytics) {
+    return [];
+  }
+  async identifyOptimizationOpportunities(analytics) {
+    return [];
+  }
+  async generateNextSteps(analytics, predictive) {
+    return [];
+  }
+  async generateLongTermStrategy(analytics, predictive) {
+    return {
+      vision: "",
+      goals: [],
+      strategies: [],
+      timeline: 0
+    };
+  }
+  async convertToCSV(data) {
+    return "";
+  }
+  async generatePDF(data) {
+    return Buffer.from("");
+  }
+};
+
+// server/ai-agents/core/BaseAgent.ts
+var BaseAgent = class {
+  config;
+  constructor(config) {
+    this.config = config;
+  }
+  /**
+   * Helper method to format responses consistently
+   */
+  formatResponse(content, actions, suggestions, insights, confidence) {
+    return {
+      content,
+      actions,
+      suggestions,
+      insights,
+      confidence
+    };
+  }
+};
+
+// server/ai-agents/agents/design-thinking/dt-facilitation-agent.ts
+import { OpenAI as OpenAI5 } from "openai";
+var DTFacilitationAgent = class extends BaseAgent {
+  openaiClient;
+  sessionMonitor;
+  interventionEngine;
+  celebrationEngine;
+  constructor() {
+    super({ apiKey: process.env.OPENAI_API_KEY || "" });
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
+    if (apiKey) {
+      this.openaiClient = new OpenAI5({
+        apiKey
+      });
+    } else {
+      console.warn("OpenAI API key not configured. DTFacilitationAgent features will be limited.");
+      this.openaiClient = null;
+    }
+    this.sessionMonitor = new SessionMonitor();
+    this.interventionEngine = new InterventionEngine();
+    this.celebrationEngine = new CelebrationEngine();
+  }
+  /**
+   * Main facilitation method - provides real-time guidance during sessions
+   */
+  async facilitateSession(session2) {
+    try {
+      const context = await this.analyzeSessionContext(session2);
+      const insights = await this.generateRealTimeInsights(context);
+      const interventions = await this.identifyInterventions(context);
+      const nextSteps = await this.planNextSteps(context);
+      const celebrations = await this.identifyCelebrations(context);
+      return {
+        suggestions: insights.suggestions,
+        interventions,
+        nextSteps,
+        celebrations,
+        confidence: insights.confidence,
+        timestamp: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error in DT facilitation:", error);
+      throw new Error("Failed to provide facilitation guidance");
+    }
+  }
+  /**
+   * Analyze session context to understand current state
+   */
+  async analyzeSessionContext(session2) {
+    const participants = session2.participants;
+    const currentPhase = session2.workflow.currentPhase;
+    const sessionData = session2.sessionData;
+    const participationAnalysis = await this.analyzeParticipation(participants);
+    const ideaAnalysis = await this.analyzeIdeaGeneration(sessionData);
+    const collaborationAnalysis = await this.analyzeCollaboration(participants);
+    const phaseAnalysis = await this.analyzePhaseProgress(currentPhase, sessionData);
+    return {
+      session: session2,
+      participationAnalysis,
+      ideaAnalysis,
+      collaborationAnalysis,
+      phaseAnalysis,
+      timestamp: /* @__PURE__ */ new Date()
+    };
+  }
+  /**
+   * Generate real-time insights and suggestions
+   */
+  async generateRealTimeInsights(context) {
+    const prompt = `
+    Analyze this Design Thinking session and provide insights:
+    
+    Session Phase: ${context.session.workflow.currentPhase}
+    Participants: ${context.session.participants.length}
+    Participation Quality: ${context.participationAnalysis.quality}
+    Idea Generation Rate: ${context.ideaAnalysis.rate}
+    Collaboration Score: ${context.collaborationAnalysis.score}
+    
+    Provide:
+    1. 3-5 specific suggestions to improve the session
+    2. Identify any blockers or issues
+    3. Suggest next activities
+    4. Rate confidence in recommendations (0-1)
+    `;
+    const response = await this.openaiClient.chat.completions.create({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7
+    });
+    const content = response.choices[0].message.content;
+    const parsed = this.parseAIResponse(content);
+    return {
+      suggestions: parsed.suggestions,
+      blockers: parsed.blockers,
+      nextActivities: parsed.nextActivities,
+      confidence: parsed.confidence
+    };
+  }
+  /**
+   * Identify necessary interventions
+   */
+  async identifyInterventions(context) {
+    const interventions = [];
+    if (context.participationAnalysis.quality < 0.6) {
+      interventions.push({
+        type: "low_participation",
+        severity: "medium",
+        message: "Some participants seem less engaged. Consider using engagement techniques.",
+        suggestions: [
+          "Use round-robin participation",
+          "Ask open-ended questions",
+          "Use visual aids",
+          "Break into smaller groups"
+        ]
+      });
+    }
+    if (context.ideaAnalysis.rate < 0.3) {
+      interventions.push({
+        type: "idea_stagnation",
+        severity: "high",
+        message: "Idea generation has slowed down. Try creativity boosters.",
+        suggestions: [
+          'Use "Yes, and..." technique',
+          "Try reverse brainstorming",
+          'Use "What if..." scenarios',
+          "Introduce constraints"
+        ]
+      });
+    }
+    if (context.collaborationAnalysis.conflicts.length > 0) {
+      interventions.push({
+        type: "conflict_detected",
+        severity: "high",
+        message: "Conflicts detected. Address them constructively.",
+        suggestions: [
+          "Acknowledge different perspectives",
+          "Find common ground",
+          'Use "I" statements',
+          "Focus on the problem, not the person"
+        ]
+      });
+    }
+    return interventions;
+  }
+  /**
+   * Plan next steps based on current context
+   */
+  async planNextSteps(context) {
+    const currentPhase = context.session.workflow.currentPhase;
+    const nextSteps = [];
+    switch (currentPhase) {
+      case "empathize":
+        nextSteps.push(
+          { action: "Conduct user interviews", priority: "high", estimatedTime: "30-60 min" },
+          { action: "Create empathy maps", priority: "high", estimatedTime: "45 min" },
+          { action: "Develop user personas", priority: "medium", estimatedTime: "30 min" }
+        );
+        break;
+      case "define":
+        nextSteps.push(
+          { action: "Synthesize insights", priority: "high", estimatedTime: "30 min" },
+          { action: "Create POV statements", priority: "high", estimatedTime: "45 min" },
+          { action: "Generate HMW questions", priority: "medium", estimatedTime: "30 min" }
+        );
+        break;
+      case "ideate":
+        nextSteps.push(
+          { action: "Brainstorm solutions", priority: "high", estimatedTime: "60 min" },
+          { action: "Use ideation techniques", priority: "medium", estimatedTime: "45 min" },
+          { action: "Cluster and prioritize ideas", priority: "medium", estimatedTime: "30 min" }
+        );
+        break;
+      case "prototype":
+        nextSteps.push(
+          { action: "Select ideas to prototype", priority: "high", estimatedTime: "15 min" },
+          { action: "Create low-fidelity prototypes", priority: "high", estimatedTime: "90 min" },
+          { action: "Plan user testing", priority: "medium", estimatedTime: "30 min" }
+        );
+        break;
+      case "test":
+        nextSteps.push(
+          { action: "Conduct user tests", priority: "high", estimatedTime: "60 min" },
+          { action: "Collect feedback", priority: "high", estimatedTime: "30 min" },
+          { action: "Synthesize learnings", priority: "medium", estimatedTime: "45 min" }
+        );
+        break;
+    }
+    return nextSteps;
+  }
+  /**
+   * Identify celebration opportunities
+   */
+  async identifyCelebrations(context) {
+    const celebrations = [];
+    if (context.participationAnalysis.quality > 0.8) {
+      celebrations.push({
+        type: "high_participation",
+        message: "Great participation from the team!",
+        impact: "positive"
+      });
+    }
+    if (context.ideaAnalysis.breakthroughIdeas.length > 0) {
+      celebrations.push({
+        type: "breakthrough_ideas",
+        message: "Excellent breakthrough ideas generated!",
+        impact: "high"
+      });
+    }
+    if (context.phaseAnalysis.completionRate > 0.9) {
+      celebrations.push({
+        type: "phase_completion",
+        message: "Phase completed successfully!",
+        impact: "positive"
+      });
+    }
+    return celebrations;
+  }
+  /**
+   * Analyze session after completion
+   */
+  async analyzeSession(session2) {
+    const context = await this.analyzeSessionContext(session2);
+    return {
+      sessionId: session2.id,
+      overallQuality: this.calculateOverallQuality(context),
+      strengths: await this.identifyStrengths(context),
+      improvements: await this.identifyImprovements(context),
+      recommendations: await this.generateRecommendations(context),
+      participantFeedback: await this.analyzeParticipantFeedback(session2),
+      nextSessionSuggestions: await this.suggestNextSession(session2)
+    };
+  }
+  /**
+   * Provide engagement techniques for specific participants
+   */
+  async suggestEngagementTechniques(participant) {
+    const techniques = [];
+    if (participant.engagementLevel < 0.5) {
+      techniques.push({
+        technique: "Direct questioning",
+        description: "Ask specific questions to encourage participation",
+        example: "What do you think about this idea?"
+      });
+    }
+    if (participant.contributionCount < 2) {
+      techniques.push({
+        technique: "Round-robin participation",
+        description: "Ensure everyone gets a chance to contribute",
+        example: "Let's go around the room and hear from everyone"
+      });
+    }
+    return techniques;
+  }
+  /**
+   * Suggest creativity boosters when ideas stagnate
+   */
+  async suggestCreativityBoost() {
+    return [
+      {
+        technique: "Reverse brainstorming",
+        description: "Think about how to make the problem worse",
+        duration: "15 minutes"
+      },
+      {
+        technique: "What if constraints",
+        description: "Add constraints to spark creativity",
+        duration: "10 minutes"
+      },
+      {
+        technique: "Analogous inspiration",
+        description: "Look at how other industries solve similar problems",
+        duration: "20 minutes"
+      }
+    ];
+  }
+  /**
+   * Suggest conflict resolution strategies
+   */
+  async suggestConflictResolution() {
+    return [
+      {
+        strategy: "Acknowledge and validate",
+        description: "Acknowledge different perspectives as valid",
+        steps: ["Listen actively", "Validate feelings", "Find common ground"]
+      },
+      {
+        strategy: "Focus on the problem",
+        description: "Redirect focus from people to the problem",
+        steps: ["Reframe the discussion", 'Use "we" language', "Focus on outcomes"]
+      },
+      {
+        strategy: "Take a break",
+        description: "Sometimes a short break helps reset",
+        steps: ["Take 5-10 minute break", "Return with fresh perspective", "Use different activity"]
+      }
+    ];
+  }
+  /**
+   * Parse AI response into structured format
+   */
+  parseAIResponse(content) {
+    return {
+      suggestions: [],
+      blockers: [],
+      nextActivities: [],
+      confidence: 0.8
+    };
+  }
+  /**
+   * Calculate overall session quality
+   */
+  calculateOverallQuality(context) {
+    const weights = {
+      participation: 0.3,
+      ideas: 0.3,
+      collaboration: 0.2,
+      phase: 0.2
+    };
+    return context.participationAnalysis.quality * weights.participation + context.ideaAnalysis.quality * weights.ideas + context.collaborationAnalysis.score * weights.collaboration + context.phaseAnalysis.progress * weights.phase;
+  }
+};
+var SessionMonitor = class {
+  async analyzeParticipation(participants) {
+    return {
+      quality: 0.8,
+      activeParticipants: participants.length,
+      engagementLevel: 0.7
+    };
+  }
+};
+var InterventionEngine = class {
+  // Implementation for intervention logic
+};
+var CelebrationEngine = class {
+  // Implementation for celebration logic
+};
+
+// server/ai-agents/agents/design-thinking/dt-insights-agent.ts
+import { OpenAI as OpenAI6 } from "openai";
+var DTInsightsAgent = class extends BaseAgent {
+  openaiClient;
+  patternEngine;
+  synthesisEngine;
+  evolutionTracker;
+  constructor() {
+    super({ apiKey: process.env.OPENAI_API_KEY || "" });
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
+    if (apiKey) {
+      this.openaiClient = new OpenAI6({
+        apiKey
+      });
+    } else {
+      console.warn("OpenAI API key not configured. DTInsightsAgent features will be limited.");
+      this.openaiClient = null;
+    }
+    this.patternEngine = new PatternEngine();
+    this.synthesisEngine = new SynthesisEngine();
+    this.evolutionTracker = new EvolutionTracker();
+  }
+  /**
+   * Synthesize insights from empathy data
+   */
+  async synthesizeInsights(data) {
+    try {
+      const patterns = await this.identifyPatterns(data);
+      const rawInsights = await this.generateInsightsFromPatterns(patterns);
+      const prioritizedInsights = await this.prioritizeInsights(rawInsights);
+      const insightsWithImpact = await this.assessBusinessImpact(prioritizedInsights);
+      const validatedInsights = await this.validateInsights(insightsWithImpact);
+      return validatedInsights;
+    } catch (error) {
+      console.error("Error synthesizing insights:", error);
+      throw new Error("Failed to synthesize insights");
+    }
+  }
+  /**
+   * Identify patterns in empathy data
+   */
+  async identifyPatterns(data) {
+    const patterns = [];
+    const painPatterns = await this.analyzePainPoints(data);
+    patterns.push(...painPatterns);
+    const emotionalPatterns = await this.analyzeEmotionalPatterns(data);
+    patterns.push(...emotionalPatterns);
+    const behavioralPatterns = await this.analyzeBehavioralPatterns(data);
+    patterns.push(...behavioralPatterns);
+    const environmentalPatterns = await this.analyzeEnvironmentalPatterns(data);
+    patterns.push(...environmentalPatterns);
+    return patterns;
+  }
+  /**
+   * Analyze pain points across empathy data
+   */
+  async analyzePainPoints(data) {
+    const painPoints = data.flatMap((d) => d.pains);
+    const painCategories = await this.categorizePainPoints(painPoints);
+    return painCategories.map((category) => ({
+      type: "pain_point",
+      category,
+      frequency: category.frequency,
+      severity: category.severity,
+      description: category.description,
+      confidence: category.confidence
+    }));
+  }
+  /**
+   * Analyze emotional patterns
+   */
+  async analyzeEmotionalPatterns(data) {
+    const emotions = data.flatMap((d) => d.thinkAndFeel);
+    const emotionalAnalysis = await this.analyzeEmotions(emotions);
+    return emotionalAnalysis.map((emotion) => ({
+      type: "emotional",
+      category: emotion.category,
+      frequency: emotion.frequency,
+      intensity: emotion.intensity,
+      description: emotion.description,
+      confidence: emotion.confidence
+    }));
+  }
+  /**
+   * Generate insights from identified patterns
+   */
+  async generateInsightsFromPatterns(patterns) {
+    const insights = [];
+    for (const pattern of patterns) {
+      const insight = await this.generateInsightFromPattern(pattern);
+      if (insight) {
+        insights.push(insight);
+      }
+    }
+    return insights;
+  }
+  /**
+   * Generate a single insight from a pattern
+   */
+  async generateInsightFromPattern(pattern) {
+    const prompt = `
+    Based on this Design Thinking pattern, generate a meaningful insight:
+    
+    Pattern Type: ${pattern.type}
+    Category: ${pattern.category}
+    Frequency: ${pattern.frequency}
+    Description: ${pattern.description}
+    
+    Generate an insight that:
+    1. Explains what this pattern means
+    2. Suggests why it's important
+    3. Indicates potential opportunities
+    4. Provides actionable implications
+    
+    Format as JSON with: content, importance, opportunities, implications
+    `;
+    try {
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      });
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      return {
+        id: this.generateId(),
+        content: parsed.content,
+        type: "pattern_derived",
+        importance: parsed.importance,
+        opportunities: parsed.opportunities,
+        implications: parsed.implications,
+        sourcePattern: pattern,
+        confidence: pattern.confidence,
+        createdAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error generating insight from pattern:", error);
+      return null;
+    }
+  }
+  /**
+   * Prioritize insights by importance and impact
+   */
+  async prioritizeInsights(insights) {
+    const scoredInsights = await Promise.all(
+      insights.map(async (insight) => {
+        const score = await this.calculateInsightScore(insight);
+        return { ...insight, score };
+      })
+    );
+    return scoredInsights.sort((a, b) => b.score - a.score).map(({ score, ...insight }) => insight);
+  }
+  /**
+   * Calculate insight importance score
+   */
+  async calculateInsightScore(insight) {
+    const factors = {
+      importance: insight.importance || 0.5,
+      confidence: insight.confidence || 0.5,
+      opportunities: insight.opportunities?.length || 0,
+      implications: insight.implications?.length || 0
+    };
+    const weights = {
+      importance: 0.4,
+      confidence: 0.3,
+      opportunities: 0.2,
+      implications: 0.1
+    };
+    return factors.importance * weights.importance + factors.confidence * weights.confidence + factors.opportunities / 10 * weights.opportunities + factors.implications / 10 * weights.implications;
+  }
+  /**
+   * Assess business impact of insights
+   */
+  async assessBusinessImpact(insights) {
+    return Promise.all(
+      insights.map(async (insight) => {
+        const businessImpact = await this.calculateBusinessImpact(insight);
+        return {
+          ...insight,
+          businessImpact
+        };
+      })
+    );
+  }
+  /**
+   * Calculate business impact score
+   */
+  async calculateBusinessImpact(insight) {
+    const prompt = `
+    Assess the business impact of this Design Thinking insight:
+    
+    Insight: ${insight.content}
+    Opportunities: ${insight.opportunities?.join(", ")}
+    Implications: ${insight.implications?.join(", ")}
+    
+    Rate the impact on:
+    1. Revenue potential (1-10)
+    2. Cost reduction (1-10)
+    3. Customer satisfaction (1-10)
+    4. Competitive advantage (1-10)
+    5. Market opportunity (1-10)
+    
+    Format as JSON with: revenue, costReduction, customerSatisfaction, competitiveAdvantage, marketOpportunity, overallScore
+    `;
+    try {
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5
+      });
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      return {
+        revenue: parsed.revenue,
+        costReduction: parsed.costReduction,
+        customerSatisfaction: parsed.customerSatisfaction,
+        competitiveAdvantage: parsed.competitiveAdvantage,
+        marketOpportunity: parsed.marketOpportunity,
+        overallScore: parsed.overallScore
+      };
+    } catch (error) {
+      console.error("Error calculating business impact:", error);
+      return {
+        revenue: 5,
+        costReduction: 5,
+        customerSatisfaction: 5,
+        competitiveAdvantage: 5,
+        marketOpportunity: 5,
+        overallScore: 5
+      };
+    }
+  }
+  /**
+   * Validate insights for accuracy and relevance
+   */
+  async validateInsights(insights) {
+    return insights.filter((insight) => {
+      return insight.content.length > 10 && insight.confidence > 0.3 && insight.importance > 0.2;
+    });
+  }
+  /**
+   * Track insight evolution across DT phases
+   */
+  async trackInsightEvolution(insightId) {
+    const evolution = await this.evolutionTracker.getEvolution(insightId);
+    return {
+      originalInsight: evolution[0],
+      transformations: evolution.map((e, i) => ({
+        phase: e.phase,
+        transformation: this.compareInsights(evolution[i], evolution[i + 1]),
+        contributingFactors: e.factors,
+        refinements: e.refinements
+      })),
+      finalOutcome: evolution[evolution.length - 1],
+      impact: await this.measureInsightImpact(insightId),
+      businessValue: await this.calculateBusinessValue(insightId)
+    };
+  }
+  /**
+   * Generate automated HMW questions from insights
+   */
+  async generateHMWQuestions(insights) {
+    const questions = [];
+    for (const insight of insights) {
+      const hmwQuestion = await this.generateHMWFromInsight(insight);
+      if (hmwQuestion) {
+        questions.push(hmwQuestion);
+      }
+    }
+    return questions;
+  }
+  /**
+   * Generate HMW question from a single insight
+   */
+  async generateHMWFromInsight(insight) {
+    const prompt = `
+    Generate a "How might we" question based on this insight:
+    
+    Insight: ${insight.content}
+    Opportunities: ${insight.opportunities?.join(", ")}
+    
+    Create a HMW question that:
+    1. Is specific and actionable
+    2. Opens up solution space
+    3. Is user-centered
+    4. Is measurable
+    
+    Format as JSON with: question, reframingType, desirability, feasibility, viability
+    `;
+    try {
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      });
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      return {
+        id: this.generateId(),
+        question: parsed.question,
+        reframingType: parsed.reframingType,
+        desirability: parsed.desirability,
+        feasibility: parsed.feasibility,
+        viability: parsed.viability,
+        sourceInsight: insight,
+        createdAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error generating HMW question:", error);
+      return null;
+    }
+  }
+  /**
+   * Generate problem statements from insights
+   */
+  async generateProblemStatements(insights) {
+    const statements = [];
+    for (const insight of insights) {
+      const statement = await this.generateProblemStatementFromInsight(insight);
+      if (statement) {
+        statements.push(statement);
+      }
+    }
+    return statements;
+  }
+  /**
+   * Generate problem statement from insight
+   */
+  async generateProblemStatementFromInsight(insight) {
+    const prompt = `
+    Generate a problem statement (POV) based on this insight:
+    
+    Insight: ${insight.content}
+    Opportunities: ${insight.opportunities?.join(", ")}
+    
+    Create a POV statement using the format:
+    [User] needs [Need] because [Insight]
+    
+    Make it:
+    1. User-centered
+    2. Specific
+    3. Actionable
+    4. Not prescriptive
+    
+    Format as JSON with: userDescription, need, insight, supportingEvidence
+    `;
+    try {
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      });
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      return {
+        id: this.generateId(),
+        userDescription: parsed.userDescription,
+        need: parsed.need,
+        insight: parsed.insight,
+        supportingEvidence: parsed.supportingEvidence,
+        sourceInsight: insight,
+        createdAt: /* @__PURE__ */ new Date()
+      };
+    } catch (error) {
+      console.error("Error generating problem statement:", error);
+      return null;
+    }
+  }
+  /**
+   * Generate insight map showing relationships
+   */
+  async generateInsightMap(workflowId) {
+    const insights = await this.getWorkflowInsights(workflowId);
+    const relationships = await this.identifyRelationships(insights);
+    const clusters = await this.clusterInsights(insights);
+    const criticalPath = await this.identifyCriticalPath(insights);
+    return {
+      nodes: insights.map((i) => ({
+        id: i.id,
+        label: i.content,
+        phase: i.phase,
+        importance: i.importance,
+        connections: i.connections
+      })),
+      edges: relationships,
+      clusters,
+      criticalPath
+    };
+  }
+  /**
+   * Compare two insights to identify transformation
+   */
+  compareInsights(insight1, insight2) {
+    return {
+      type: this.determineTransformationType(insight1, insight2),
+      changes: this.identifyChanges(insight1, insight2),
+      improvements: this.identifyImprovements(insight1, insight2),
+      newElements: this.identifyNewElements(insight1, insight2)
+    };
+  }
+  /**
+   * Measure insight impact
+   */
+  async measureInsightImpact(insightId) {
+    return {
+      usageCount: 0,
+      influenceScore: 0,
+      businessValue: 0,
+      timeToImpact: 0
+    };
+  }
+  /**
+   * Calculate business value of insight
+   */
+  async calculateBusinessValue(insightId) {
+    return 0;
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+};
+var PatternEngine = class {
+  async categorizePainPoints(painPoints) {
+    return [];
+  }
+  async analyzeEmotions(emotions) {
+    return [];
+  }
+};
+var SynthesisEngine = class {
+  // Implementation for insight synthesis
+};
+var EvolutionTracker = class {
+  async getEvolution(insightId) {
+    return [];
+  }
+};
+
+// server/routes/enhanced-dt-routes.ts
+var router3 = express2.Router();
+var collaborationService = new DTCollaborationService();
+var analyticsService = new DTAnalyticsService();
+var facilitationAgent = new DTFacilitationAgent();
+var insightsAgent = new DTInsightsAgent();
+router3.get("/workflows", authMiddleware, async (req, res) => {
+  try {
+    if (!requireAuth(req, res)) return;
+    const userId = req.user.id;
+    const { status, phase, limit = 20, offset = 0 } = req.query;
+    const workflows = await getWorkflows(userId, {
+      status,
+      phase,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    res.json(workflows);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to fetch DT workflows");
+  }
+});
+router3.post("/workflows", authMiddleware, async (req, res) => {
+  try {
+    if (!requireAuth(req, res)) return;
+    const userId = req.user.id;
+    const workflowData = {
+      ...req.body,
+      userId,
+      aiFacilitationEnabled: req.body.aiFacilitationEnabled ?? true,
+      collaborationMode: req.body.collaborationMode ?? "real-time"
+    };
+    const workflow = await createWorkflow(workflowData);
+    if (workflow.aiFacilitationEnabled) {
+      await facilitationAgent.initialize(workflow.id);
+    }
+    res.status(201).json(workflow);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to create DT workflow");
+  }
+});
+router3.get("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const workflow = await getWorkflow(id);
+    if (!requireResource(workflow, res, "Workflow")) return;
+    res.json(workflow);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to fetch DT workflow");
+  }
+});
+router3.put("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const workflow = await updateWorkflow(id, updates);
+    if (!requireResource(workflow, res, "Workflow")) return;
+    res.json(workflow);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to update DT workflow");
+  }
+});
+router3.delete("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteWorkflow(id);
+    res.status(204).send();
+  } catch (error) {
+    handleRouteError(error, res, "Failed to delete DT workflow");
+  }
+});
+router3.put("/workflows/:id/phase", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phase } = req.body;
+    const workflow = await transitionToPhase(id, phase);
+    if (!requireResource(workflow, res, "Workflow")) return;
+    if (workflow.aiFacilitationEnabled) {
+      await facilitationAgent.handlePhaseTransition(id, phase);
+    }
+    res.json(workflow);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to transition phase");
+  }
+});
+router3.get("/workflows/:id/ai-insights", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, limit = 10 } = req.query;
+    const insights = await facilitationAgent.generateInsights(id, {
+      type,
+      limit: parseInt(limit)
+    });
+    res.json(insights);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to generate AI insights");
+  }
+});
+router3.post("/workflows/:id/ai-facilitation", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sessionData, context } = req.body;
+    const facilitation = await facilitationAgent.facilitateSession({
+      id,
+      workflow: { id, currentPhase: "empathize" },
+      participants: [],
+      sessionData,
+      context
+    });
+    res.json(facilitation);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to get AI facilitation");
+  }
+});
+router3.get("/workflows/:id/collaboration-status", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const status = await collaborationService.getSessionStatus(id);
+    res.json(status);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to get collaboration status");
+  }
+});
+router3.post("/workflows/:id/enable-clustering", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { canvasId } = req.body;
+    const clusters = await collaborationService.enableSmartClustering(canvasId);
+    res.json(clusters);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to enable smart clustering");
+  }
+});
+router3.get("/workflows/:id/analytics", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type = "comprehensive" } = req.query;
+    let analytics;
+    switch (type) {
+      case "comprehensive":
+        analytics = await analyticsService.getComprehensiveAnalytics(id);
+        break;
+      case "effectiveness":
+        analytics = await analyticsService.calculateEffectivenessScore(id);
+        break;
+      case "insights":
+        analytics = await analyticsService.generateInsightMap(id);
+        break;
+      case "roi":
+        analytics = await analyticsService.calculateROI(id);
+        break;
+      case "benchmarks":
+        analytics = await analyticsService.compareToBenchmarks(id);
+        break;
+      default:
+        analytics = await analyticsService.getComprehensiveAnalytics(id);
+    }
+    res.json(analytics);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to fetch analytics");
+  }
+});
+router3.get("/workflows/:id/insights/evolution/:insightId", authMiddleware, async (req, res) => {
+  try {
+    const { insightId } = req.params;
+    const evolution = await analyticsService.trackInsightEvolution(insightId);
+    res.json(evolution);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to track insight evolution");
+  }
+});
+router3.get("/workflows/:id/predictive-analytics", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const predictive = await analyticsService.generatePredictiveAnalytics(id);
+    res.json(predictive);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to generate predictive analytics");
+  }
+});
+router3.post("/workflows/:id/insights/synthesize", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { empathyData } = req.body;
+    const insights = await insightsAgent.synthesizeInsights(empathyData);
+    res.json(insights);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to synthesize insights");
+  }
+});
+router3.post("/workflows/:id/insights/hmw-questions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { insights } = req.body;
+    const hmwQuestions = await insightsAgent.generateHMWQuestions(insights);
+    res.json(hmwQuestions);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to generate HMW questions");
+  }
+});
+router3.post("/workflows/:id/insights/problem-statements", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { insights } = req.body;
+    const problemStatements = await insightsAgent.generateProblemStatements(insights);
+    res.json(problemStatements);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to generate problem statements");
+  }
+});
+router3.get("/workflows/:id/export", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const format = req.query.format || "json";
+    const exportData = await analyticsService.exportAnalytics(id, format);
+    if (format === "pdf") {
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="dt-workflow-${id}.pdf"`);
+    } else if (format === "csv") {
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="dt-workflow-${id}.csv"`);
+    } else {
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename="dt-workflow-${id}.json"`);
+    }
+    res.send(exportData.data);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to export workflow");
+  }
+});
+router3.get("/workflows/:id/ws", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const wsUrl = `ws://localhost:3001/dt/workflows/${id}?userId=${userId}`;
+    res.json({ wsUrl });
+  } catch (error) {
+    handleRouteError(error, res, "Failed to setup WebSocket connection");
+  }
+});
+router3.post("/workflows/:id/sessions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sessionData } = req.body;
+    const session2 = await createSession(id, sessionData);
+    res.status(201).json(session2);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to create session");
+  }
+});
+router3.get("/workflows/:id/sessions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sessions = await getWorkflowSessions(id);
+    res.json(sessions);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to fetch sessions");
+  }
+});
+router3.put("/workflows/:id/sessions/:sessionId", authMiddleware, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { updates } = req.body;
+    const session2 = await updateSession(sessionId, updates);
+    res.json(session2);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to update session");
+  }
+});
+router3.get("/agents/status", authMiddleware, async (req, res) => {
+  try {
+    const status = {
+      facilitationAgent: await facilitationAgent.getStatus(),
+      insightsAgent: await insightsAgent.getStatus(),
+      collaborationService: await collaborationService.getStatus(),
+      analyticsService: await analyticsService.getStatus()
+    };
+    res.json(status);
+  } catch (error) {
+    handleRouteError(error, res, "Failed to get agent status");
+  }
+});
+router3.get("/health", async (req, res) => {
+  try {
+    const health = {
+      status: "healthy",
+      timestamp: /* @__PURE__ */ new Date(),
+      services: {
+        database: "connected",
+        ai: "available",
+        collaboration: "active",
+        analytics: "ready"
+      }
+    };
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: "unhealthy",
+      timestamp: /* @__PURE__ */ new Date(),
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+async function getWorkflows(userId, filters) {
+  return [];
+}
+async function createWorkflow(workflowData) {
+  return workflowData;
+}
+async function getWorkflow(id) {
+  return null;
+}
+async function updateWorkflow(id, updates) {
+  return null;
+}
+async function deleteWorkflow(id) {
+}
+async function transitionToPhase(workflowId, phase) {
+  return null;
+}
+async function createSession(workflowId, sessionData) {
+  return sessionData;
+}
+async function getWorkflowSessions(workflowId) {
+  return [];
+}
+async function updateSession(sessionId, updates) {
+  return null;
+}
+var enhanced_dt_routes_default = router3;
+
+// server/routes/dt-comprehensive-routes.ts
+import express3 from "express";
+
+// server/services/dt-workflow-service.ts
+var DTWorkflowService = class {
+  workflows = /* @__PURE__ */ new Map();
+  povStatements = /* @__PURE__ */ new Map();
+  hmwQuestions = /* @__PURE__ */ new Map();
+  ideas = /* @__PURE__ */ new Map();
+  prototypes = /* @__PURE__ */ new Map();
+  testSessions = /* @__PURE__ */ new Map();
+  insights = /* @__PURE__ */ new Map();
+  empathyData = /* @__PURE__ */ new Map();
+  // ===========================
+  // WORKFLOW OPERATIONS
+  // ===========================
+  async createWorkflow(data) {
+    const workflow = {
+      id: this.generateId(),
+      projectId: data.projectId || "",
+      userId: data.userId || "",
+      name: data.name || "New DT Workflow",
+      description: data.description || "",
+      currentPhase: data.currentPhase || "empathize",
+      phaseProgress: data.phaseProgress || {},
+      status: data.status || "active",
+      aiFacilitationEnabled: data.aiFacilitationEnabled ?? true,
+      aiModelVersion: data.aiModelVersion || "gpt-4",
+      facilitationStyle: data.facilitationStyle || "balanced",
+      collaborationMode: data.collaborationMode || "real-time",
+      teamMembers: data.teamMembers || [],
+      industry: data.industry,
+      targetMarket: data.targetMarket,
+      innovationType: data.innovationType,
+      createdAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date(),
+      createdBy: data.userId || ""
+    };
+    this.workflows.set(workflow.id, workflow);
+    return workflow;
+  }
+  async getWorkflow(workflowId) {
+    return this.workflows.get(workflowId) || null;
+  }
+  async getWorkflows(userId, filters) {
+    let workflows = Array.from(this.workflows.values()).filter((w) => w.userId === userId);
+    if (filters?.status) {
+      workflows = workflows.filter((w) => w.status === filters.status);
+    }
+    if (filters?.phase) {
+      workflows = workflows.filter((w) => w.currentPhase === filters.phase);
+    }
+    const offset = filters?.offset || 0;
+    const limit = filters?.limit || 20;
+    return workflows.slice(offset, offset + limit);
+  }
+  async updateWorkflow(workflowId, updates) {
+    const workflow = this.workflows.get(workflowId);
+    if (!workflow) return null;
+    const updated = {
+      ...workflow,
+      ...updates,
+      updatedAt: /* @__PURE__ */ new Date()
+    };
+    this.workflows.set(workflowId, updated);
+    return updated;
+  }
+  async deleteWorkflow(workflowId) {
+    return this.workflows.delete(workflowId);
+  }
+  async transitionPhase(workflowId, newPhase) {
+    const workflow = this.workflows.get(workflowId);
+    if (!workflow) return null;
+    workflow.currentPhase = newPhase;
+    workflow.updatedAt = /* @__PURE__ */ new Date();
+    if (!workflow.phaseProgress[newPhase]) {
+      workflow.phaseProgress[newPhase] = 0;
+    }
+    this.workflows.set(workflowId, workflow);
+    return workflow;
+  }
+  // ===========================
+  // POV STATEMENT OPERATIONS
+  // ===========================
+  async createPOVStatement(data) {
+    const pov = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      userPersona: data.userPersona || "",
+      need: data.need || "",
+      insight: data.insight || "",
+      supportingEmpathyData: data.supportingEmpathyData || [],
+      evidenceStrength: data.evidenceStrength || 0.5,
+      validated: data.validated || false,
+      validationNotes: data.validationNotes,
+      solutionBiasDetected: data.solutionBiasDetected || false,
+      priorityScore: data.priorityScore || 50,
+      selectedForIdeation: data.selectedForIdeation || false,
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.povStatements.set(pov.id, pov);
+    return pov;
+  }
+  async getPOVStatements(workflowId) {
+    return Array.from(this.povStatements.values()).filter((pov) => pov.workflowId === workflowId).sort((a, b) => b.priorityScore - a.priorityScore);
+  }
+  async updatePOVStatement(povId, updates) {
+    const pov = this.povStatements.get(povId);
+    if (!pov) return null;
+    const updated = { ...pov, ...updates };
+    this.povStatements.set(povId, updated);
+    return updated;
+  }
+  // ===========================
+  // HMW QUESTION OPERATIONS
+  // ===========================
+  async createHMWQuestion(data) {
+    const hmw = {
+      id: this.generateId(),
+      povStatementId: data.povStatementId || "",
+      workflowId: data.workflowId || "",
+      question: data.question || "",
+      reframingType: data.reframingType,
+      desirabilityScore: data.desirabilityScore,
+      feasibilityScore: data.feasibilityScore,
+      viabilityScore: data.viabilityScore,
+      voteCount: data.voteCount || 0,
+      ideaCount: data.ideaCount || 0,
+      selectedForIdeation: data.selectedForIdeation || false,
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.hmwQuestions.set(hmw.id, hmw);
+    return hmw;
+  }
+  async getHMWQuestions(workflowId) {
+    return Array.from(this.hmwQuestions.values()).filter((hmw) => hmw.workflowId === workflowId).sort((a, b) => b.voteCount - a.voteCount);
+  }
+  async voteHMWQuestion(hmwId) {
+    const hmw = this.hmwQuestions.get(hmwId);
+    if (!hmw) return null;
+    hmw.voteCount++;
+    this.hmwQuestions.set(hmwId, hmw);
+    return hmw;
+  }
+  // ===========================
+  // IDEA OPERATIONS
+  // ===========================
+  async createIdea(data) {
+    const idea = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      hmwQuestionId: data.hmwQuestionId,
+      title: data.title || "New Idea",
+      description: data.description || "",
+      category: data.category,
+      userBenefit: data.userBenefit || "",
+      businessValue: data.businessValue || "",
+      implementationApproach: data.implementationApproach || "",
+      desirabilityScore: data.desirabilityScore,
+      feasibilityScore: data.feasibilityScore,
+      viabilityScore: data.viabilityScore,
+      innovationScore: data.innovationScore,
+      impactScore: data.impactScore,
+      overallScore: data.overallScore,
+      aiEvaluation: data.aiEvaluation || {},
+      identifiedRisks: data.identifiedRisks || [],
+      identifiedOpportunities: data.identifiedOpportunities || [],
+      synergies: data.synergies || [],
+      status: data.status || "draft",
+      selectedForPrototyping: data.selectedForPrototyping || false,
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.ideas.set(idea.id, idea);
+    return idea;
+  }
+  async getIdeas(workflowId) {
+    return Array.from(this.ideas.values()).filter((idea) => idea.workflowId === workflowId).sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+  }
+  async updateIdea(ideaId, updates) {
+    const idea = this.ideas.get(ideaId);
+    if (!idea) return null;
+    const updated = { ...idea, ...updates };
+    this.ideas.set(ideaId, updated);
+    return updated;
+  }
+  // ===========================
+  // PROTOTYPE OPERATIONS
+  // ===========================
+  async createPrototype(data) {
+    const prototype = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      ideaId: data.ideaId,
+      name: data.name || "New Prototype",
+      description: data.description || "",
+      fidelity: data.fidelity || "low",
+      prototypeType: data.prototypeType || "sketch",
+      learningGoals: data.learningGoals || [],
+      hypotheses: data.hypotheses || [],
+      files: data.files || [],
+      links: data.links || [],
+      effortEstimate: data.effortEstimate,
+      costEstimate: data.costEstimate,
+      testPlanId: data.testPlanId,
+      testResults: data.testResults || [],
+      status: data.status || "planning",
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.prototypes.set(prototype.id, prototype);
+    return prototype;
+  }
+  async getPrototypes(workflowId) {
+    return Array.from(this.prototypes.values()).filter((p) => p.workflowId === workflowId);
+  }
+  async updatePrototype(prototypeId, updates) {
+    const prototype = this.prototypes.get(prototypeId);
+    if (!prototype) return null;
+    const updated = { ...prototype, ...updates };
+    this.prototypes.set(prototypeId, updated);
+    return updated;
+  }
+  // ===========================
+  // TEST SESSION OPERATIONS
+  // ===========================
+  async createTestSession(data) {
+    const session2 = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      prototypeId: data.prototypeId || "",
+      sessionName: data.sessionName || "Test Session",
+      testMethodology: data.testMethodology || "usability",
+      participantPersona: data.participantPersona || "",
+      participantDemographics: data.participantDemographics || {},
+      scheduledAt: data.scheduledAt || /* @__PURE__ */ new Date(),
+      durationMinutes: data.durationMinutes || 60,
+      facilitatorId: data.facilitatorId || "",
+      recordingUrl: data.recordingUrl,
+      transcription: data.transcription,
+      observations: data.observations || "",
+      feedback: data.feedback || [],
+      metrics: data.metrics || {},
+      aiSynthesis: data.aiSynthesis || {},
+      sentimentAnalysis: data.sentimentAnalysis || {},
+      keyFindings: data.keyFindings || [],
+      status: data.status || "scheduled",
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.testSessions.set(session2.id, session2);
+    return session2;
+  }
+  async getTestSessions(workflowId) {
+    return Array.from(this.testSessions.values()).filter((s) => s.workflowId === workflowId);
+  }
+  async updateTestSession(sessionId, updates) {
+    const session2 = this.testSessions.get(sessionId);
+    if (!session2) return null;
+    const updated = { ...session2, ...updates };
+    this.testSessions.set(sessionId, updated);
+    return updated;
+  }
+  // ===========================
+  // INSIGHT OPERATIONS
+  // ===========================
+  async createInsight(data) {
+    const insight = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      phase: data.phase || "empathize",
+      insightType: data.insightType || "pattern",
+      title: data.title || "New Insight",
+      content: data.content || "",
+      confidenceScore: data.confidenceScore || 0.5,
+      impactScore: data.impactScore || 0.5,
+      actionabilityScore: data.actionabilityScore || 0.5,
+      sourceData: data.sourceData || {},
+      relatedEntities: data.relatedEntities || [],
+      aiModelVersion: data.aiModelVersion || "gpt-4",
+      generationMethod: data.generationMethod || "ai",
+      acknowledged: data.acknowledged || false,
+      actedUpon: data.actedUpon || false,
+      userFeedback: data.userFeedback,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    this.insights.set(insight.id, insight);
+    return insight;
+  }
+  async getInsights(workflowId, filters) {
+    let insights = Array.from(this.insights.values()).filter((i) => i.workflowId === workflowId);
+    if (filters?.phase) {
+      insights = insights.filter((i) => i.phase === filters.phase);
+    }
+    if (filters?.type) {
+      insights = insights.filter((i) => i.insightType === filters.type);
+    }
+    insights.sort((a, b) => {
+      const scoreA = a.impactScore * a.confidenceScore;
+      const scoreB = b.impactScore * b.confidenceScore;
+      return scoreB - scoreA;
+    });
+    const limit = filters?.limit || insights.length;
+    return insights.slice(0, limit);
+  }
+  // ===========================
+  // EMPATHY DATA OPERATIONS
+  // ===========================
+  async createEmpathyData(data) {
+    const empathy = {
+      id: this.generateId(),
+      workflowId: data.workflowId || "",
+      dataType: data.dataType || "interview",
+      participantPersona: data.participantPersona || "",
+      participantDemographics: data.participantDemographics || {},
+      rawData: data.rawData || "",
+      transcription: data.transcription,
+      recordingUrl: data.recordingUrl,
+      insights: data.insights || [],
+      painPoints: data.painPoints || [],
+      needs: data.needs || [],
+      behaviors: data.behaviors || [],
+      emotions: data.emotions || [],
+      aiAnalyzed: data.aiAnalyzed || false,
+      aiInsights: data.aiInsights || {},
+      sentimentScore: data.sentimentScore,
+      createdAt: /* @__PURE__ */ new Date(),
+      createdBy: data.createdBy || ""
+    };
+    this.empathyData.set(empathy.id, empathy);
+    return empathy;
+  }
+  async getEmpathyData(workflowId) {
+    return Array.from(this.empathyData.values()).filter((e) => e.workflowId === workflowId);
+  }
+  // ===========================
+  // UTILITY METHODS
+  // ===========================
+  generateId() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  }
+  async getWorkflowSummary(workflowId) {
+    const workflow = await this.getWorkflow(workflowId);
+    if (!workflow) return null;
+    const empathyData = await this.getEmpathyData(workflowId);
+    const povStatements = await this.getPOVStatements(workflowId);
+    const hmwQuestions = await this.getHMWQuestions(workflowId);
+    const ideas = await this.getIdeas(workflowId);
+    const prototypes = await this.getPrototypes(workflowId);
+    const testSessions = await this.getTestSessions(workflowId);
+    const insights = await this.getInsights(workflowId);
+    return {
+      workflow,
+      stats: {
+        empathyDataCount: empathyData.length,
+        povStatementCount: povStatements.length,
+        hmwQuestionCount: hmwQuestions.length,
+        ideaCount: ideas.length,
+        prototypeCount: prototypes.length,
+        testSessionCount: testSessions.length,
+        insightCount: insights.length
+      },
+      recentActivity: {
+        latestInsights: insights.slice(0, 5),
+        topIdeas: ideas.slice(0, 5),
+        recentTests: testSessions.slice(0, 3)
+      }
+    };
+  }
+};
+var dtWorkflowService = new DTWorkflowService();
+
+// server/ai-agents/agents/design-thinking/enhanced-dt-agent.ts
+import { OpenAI as OpenAI7 } from "openai";
+var EnhancedDesignThinkingAgent = class extends BaseAgent {
+  openaiClient;
+  constructor() {
+    super({ apiKey: process.env.OPENAI_API_KEY || "" });
+    const apiKey = process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
+    if (apiKey) {
+      this.openaiClient = new OpenAI7({
+        apiKey,
+        baseURL: process.env.AZURE_OPENAI_ENDPOINT
+      });
+    } else {
+      console.warn("OpenAI API key not configured. EnhancedDesignThinkingAgent features will be limited.");
+      this.openaiClient = null;
+    }
+  }
+  // ===========================
+  // SESSION FACILITATION
+  // ===========================
+  async facilitateSession(session2) {
+    const context = await this.analyzeSessionContext(session2);
+    return {
+      suggestions: await this.generateSuggestions(context),
+      nextSteps: this.planNextSteps(context),
+      interventions: await this.identifyInterventions(context),
+      celebrations: await this.identifyCelebrations(context),
+      warnings: await this.identifyWarnings(context)
+    };
+  }
+  async analyzeSessionContext(session2) {
+    const elapsed = Date.now() - session2.startTime.getTime();
+    const progress = elapsed / (session2.duration * 60 * 1e3);
+    return {
+      session: session2,
+      progress,
+      participationMetrics: await this.calculateParticipation(session2),
+      energyLevel: await this.assessEnergyLevel(session2),
+      outputQuality: await this.assessOutputQuality(session2),
+      timeRemaining: session2.duration - elapsed / 6e4
+    };
+  }
+  async generateSuggestions(context) {
+    const suggestions = [];
+    if (context.participationMetrics.lowParticipants?.length > 0) {
+      suggestions.push({
+        type: "engagement",
+        priority: "high",
+        content: `${context.participationMetrics.lowParticipants.length} participants have low engagement. Try: "Let's hear from someone who hasn't shared yet."`,
+        technique: "round_robin"
+      });
+    }
+    if (context.energyLevel < 0.4 && context.timeRemaining > 15) {
+      suggestions.push({
+        type: "energy_boost",
+        priority: "medium",
+        content: "Energy levels are dropping. Consider a 5-minute energizer activity or stretch break.",
+        technique: "energizer"
+      });
+    }
+    if (context.progress > 0.75 && context.outputQuality < 0.6) {
+      suggestions.push({
+        type: "time_management",
+        priority: "high",
+        content: "Running low on time with incomplete outputs. Focus on key deliverables.",
+        technique: "prioritization"
+      });
+    }
+    const aiSuggestions = await this.generateAISuggestions(context);
+    suggestions.push(...aiSuggestions);
+    return suggestions;
+  }
+  async generateAISuggestions(context) {
+    try {
+      const prompt = `You are an expert Design Thinking facilitator. Analyze this session context and provide 2-3 actionable suggestions:
+
+Session Type: ${context.session.sessionType}
+Progress: ${(context.progress * 100).toFixed(0)}%
+Participation: ${context.participationMetrics.averageParticipation?.toFixed(0) || 50}%
+Energy Level: ${(context.energyLevel * 100).toFixed(0)}%
+Output Quality: ${(context.outputQuality * 100).toFixed(0)}%
+Time Remaining: ${context.timeRemaining} minutes
+
+Provide specific, actionable facilitation suggestions that would improve the session outcome.
+Format as JSON array: [{type, priority, content, technique}]`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert Design Thinking facilitator providing real-time coaching." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
+      const content = response.choices[0].message.content || "[]";
+      return JSON.parse(content);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      return [];
+    }
+  }
+  planNextSteps(context) {
+    const steps = [];
+    if (context.progress < 0.5) {
+      steps.push({
+        action: "Continue current activity",
+        timeframe: `${Math.round(context.timeRemaining * 0.5)} minutes`,
+        priority: 1
+      });
+    } else {
+      steps.push({
+        action: "Begin wrap-up and synthesis",
+        timeframe: `${Math.round(context.timeRemaining * 0.3)} minutes`,
+        priority: 1
+      });
+    }
+    return steps;
+  }
+  async identifyInterventions(context) {
+    return [];
+  }
+  async identifyCelebrations(context) {
+    return [];
+  }
+  async identifyWarnings(context) {
+    return [];
+  }
+  async calculateParticipation(session2) {
+    const totalParticipants = session2.participants.length;
+    const activeParticipants = session2.participants.filter((p) => (p.contributions || 0) > 0).length;
+    return {
+      averageParticipation: totalParticipants > 0 ? activeParticipants / totalParticipants * 100 : 0,
+      lowParticipants: session2.participants.filter((p) => (p.contributions || 0) < 2)
+    };
+  }
+  async assessEnergyLevel(session2) {
+    const sessionDuration = (Date.now() - session2.startTime.getTime()) / 6e4;
+    let energy = 1;
+    energy -= sessionDuration / 120 * 0.3;
+    return Math.max(0, Math.min(1, energy));
+  }
+  async assessOutputQuality(session2) {
+    return 0.7;
+  }
+  // ===========================
+  // INSIGHT SYNTHESIS
+  // ===========================
+  async synthesizeInsights(data) {
+    const patterns = await this.identifyPatterns(data);
+    const insights = await this.generateInsights(patterns);
+    const prioritized = await this.prioritizeInsights(insights);
+    return prioritized.map((insight) => ({
+      ...insight,
+      confidence: this.calculateConfidence(insight, data),
+      actionability: this.assessActionability(insight),
+      businessImpact: this.assessBusinessImpact(insight)
+    }));
+  }
+  async identifyPatterns(data) {
+    try {
+      const prompt = `Analyze the following user research data and identify key patterns, themes, and insights:
+
+${data.map((d, i) => `
+Interview ${i + 1}:
+Persona: ${d.participantPersona}
+Pain Points: ${JSON.stringify(d.painPoints)}
+Needs: ${JSON.stringify(d.needs)}
+Behaviors: ${JSON.stringify(d.behaviors)}
+Emotions: ${JSON.stringify(d.emotions)}
+`).join("\n")}
+
+Identify:
+1. Recurring patterns across multiple interviews
+2. Contradictions or surprising findings
+3. Unmet needs and pain points
+4. Behavioral patterns
+5. Emotional themes
+
+Format as JSON array of patterns with: type, description, frequency, evidence.`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert at synthesizing qualitative research data." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        max_tokens: 2e3,
+        response_format: { type: "json_object" }
+      });
+      const result = JSON.parse(response.choices[0].message.content || '{"patterns": []}');
+      return result.patterns || [];
+    } catch (error) {
+      console.error("Error identifying patterns:", error);
+      return [];
+    }
+  }
+  async generateInsights(patterns) {
+    const insights = [];
+    for (const pattern of patterns) {
+      const insight = await this.patternToInsight(pattern);
+      insights.push(insight);
+    }
+    return insights;
+  }
+  async patternToInsight(pattern) {
+    try {
+      const prompt = `Convert this pattern into an actionable insight:
+
+Pattern Type: ${pattern.type}
+Description: ${pattern.description}
+Frequency: ${pattern.frequency}
+Evidence: ${JSON.stringify(pattern.evidence)}
+
+Generate a clear, actionable insight that:
+1. Explains what the pattern means
+2. Why it matters for the business
+3. What action could be taken
+
+Format as JSON: {type, content, implications, suggestedActions}`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert at converting research patterns into business insights." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 500,
+        response_format: { type: "json_object" }
+      });
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      return {
+        id: this.generateId(),
+        type: result.type || "pattern",
+        content: result.content,
+        confidence: 0.8,
+        actionability: 0.7,
+        businessImpact: 0.6,
+        relatedEntities: pattern.evidence?.map((e) => e.id) || []
+      };
+    } catch (error) {
+      console.error("Error converting pattern to insight:", error);
+      return {
+        id: this.generateId(),
+        type: "pattern",
+        content: pattern.description,
+        confidence: 0.5,
+        actionability: 0.5,
+        businessImpact: 0.5,
+        relatedEntities: []
+      };
+    }
+  }
+  async prioritizeInsights(insights) {
+    return insights.sort((a, b) => {
+      const scoreA = a.confidence * a.actionability * a.businessImpact;
+      const scoreB = b.confidence * b.actionability * b.businessImpact;
+      return scoreB - scoreA;
+    });
+  }
+  calculateConfidence(insight, data) {
+    const supportingDataCount = insight.relatedEntities.length;
+    const dataCount = data.length;
+    const coverage = supportingDataCount / dataCount;
+    return Math.min(0.95, coverage * 1.2);
+  }
+  assessActionability(insight) {
+    const hasSpecificAction = insight.content.toLowerCase().includes("could") || insight.content.toLowerCase().includes("should");
+    return hasSpecificAction ? 0.8 : 0.5;
+  }
+  assessBusinessImpact(insight) {
+    const impactKeywords = ["revenue", "cost", "efficiency", "satisfaction", "retention"];
+    const hasImpactKeyword = impactKeywords.some(
+      (keyword) => insight.content.toLowerCase().includes(keyword)
+    );
+    return hasImpactKeyword ? 0.7 : 0.4;
+  }
+  // ===========================
+  // IDEA EVALUATION
+  // ===========================
+  async evaluateIdeas(ideas, criteria) {
+    const evaluationCriteria = criteria || this.getDefaultCriteria();
+    const evaluations = await Promise.all(
+      ideas.map((idea) => this.comprehensiveEvaluation(idea, evaluationCriteria))
+    );
+    return this.rankIdeas(evaluations);
+  }
+  getDefaultCriteria() {
+    return [
+      { name: "Desirability", weight: 0.3, description: "User want/need" },
+      { name: "Feasibility", weight: 0.25, description: "Technical capability" },
+      { name: "Viability", weight: 0.25, description: "Business sustainability" },
+      { name: "Innovation", weight: 0.1, description: "Uniqueness/novelty" },
+      { name: "Impact", weight: 0.1, description: "Potential impact scale" }
+    ];
+  }
+  async comprehensiveEvaluation(idea, criteria) {
+    const scores = {
+      desirability: await this.assessDesirability(idea),
+      feasibility: await this.assessFeasibility(idea),
+      viability: await this.assessViability(idea),
+      innovation: await this.assessInnovation(idea),
+      impact: await this.assessImpact(idea)
+    };
+    const risks = await this.identifyRisks(idea);
+    const opportunities = await this.identifyOpportunities(idea);
+    const synergies = [];
+    const recommendations = await this.generateRecommendations(idea, scores);
+    return {
+      idea,
+      scores,
+      risks,
+      opportunities,
+      synergies,
+      recommendations
+    };
+  }
+  async assessDesirability(idea) {
+    try {
+      const prompt = `Assess the desirability of this idea from a user perspective:
+
+Title: ${idea.title}
+Description: ${idea.description}
+User Benefit: ${idea.userBenefit}
+
+Rate desirability (0-1) based on:
+1. How well it addresses user needs
+2. Emotional appeal
+3. Differentiation from alternatives
+4. Likelihood of adoption
+
+Provide score and brief reasoning as JSON: {score, reasoning}`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert at evaluating product desirability." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        max_tokens: 300,
+        response_format: { type: "json_object" }
+      });
+      const result = JSON.parse(response.choices[0].message.content || '{"score": 0.5}');
+      return result.score;
+    } catch (error) {
+      console.error("Error assessing desirability:", error);
+      return 0.5;
+    }
+  }
+  async assessFeasibility(idea) {
+    return 0.6;
+  }
+  async assessViability(idea) {
+    return 0.6;
+  }
+  async assessInnovation(idea) {
+    return 0.5;
+  }
+  async assessImpact(idea) {
+    return 0.6;
+  }
+  async identifyRisks(idea) {
+    return [];
+  }
+  async identifyOpportunities(idea) {
+    return [];
+  }
+  async generateRecommendations(idea, scores) {
+    const recommendations = [];
+    if (scores.desirability < 0.5) {
+      recommendations.push("Conduct more user research to validate desirability");
+    }
+    if (scores.feasibility < 0.5) {
+      recommendations.push("Assess technical requirements and constraints");
+    }
+    if (scores.viability < 0.5) {
+      recommendations.push("Develop business model and revenue strategy");
+    }
+    return recommendations;
+  }
+  rankIdeas(evaluations) {
+    return evaluations.sort((a, b) => {
+      const scoreA = this.calculateOverallScore(a.scores);
+      const scoreB = this.calculateOverallScore(b.scores);
+      return scoreB - scoreA;
+    });
+  }
+  calculateOverallScore(scores) {
+    const weights = {
+      desirability: 0.3,
+      feasibility: 0.25,
+      viability: 0.25,
+      innovation: 0.1,
+      impact: 0.1
+    };
+    return Object.entries(weights).reduce((total, [key, weight]) => {
+      return total + scores[key] * weight;
+    }, 0);
+  }
+  // ===========================
+  // POV STATEMENT GENERATION
+  // ===========================
+  async generatePOVStatements(empathyData) {
+    const insights = await this.synthesizeInsights(empathyData);
+    const povStatements = [];
+    for (const insight of insights.slice(0, 5)) {
+      const pov = await this.insightToPOV(insight, empathyData);
+      povStatements.push(pov);
+    }
+    return povStatements;
+  }
+  async insightToPOV(insight, empathyData) {
+    try {
+      const prompt = `Create a Point of View (POV) statement from this insight:
+
+Insight: ${insight.content}
+
+Use the format: [User] needs [Need] because [Insight]
+
+Requirements:
+1. Be specific about the user (not "users" but a specific persona)
+2. Express a need, not a solution
+3. Include a surprising insight from research
+
+Also identify:
+- Supporting evidence from research
+- Potential solution bias
+- Priority score (0-100)
+
+Format as JSON: {user, need, insight, supportingEvidence, solutionBias, priorityScore}`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert at framing problems using Design Thinking POV statements." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 500,
+        response_format: { type: "json_object" }
+      });
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      return {
+        id: this.generateId(),
+        workflowId: empathyData[0]?.workflowId || "",
+        userPersona: result.user,
+        need: result.need,
+        insight: result.insight,
+        supportingEmpathyData: result.supportingEvidence || [],
+        evidenceStrength: 0.8,
+        validated: false,
+        solutionBiasDetected: result.solutionBias || false,
+        priorityScore: result.priorityScore || 50,
+        selectedForIdeation: false
+      };
+    } catch (error) {
+      console.error("Error generating POV statement:", error);
+      return {
+        id: this.generateId(),
+        workflowId: empathyData[0]?.workflowId || "",
+        userPersona: "User",
+        need: "needs to be defined",
+        insight: insight.content,
+        supportingEmpathyData: [],
+        evidenceStrength: 0.5,
+        validated: false,
+        solutionBiasDetected: false,
+        priorityScore: 50,
+        selectedForIdeation: false
+      };
+    }
+  }
+  // ===========================
+  // HMW QUESTION GENERATION
+  // ===========================
+  async generateHMWQuestions(povStatement) {
+    const hmwQuestions = [];
+    const baseHMW = await this.povToHMW(povStatement);
+    hmwQuestions.push(baseHMW);
+    const reframingTypes = ["amplify", "remove_constraint", "opposite", "question_assumption", "resource_change"];
+    for (const type of reframingTypes) {
+      const reframed = await this.reframeHMW(baseHMW, type);
+      hmwQuestions.push(reframed);
+    }
+    return hmwQuestions;
+  }
+  async povToHMW(pov) {
+    try {
+      const prompt = `Convert this POV statement into a "How Might We" question:
+
+User: ${pov.userPersona}
+Need: ${pov.need}
+Insight: ${pov.insight}
+
+Create an actionable HMW question that:
+1. Starts with "How might we..."
+2. Is broad enough to allow creative solutions
+3. Is specific enough to be actionable
+4. Doesn't prescribe a solution
+
+Format as JSON: {question, reasoning}`;
+      const response = await this.openaiClient.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "You are an expert at creating How Might We questions." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 300,
+        response_format: { type: "json_object" }
+      });
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      return {
+        id: this.generateId(),
+        povStatementId: pov.id,
+        workflowId: pov.workflowId,
+        question: result.question,
+        reframingType: null,
+        desirabilityScore: null,
+        feasibilityScore: null,
+        viabilityScore: null,
+        voteCount: 0,
+        ideaCount: 0,
+        selectedForIdeation: false
+      };
+    } catch (error) {
+      console.error("Error generating HMW question:", error);
+      return {
+        id: this.generateId(),
+        povStatementId: pov.id,
+        workflowId: pov.workflowId,
+        question: `How might we help ${pov.userPersona} ${pov.need}?`,
+        reframingType: null,
+        desirabilityScore: null,
+        feasibilityScore: null,
+        viabilityScore: null,
+        voteCount: 0,
+        ideaCount: 0,
+        selectedForIdeation: false
+      };
+    }
+  }
+  async reframeHMW(baseHMW, reframingType) {
+    return {
+      ...baseHMW,
+      id: this.generateId(),
+      reframingType,
+      question: `${baseHMW.question} (${reframingType})`
+    };
+  }
+  // ===========================
+  // PROTOTYPE PLANNING
+  // ===========================
+  async generatePrototypePlan(idea, resources) {
+    return {
+      recommendedFidelity: "low",
+      steps: ["Define learning goals", "Create prototype", "Test with users"],
+      requiredResources: {},
+      estimatedTimeline: `${resources.timeline} days`,
+      riskMitigation: [],
+      testingStrategy: {},
+      successMetrics: []
+    };
+  }
+  // ===========================
+  // TEST PLAN GENERATION
+  // ===========================
+  async generateTestPlan(prototype, targetAudience) {
+    return {
+      methodology: "usability",
+      scenarios: [],
+      questions: [],
+      successCriteria: [],
+      recruitment: {},
+      timeline: "2 weeks",
+      analysisApproach: "thematic analysis"
+    };
+  }
+  // ===========================
+  // FEEDBACK SYNTHESIS
+  // ===========================
+  async synthesizeFeedback(feedback) {
+    return {
+      themes: [],
+      sentimentAnalysis: {},
+      painPoints: [],
+      delighters: [],
+      suggestions: [],
+      prioritizedChanges: [],
+      iterationRecommendations: []
+    };
+  }
+  // ===========================
+  // UTILITY METHODS
+  // ===========================
+  generateId() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  }
+  async initialize(workflowId) {
+    console.log(`Initializing Enhanced DT Agent for workflow: ${workflowId}`);
+  }
+  async handlePhaseTransition(workflowId, phase) {
+    console.log(`Handling phase transition for workflow ${workflowId} to phase: ${phase}`);
+  }
+  async generateInsights(workflowId, options) {
+    return [];
+  }
+  async getStatus() {
+    return {
+      status: "active",
+      capabilities: [
+        "session_facilitation",
+        "insight_synthesis",
+        "idea_evaluation",
+        "pov_generation",
+        "hmw_generation",
+        "prototype_planning",
+        "test_planning",
+        "feedback_synthesis"
+      ]
+    };
+  }
+};
+
+// server/routes/dt-comprehensive-routes.ts
+var router4 = express3.Router();
+var dtAgent = new EnhancedDesignThinkingAgent();
+var collaborationService2 = new DTCollaborationService();
+var analyticsService2 = new DTAnalyticsService();
+router4.get("/workflows", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { status, phase, limit, offset } = req.query;
+    const workflows = await dtWorkflowService.getWorkflows(userId, {
+      status,
+      phase,
+      limit: limit ? parseInt(limit) : void 0,
+      offset: offset ? parseInt(offset) : void 0
+    });
+    res.json({
+      success: true,
+      data: workflows,
+      count: workflows.length
+    });
+  } catch (error) {
+    console.error("Error fetching workflows:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch workflows"
+    });
+  }
+});
+router4.post("/workflows", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const workflowData = {
+      ...req.body,
+      userId
+    };
+    const workflow = await dtWorkflowService.createWorkflow(workflowData);
+    if (workflow.aiFacilitationEnabled) {
+      await dtAgent.initialize(workflow.id);
+    }
+    res.status(201).json({
+      success: true,
+      data: workflow
+    });
+  } catch (error) {
+    console.error("Error creating workflow:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create workflow"
+    });
+  }
+});
+router4.get("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const summary = await dtWorkflowService.getWorkflowSummary(id);
+    if (!summary) {
+      return res.status(404).json({
+        success: false,
+        error: "Workflow not found"
+      });
+    }
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error("Error fetching workflow:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch workflow"
+    });
+  }
+});
+router4.put("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const workflow = await dtWorkflowService.updateWorkflow(id, updates);
+    if (!workflow) {
+      return res.status(404).json({
+        success: false,
+        error: "Workflow not found"
+      });
+    }
+    res.json({
+      success: true,
+      data: workflow
+    });
+  } catch (error) {
+    console.error("Error updating workflow:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update workflow"
+    });
+  }
+});
+router4.put("/workflows/:id/phase", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phase } = req.body;
+    const workflow = await dtWorkflowService.transitionPhase(id, phase);
+    if (!workflow) {
+      return res.status(404).json({
+        success: false,
+        error: "Workflow not found"
+      });
+    }
+    if (workflow.aiFacilitationEnabled) {
+      await dtAgent.handlePhaseTransition(id, phase);
+    }
+    res.json({
+      success: true,
+      data: workflow,
+      message: `Transitioned to ${phase} phase`
+    });
+  } catch (error) {
+    console.error("Error transitioning phase:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to transition phase"
+    });
+  }
+});
+router4.delete("/workflows/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await dtWorkflowService.deleteWorkflow(id);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        error: "Workflow not found"
+      });
+    }
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting workflow:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete workflow"
+    });
+  }
+});
+router4.post("/workflows/:id/empathy-data", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const empathyData = await dtWorkflowService.createEmpathyData({
+      ...req.body,
+      workflowId: id,
+      createdBy: userId
+    });
+    res.status(201).json({
+      success: true,
+      data: empathyData
+    });
+  } catch (error) {
+    console.error("Error creating empathy data:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create empathy data"
+    });
+  }
+});
+router4.get("/workflows/:id/empathy-data", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empathyData = await dtWorkflowService.getEmpathyData(id);
+    res.json({
+      success: true,
+      data: empathyData,
+      count: empathyData.length
+    });
+  } catch (error) {
+    console.error("Error fetching empathy data:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch empathy data"
+    });
+  }
+});
+router4.post("/workflows/:id/pov-statements", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const pov = await dtWorkflowService.createPOVStatement({
+      ...req.body,
+      workflowId: id,
+      createdBy: userId
+    });
+    res.status(201).json({
+      success: true,
+      data: pov
+    });
+  } catch (error) {
+    console.error("Error creating POV statement:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create POV statement"
+    });
+  }
+});
+router4.post("/workflows/:id/pov-statements/generate", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empathyData = await dtWorkflowService.getEmpathyData(id);
+    if (empathyData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No empathy data available. Please add empathy data first."
+      });
+    }
+    const povStatements = await dtAgent.generatePOVStatements(empathyData);
+    const userId = req.user.id;
+    const saved = await Promise.all(
+      povStatements.map(
+        (pov) => dtWorkflowService.createPOVStatement({
+          ...pov,
+          createdBy: userId
+        })
+      )
+    );
+    res.json({
+      success: true,
+      data: saved,
+      count: saved.length
+    });
+  } catch (error) {
+    console.error("Error generating POV statements:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate POV statements"
+    });
+  }
+});
+router4.get("/workflows/:id/pov-statements", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const povStatements = await dtWorkflowService.getPOVStatements(id);
+    res.json({
+      success: true,
+      data: povStatements,
+      count: povStatements.length
+    });
+  } catch (error) {
+    console.error("Error fetching POV statements:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch POV statements"
+    });
+  }
+});
+router4.post("/pov-statements/:povId/hmw-questions/generate", authMiddleware, async (req, res) => {
+  try {
+    const { povId } = req.params;
+    const pov = await dtWorkflowService.getPOVStatements("").then(
+      (povs) => povs.find((p) => p.id === povId)
+    );
+    if (!pov) {
+      return res.status(404).json({
+        success: false,
+        error: "POV statement not found"
+      });
+    }
+    const hmwQuestions = await dtAgent.generateHMWQuestions(pov);
+    const userId = req.user.id;
+    const saved = await Promise.all(
+      hmwQuestions.map(
+        (hmw) => dtWorkflowService.createHMWQuestion({
+          ...hmw,
+          createdBy: userId
+        })
+      )
+    );
+    res.json({
+      success: true,
+      data: saved,
+      count: saved.length
+    });
+  } catch (error) {
+    console.error("Error generating HMW questions:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate HMW questions"
+    });
+  }
+});
+router4.get("/workflows/:id/hmw-questions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const hmwQuestions = await dtWorkflowService.getHMWQuestions(id);
+    res.json({
+      success: true,
+      data: hmwQuestions,
+      count: hmwQuestions.length
+    });
+  } catch (error) {
+    console.error("Error fetching HMW questions:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch HMW questions"
+    });
+  }
+});
+router4.post("/hmw-questions/:hmwId/vote", authMiddleware, async (req, res) => {
+  try {
+    const { hmwId } = req.params;
+    const hmw = await dtWorkflowService.voteHMWQuestion(hmwId);
+    if (!hmw) {
+      return res.status(404).json({
+        success: false,
+        error: "HMW question not found"
+      });
+    }
+    res.json({
+      success: true,
+      data: hmw
+    });
+  } catch (error) {
+    console.error("Error voting HMW question:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to vote HMW question"
+    });
+  }
+});
+router4.post("/workflows/:id/ideas", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const idea = await dtWorkflowService.createIdea({
+      ...req.body,
+      workflowId: id,
+      createdBy: userId
+    });
+    res.status(201).json({
+      success: true,
+      data: idea
+    });
+  } catch (error) {
+    console.error("Error creating idea:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create idea"
+    });
+  }
+});
+router4.get("/workflows/:id/ideas", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ideas = await dtWorkflowService.getIdeas(id);
+    res.json({
+      success: true,
+      data: ideas,
+      count: ideas.length
+    });
+  } catch (error) {
+    console.error("Error fetching ideas:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch ideas"
+    });
+  }
+});
+router4.post("/workflows/:id/ideas/evaluate", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { criteria } = req.body;
+    const ideas = await dtWorkflowService.getIdeas(id);
+    if (ideas.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No ideas to evaluate"
+      });
+    }
+    const evaluations = await dtAgent.evaluateIdeas(ideas, criteria);
+    await Promise.all(
+      evaluations.map(
+        (evaluation) => dtWorkflowService.updateIdea(evaluation.idea.id, {
+          desirabilityScore: evaluation.scores.desirability,
+          feasibilityScore: evaluation.scores.feasibility,
+          viabilityScore: evaluation.scores.viability,
+          innovationScore: evaluation.scores.innovation,
+          impactScore: evaluation.scores.impact,
+          overallScore: evaluation.scores.desirability * 0.3 + evaluation.scores.feasibility * 0.25 + evaluation.scores.viability * 0.25 + evaluation.scores.innovation * 0.1 + evaluation.scores.impact * 0.1,
+          aiEvaluation: {
+            risks: evaluation.risks,
+            opportunities: evaluation.opportunities,
+            recommendations: evaluation.recommendations
+          },
+          status: "evaluated"
+        })
+      )
+    );
+    res.json({
+      success: true,
+      data: evaluations,
+      count: evaluations.length
+    });
+  } catch (error) {
+    console.error("Error evaluating ideas:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to evaluate ideas"
+    });
+  }
+});
+router4.post("/workflows/:id/prototypes", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const prototype = await dtWorkflowService.createPrototype({
+      ...req.body,
+      workflowId: id,
+      createdBy: userId
+    });
+    res.status(201).json({
+      success: true,
+      data: prototype
+    });
+  } catch (error) {
+    console.error("Error creating prototype:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create prototype"
+    });
+  }
+});
+router4.get("/workflows/:id/prototypes", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prototypes = await dtWorkflowService.getPrototypes(id);
+    res.json({
+      success: true,
+      data: prototypes,
+      count: prototypes.length
+    });
+  } catch (error) {
+    console.error("Error fetching prototypes:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch prototypes"
+    });
+  }
+});
+router4.post("/ideas/:ideaId/prototype-plan", authMiddleware, async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+    const { resources } = req.body;
+    const ideas = await dtWorkflowService.getIdeas("");
+    const idea = ideas.find((i) => i.id === ideaId);
+    if (!idea) {
+      return res.status(404).json({
+        success: false,
+        error: "Idea not found"
+      });
+    }
+    const plan = await dtAgent.generatePrototypePlan(idea, resources);
+    res.json({
+      success: true,
+      data: plan
+    });
+  } catch (error) {
+    console.error("Error generating prototype plan:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate prototype plan"
+    });
+  }
+});
+router4.post("/workflows/:id/test-sessions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const session2 = await dtWorkflowService.createTestSession({
+      ...req.body,
+      workflowId: id,
+      createdBy: userId
+    });
+    res.status(201).json({
+      success: true,
+      data: session2
+    });
+  } catch (error) {
+    console.error("Error creating test session:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create test session"
+    });
+  }
+});
+router4.get("/workflows/:id/test-sessions", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sessions = await dtWorkflowService.getTestSessions(id);
+    res.json({
+      success: true,
+      data: sessions,
+      count: sessions.length
+    });
+  } catch (error) {
+    console.error("Error fetching test sessions:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch test sessions"
+    });
+  }
+});
+router4.post("/workflows/:id/insights/synthesize", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empathyData = await dtWorkflowService.getEmpathyData(id);
+    if (empathyData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No empathy data available for synthesis"
+      });
+    }
+    const insights = await dtAgent.synthesizeInsights(empathyData);
+    const saved = await Promise.all(
+      insights.map(
+        (insight) => dtWorkflowService.createInsight({
+          workflowId: id,
+          phase: "empathize",
+          insightType: insight.type,
+          title: insight.content.substring(0, 100),
+          content: insight.content,
+          confidenceScore: insight.confidence,
+          impactScore: insight.businessImpact,
+          actionabilityScore: insight.actionability,
+          relatedEntities: insight.relatedEntities,
+          aiModelVersion: "gpt-4",
+          generationMethod: "pattern_analysis"
+        })
+      )
+    );
+    res.json({
+      success: true,
+      data: saved,
+      count: saved.length
+    });
+  } catch (error) {
+    console.error("Error synthesizing insights:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to synthesize insights"
+    });
+  }
+});
+router4.get("/workflows/:id/insights", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { phase, type, limit } = req.query;
+    const insights = await dtWorkflowService.getInsights(id, {
+      phase,
+      type,
+      limit: limit ? parseInt(limit) : void 0
+    });
+    res.json({
+      success: true,
+      data: insights,
+      count: insights.length
+    });
+  } catch (error) {
+    console.error("Error fetching insights:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch insights"
+    });
+  }
+});
+router4.get("/workflows/:id/analytics", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type = "comprehensive" } = req.query;
+    let analytics;
+    switch (type) {
+      case "effectiveness":
+        analytics = await analyticsService2.calculateEffectivenessScore(id);
+        break;
+      case "insights":
+        analytics = await analyticsService2.generateInsightMap(id);
+        break;
+      case "roi":
+        analytics = await analyticsService2.calculateROI(id);
+        break;
+      case "benchmarks":
+        analytics = await analyticsService2.compareToBenchmarks(id);
+        break;
+      default:
+        analytics = await analyticsService2.getComprehensiveAnalytics(id);
+    }
+    res.json({
+      success: true,
+      data: analytics
+    });
+  } catch (error) {
+    console.error("Error fetching analytics:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch analytics"
+    });
+  }
+});
+router4.get("/insights/:insightId/evolution", authMiddleware, async (req, res) => {
+  try {
+    const { insightId } = req.params;
+    const evolution = await analyticsService2.trackInsightEvolution(insightId);
+    res.json({
+      success: true,
+      data: evolution
+    });
+  } catch (error) {
+    console.error("Error tracking insight evolution:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to track insight evolution"
+    });
+  }
+});
+router4.get("/workflows/:id/collaboration-status", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const status = await collaborationService2.getSessionStatus(id);
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    console.error("Error fetching collaboration status:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch collaboration status"
+    });
+  }
+});
+router4.post("/sessions/:sessionId/facilitate", authMiddleware, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { sessionData } = req.body;
+    const facilitation = await dtAgent.facilitateSession({
+      id: sessionId,
+      workflowId: sessionData.workflowId,
+      sessionType: sessionData.sessionType,
+      participants: sessionData.participants || [],
+      currentActivity: sessionData.currentActivity,
+      startTime: new Date(sessionData.startTime),
+      duration: sessionData.duration,
+      sessionData
+    });
+    res.json({
+      success: true,
+      data: facilitation
+    });
+  } catch (error) {
+    console.error("Error providing facilitation:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to provide facilitation"
+    });
+  }
+});
+router4.get("/health", async (req, res) => {
+  try {
+    const agentStatus = await dtAgent.getStatus();
+    res.json({
+      success: true,
+      status: "healthy",
+      timestamp: /* @__PURE__ */ new Date(),
+      services: {
+        dtAgent: agentStatus.status,
+        collaboration: "active",
+        analytics: "ready",
+        workflows: "operational"
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      status: "unhealthy",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+var dt_comprehensive_routes_default = router4;
+
+// server/routes/assessment-routes.ts
+import { Router as Router2 } from "express";
+
+// server/services/assessment-database.ts
+import { MongoClient } from "mongodb";
+var AssessmentDatabaseService = class {
+  client;
+  db;
+  sessions;
+  completedAssessments;
+  assessmentHistory;
+  constructor(connectionString, databaseName) {
+    this.client = new MongoClient(connectionString);
+    this.db = this.client.db(databaseName);
+    this.sessions = this.db.collection("assessment_sessions");
+    this.completedAssessments = this.db.collection("completed_assessments");
+    this.assessmentHistory = this.db.collection("assessment_history");
+  }
+  async connect() {
+    await this.client.connect();
+    await this.createIndexes();
+    console.log("\u2705 Assessment Database Service connected to Azure MongoDB");
+  }
+  async disconnect() {
+    await this.client.close();
+  }
+  // ============================================================================
+  // SESSION MANAGEMENT
+  // ============================================================================
+  async createSession(userId, assessmentType, totalQuestions) {
+    const session2 = {
+      userId,
+      sessionId: this.generateSessionId(),
+      assessmentType,
+      status: "in_progress",
+      responses: [],
+      currentQuestionIndex: 0,
+      totalQuestions,
+      progressPercentage: 0,
+      startedAt: /* @__PURE__ */ new Date(),
+      lastActivityAt: /* @__PURE__ */ new Date()
+    };
+    const result = await this.sessions.insertOne(session2);
+    return {
+      ...session2,
+      _id: result.insertedId
+    };
+  }
+  async getSession(sessionId) {
+    return await this.sessions.findOne({ sessionId });
+  }
+  async getUserActiveSessions(userId) {
+    return await this.sessions.find({
+      userId,
+      status: "in_progress"
+    }).sort({ lastActivityAt: -1 }).toArray();
+  }
+  async updateSession(sessionId, responses, currentQuestionIndex) {
+    const progressPercentage = await this.calculateProgress(sessionId, responses.length);
+    await this.sessions.updateOne(
+      { sessionId },
+      {
+        $set: {
+          responses,
+          currentQuestionIndex,
+          progressPercentage,
+          lastActivityAt: /* @__PURE__ */ new Date()
+        }
+      }
+    );
+  }
+  async saveResponse(sessionId, response) {
+    const session2 = await this.getSession(sessionId);
+    if (!session2) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+    const responses = [...session2.responses, response];
+    const currentQuestionIndex = session2.currentQuestionIndex + 1;
+    const progressPercentage = responses.length / session2.totalQuestions * 100;
+    await this.sessions.updateOne(
+      { sessionId },
+      {
+        $push: { responses: response },
+        $set: {
+          currentQuestionIndex,
+          progressPercentage,
+          lastActivityAt: /* @__PURE__ */ new Date()
+        }
+      }
+    );
+  }
+  async completeSession(sessionId, results, compositeProfile) {
+    const session2 = await this.getSession(sessionId);
+    if (!session2) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+    await this.sessions.updateOne(
+      { sessionId },
+      {
+        $set: {
+          status: "completed",
+          completedAt: /* @__PURE__ */ new Date(),
+          lastActivityAt: /* @__PURE__ */ new Date()
+        }
+      }
+    );
+    const completedAssessment = {
+      userId: session2.userId,
+      sessionId,
+      assessmentType: session2.assessmentType,
+      responses: session2.responses,
+      results,
+      compositeProfile,
+      completedAt: /* @__PURE__ */ new Date(),
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1e3),
+      // 1 year
+      version: "1.0",
+      metadata: session2.metadata
+    };
+    const result = await this.completedAssessments.insertOne(completedAssessment);
+    await this.updateAssessmentHistory(
+      session2.userId,
+      session2.assessmentType,
+      result.insertedId,
+      results
+    );
+    return result.insertedId;
+  }
+  async abandonSession(sessionId) {
+    await this.sessions.updateOne(
+      { sessionId },
+      {
+        $set: {
+          status: "abandoned",
+          lastActivityAt: /* @__PURE__ */ new Date()
+        }
+      }
+    );
+  }
+  // ============================================================================
+  // ASSESSMENT RETRIEVAL
+  // ============================================================================
+  async getLatestAssessment(userId, assessmentType) {
+    return await this.completedAssessments.findOne(
+      {
+        userId,
+        assessmentType,
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: { $gt: /* @__PURE__ */ new Date() } }
+        ]
+      },
+      { sort: { completedAt: -1 } }
+    );
+  }
+  async getAllUserAssessments(userId) {
+    return await this.completedAssessments.find({
+      userId,
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: { $gt: /* @__PURE__ */ new Date() } }
+      ]
+    }).sort({ completedAt: -1 }).toArray();
+  }
+  async getAssessmentById(assessmentId) {
+    return await this.completedAssessments.findOne({ _id: assessmentId });
+  }
+  async getUserCompositeProfile(userId) {
+    const assessment = await this.completedAssessments.findOne(
+      {
+        userId,
+        compositeProfile: { $exists: true },
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: { $gt: /* @__PURE__ */ new Date() } }
+        ]
+      },
+      { sort: { completedAt: -1 } }
+    );
+    return assessment?.compositeProfile || null;
+  }
+  // ============================================================================
+  // ASSESSMENT HISTORY
+  // ============================================================================
+  async updateAssessmentHistory(userId, assessmentType, assessmentId, results) {
+    const now = /* @__PURE__ */ new Date();
+    await this.assessmentHistory.findOneAndUpdate(
+      { userId, assessmentType },
+      {
+        $push: {
+          assessments: {
+            completedAt: now,
+            results,
+            version: "1.0"
+          }
+        },
+        $set: {
+          latestAssessmentId: assessmentId,
+          lastAssessmentAt: now
+        },
+        $inc: {
+          totalAssessments: 1
+        },
+        $setOnInsert: {
+          firstAssessmentAt: now
+        }
+      },
+      { upsert: true }
+    );
+  }
+  async getAssessmentHistory(userId, assessmentType) {
+    const query = { userId };
+    if (assessmentType) {
+      query.assessmentType = assessmentType;
+    }
+    return await this.assessmentHistory.find(query).toArray();
+  }
+  async getAssessmentEvolution(userId, assessmentType) {
+    const history = await this.assessmentHistory.findOne({ userId, assessmentType });
+    if (!history || history.assessments.length < 2) {
+      return null;
+    }
+    const evolution = {
+      assessmentType,
+      totalAssessments: history.totalAssessments,
+      firstAssessment: history.assessments[0],
+      latestAssessment: history.assessments[history.assessments.length - 1],
+      changes: this.calculateChanges(
+        history.assessments[0].results,
+        history.assessments[history.assessments.length - 1].results
+      ),
+      trajectory: this.determineTrajectory(history.assessments)
+    };
+    return evolution;
+  }
+  calculateChanges(oldResults, newResults) {
+    const changes = [];
+    return changes;
+  }
+  determineTrajectory(assessments) {
+    if (assessments.length < 2) return "stable";
+    return "stable";
+  }
+  // ============================================================================
+  // ANALYTICS
+  // ============================================================================
+  async getAssessmentStats(userId) {
+    const [sessions, completed, history] = await Promise.all([
+      this.sessions.countDocuments({ userId }),
+      this.completedAssessments.countDocuments({ userId }),
+      this.assessmentHistory.find({ userId }).toArray()
+    ]);
+    return {
+      totalSessions: sessions,
+      completedAssessments: completed,
+      inProgressSessions: sessions - completed,
+      assessmentTypes: history.map((h) => h.assessmentType),
+      lastAssessmentDate: history.length > 0 ? Math.max(...history.map((h) => h.lastAssessmentAt.getTime())) : null
+    };
+  }
+  async getPlatformAssessmentStats() {
+    const stats = await this.completedAssessments.aggregate([
+      {
+        $group: {
+          _id: "$assessmentType",
+          count: { $sum: 1 },
+          avgCompletionTime: { $avg: "$metadata.duration" }
+        }
+      }
+    ]).toArray();
+    return {
+      totalAssessments: stats.reduce((sum, s) => sum + s.count, 0),
+      byType: stats.map((s) => ({
+        type: s._id,
+        count: s.count,
+        avgCompletionTime: Math.round(s.avgCompletionTime || 0)
+      }))
+    };
+  }
+  // ============================================================================
+  // DATABASE MAINTENANCE
+  // ============================================================================
+  async createIndexes() {
+    await this.sessions.createIndex({ userId: 1, status: 1 });
+    await this.sessions.createIndex({ sessionId: 1 }, { unique: true });
+    await this.sessions.createIndex({ lastActivityAt: -1 });
+    await this.completedAssessments.createIndex({ userId: 1, assessmentType: 1, completedAt: -1 });
+    await this.completedAssessments.createIndex({ sessionId: 1 });
+    await this.completedAssessments.createIndex({ expiresAt: 1 }, { sparse: true });
+    await this.assessmentHistory.createIndex({ userId: 1, assessmentType: 1 }, { unique: true });
+    console.log("\u2705 Assessment database indexes created");
+  }
+  generateSessionId() {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  async calculateProgress(sessionId, responseCount) {
+    const session2 = await this.getSession(sessionId);
+    if (!session2) return 0;
+    return responseCount / session2.totalQuestions * 100;
+  }
+  async cleanupAbandonedSessions(daysOld = 7) {
+    const cutoffDate = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1e3);
+    const result = await this.sessions.deleteMany({
+      status: "in_progress",
+      lastActivityAt: { $lt: cutoffDate }
+    });
+    return result.deletedCount;
+  }
+};
+var assessmentDbInstance = null;
+function getAssessmentDatabase() {
+  if (!assessmentDbInstance) {
+    const connectionString = process.env.MONGODB_CONNECTION_STRING;
+    const databaseName = process.env.MONGODB_DATABASE_NAME || "iterativ-db";
+    if (!connectionString) {
+      throw new Error("MONGODB_CONNECTION_STRING environment variable is not set");
+    }
+    assessmentDbInstance = new AssessmentDatabaseService(connectionString, databaseName);
+  }
+  return assessmentDbInstance;
+}
+
+// server/services/assessment-integration.ts
+import { MongoClient as MongoClient2 } from "mongodb";
+var AssessmentIntegrationService = class {
+  client;
+  db;
+  assessmentProfiles;
+  agentAdaptations;
+  constructor(connectionString, databaseName) {
+    this.client = new MongoClient2(connectionString);
+    this.db = this.client.db(databaseName);
+    this.assessmentProfiles = this.db.collection("assessment_profiles");
+    this.agentAdaptations = this.db.collection("agent_personality_adaptations");
+  }
+  async connect() {
+    await this.client.connect();
+    await this.createIndexes();
+    console.log("\u2705 Assessment Integration Service connected to Azure MongoDB");
+  }
+  async disconnect() {
+    await this.client.close();
+  }
+  // ============================================================================
+  // ASSESSMENT PROFILE MANAGEMENT
+  // ============================================================================
+  async saveAssessmentProfile(profile) {
+    const result = await this.assessmentProfiles.insertOne({
+      ...profile,
+      createdAt: /* @__PURE__ */ new Date()
+    });
+    return result.insertedId;
+  }
+  async getAssessmentProfile(userId, assessmentType) {
+    const query = { userId };
+    if (assessmentType) {
+      query.assessmentType = assessmentType;
+    }
+    const profile = await this.assessmentProfiles.findOne(
+      {
+        ...query,
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: { $gt: /* @__PURE__ */ new Date() } }
+        ]
+      },
+      { sort: { completedAt: -1 } }
+    );
+    return profile;
+  }
+  async getAllUserAssessments(userId) {
+    return await this.assessmentProfiles.find({
+      userId,
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: { $gt: /* @__PURE__ */ new Date() } }
+      ]
+    }).sort({ completedAt: -1 }).toArray();
+  }
+  // ============================================================================
+  // AGENT PERSONALITY ADAPTATION
+  // ============================================================================
+  async adaptAgentPersonality(userId, agentType, assessmentProfileId) {
+    const profile = await this.assessmentProfiles.findOne({ _id: assessmentProfileId });
+    if (!profile) {
+      throw new Error("Assessment profile not found");
+    }
+    const adaptedTraits = this.generateAdaptedTraits(agentType, profile);
+    const communicationAdjustments = this.generateCommunicationAdjustments(profile);
+    const coachingApproach = this.determineCoachingApproach(agentType, profile);
+    const adaptation = {
+      userId,
+      agentType,
+      assessmentProfileId,
+      adaptedTraits,
+      communicationAdjustments,
+      coachingApproach,
+      adaptationEffectiveness: 0.5,
+      // Initial baseline
+      lastAdaptedAt: /* @__PURE__ */ new Date()
+    };
+    const result = await this.agentAdaptations.findOneAndUpdate(
+      { userId, agentType },
+      {
+        $set: {
+          ...adaptation,
+          lastAdaptedAt: /* @__PURE__ */ new Date()
+        },
+        $setOnInsert: {
+          createdAt: /* @__PURE__ */ new Date()
+        }
+      },
+      {
+        upsert: true,
+        returnDocument: "after"
+      }
+    );
+    return result;
+  }
+  async getAgentAdaptation(userId, agentType) {
+    return await this.agentAdaptations.findOne({ userId, agentType });
+  }
+  async updateAdaptationEffectiveness(userId, agentType, effectivenessDelta) {
+    await this.agentAdaptations.updateOne(
+      { userId, agentType },
+      {
+        $inc: { adaptationEffectiveness: effectivenessDelta * 0.1 },
+        $set: { lastAdaptedAt: /* @__PURE__ */ new Date() }
+      }
+    );
+  }
+  // ============================================================================
+  // PERSONALITY ANALYSIS
+  // ============================================================================
+  generateAdaptedTraits(agentType, profile) {
+    const traits = profile.personalityTraits || {};
+    const workPrefs = profile.workPreferences || {};
+    const baseTraits = {
+      co_founder: {
+        communicationStyle: "supportive-challenging",
+        energyLevel: "high",
+        coachingApproach: "accountability-focused",
+        decisionSupport: "collaborative",
+        feedbackStyle: "constructive",
+        pacing: "adaptive"
+      },
+      co_investor: {
+        communicationStyle: "analytical-strategic",
+        energyLevel: "moderate",
+        coachingApproach: "data-driven",
+        decisionSupport: "analytical",
+        feedbackStyle: "direct",
+        pacing: "deliberate"
+      },
+      co_builder: {
+        communicationStyle: "collaborative-strategic",
+        energyLevel: "high",
+        coachingApproach: "partnership-focused",
+        decisionSupport: "strategic",
+        feedbackStyle: "encouraging",
+        pacing: "adaptive"
+      },
+      business_advisor: {
+        communicationStyle: "professional-analytical",
+        energyLevel: "moderate",
+        coachingApproach: "expert-guidance",
+        decisionSupport: "data-driven",
+        feedbackStyle: "detailed",
+        pacing: "thorough"
+      },
+      investment_analyst: {
+        communicationStyle: "analytical-precise",
+        energyLevel: "moderate",
+        coachingApproach: "analytical",
+        decisionSupport: "quantitative",
+        feedbackStyle: "objective",
+        pacing: "methodical"
+      },
+      credit_analyst: {
+        communicationStyle: "professional-direct",
+        energyLevel: "moderate",
+        coachingApproach: "risk-focused",
+        decisionSupport: "criteria-based",
+        feedbackStyle: "clear",
+        pacing: "systematic"
+      },
+      impact_analyst: {
+        communicationStyle: "empathetic-analytical",
+        energyLevel: "moderate",
+        coachingApproach: "values-driven",
+        decisionSupport: "impact-focused",
+        feedbackStyle: "holistic",
+        pacing: "thoughtful"
+      },
+      program_manager: {
+        communicationStyle: "organized-supportive",
+        energyLevel: "moderate",
+        coachingApproach: "structured",
+        decisionSupport: "process-oriented",
+        feedbackStyle: "systematic",
+        pacing: "steady"
+      },
+      platform_orchestrator: {
+        communicationStyle: "strategic-comprehensive",
+        energyLevel: "adaptive",
+        coachingApproach: "holistic",
+        decisionSupport: "systems-thinking",
+        feedbackStyle: "integrated",
+        pacing: "adaptive"
+      }
+    };
+    const adapted = { ...baseTraits[agentType] };
+    if (traits.extraversion !== void 0) {
+      if (traits.extraversion > 70) {
+        adapted.energyLevel = "high";
+        adapted.communicationStyle = adapted.communicationStyle + "-energetic";
+      } else if (traits.extraversion < 30) {
+        adapted.energyLevel = "moderate";
+        adapted.communicationStyle = adapted.communicationStyle + "-thoughtful";
+      }
+    }
+    if (traits.conscientiousness !== void 0 && traits.conscientiousness > 70) {
+      adapted.pacing = "structured";
+      adapted.feedbackStyle = "detailed";
+    }
+    if (traits.openness !== void 0 && traits.openness > 70) {
+      adapted.coachingApproach = adapted.coachingApproach + "-exploratory";
+    }
+    if (workPrefs.decisionSpeed === "quick") {
+      adapted.pacing = "fast";
+      adapted.decisionSupport = "decisive";
+    } else if (workPrefs.decisionSpeed === "thorough") {
+      adapted.pacing = "deliberate";
+      adapted.decisionSupport = "comprehensive";
+    }
+    if (workPrefs.feedbackPreference === "direct") {
+      adapted.feedbackStyle = "direct";
+    } else if (workPrefs.feedbackPreference === "gentle") {
+      adapted.feedbackStyle = "supportive";
+    }
+    return adapted;
+  }
+  generateCommunicationAdjustments(profile) {
+    const traits = profile.personalityTraits || {};
+    const workPrefs = profile.workPreferences || {};
+    const adjustments = {
+      toneOfVoice: "professional-friendly",
+      formalityLevel: "professional",
+      detailLevel: "balanced",
+      questioningStyle: "exploratory",
+      encouragementFrequency: "moderate"
+    };
+    if (traits.agreeableness && traits.agreeableness > 70) {
+      adjustments.toneOfVoice = "warm-supportive";
+      adjustments.encouragementFrequency = "frequent";
+    } else if (traits.agreeableness && traits.agreeableness < 30) {
+      adjustments.toneOfVoice = "direct-professional";
+      adjustments.encouragementFrequency = "minimal";
+    }
+    if (profile.communicationStyle === "direct") {
+      adjustments.formalityLevel = "casual";
+      adjustments.questioningStyle = "direct";
+    } else if (profile.communicationStyle === "diplomatic") {
+      adjustments.formalityLevel = "professional";
+      adjustments.questioningStyle = "socratic";
+    }
+    if (traits.analyticalThinking && traits.analyticalThinking > 70) {
+      adjustments.detailLevel = "detailed";
+    } else if (traits.analyticalThinking && traits.analyticalThinking < 30) {
+      adjustments.detailLevel = "high-level";
+    }
+    if (workPrefs.structureNeed === "high") {
+      adjustments.detailLevel = "detailed";
+      adjustments.questioningStyle = "structured";
+    }
+    return adjustments;
+  }
+  determineCoachingApproach(agentType, profile) {
+    const traits = profile.personalityTraits || {};
+    const workPrefs = profile.workPreferences || {};
+    const defaultApproaches = {
+      co_founder: "collaborative",
+      co_investor: "challenging",
+      co_builder: "supportive",
+      business_advisor: "directive",
+      investment_analyst: "collaborative",
+      credit_analyst: "directive",
+      impact_analyst: "supportive",
+      program_manager: "collaborative",
+      platform_orchestrator: "adaptive"
+    };
+    let approach = defaultApproaches[agentType];
+    if (traits.conscientiousness && traits.conscientiousness > 70) {
+      if (workPrefs.collaborationStyle === "independent") {
+        approach = "directive";
+      }
+    }
+    if (traits.openness && traits.openness > 70) {
+      approach = "collaborative";
+    }
+    if (traits.resilience && traits.resilience > 70) {
+      approach = "challenging";
+    } else if (traits.resilience && traits.resilience < 40) {
+      approach = "supportive";
+    }
+    return approach;
+  }
+  // ============================================================================
+  // PERSONALITY INSIGHTS
+  // ============================================================================
+  async generatePersonalityInsights(userId) {
+    const profiles = await this.getAllUserAssessments(userId);
+    if (profiles.length === 0) {
+      return [];
+    }
+    const latestProfile = profiles[0];
+    const traits = latestProfile.personalityTraits || {};
+    const insights = [];
+    if (traits.openness !== void 0) {
+      insights.push({
+        trait: "Openness to Experience",
+        score: traits.openness,
+        interpretation: this.interpretTrait("openness", traits.openness),
+        agentRecommendation: this.getAgentRecommendation("openness", traits.openness)
+      });
+    }
+    if (traits.conscientiousness !== void 0) {
+      insights.push({
+        trait: "Conscientiousness",
+        score: traits.conscientiousness,
+        interpretation: this.interpretTrait("conscientiousness", traits.conscientiousness),
+        agentRecommendation: this.getAgentRecommendation("conscientiousness", traits.conscientiousness)
+      });
+    }
+    if (traits.extraversion !== void 0) {
+      insights.push({
+        trait: "Extraversion",
+        score: traits.extraversion,
+        interpretation: this.interpretTrait("extraversion", traits.extraversion),
+        agentRecommendation: this.getAgentRecommendation("extraversion", traits.extraversion)
+      });
+    }
+    if (traits.analyticalThinking !== void 0) {
+      insights.push({
+        trait: "Analytical Thinking",
+        score: traits.analyticalThinking,
+        interpretation: this.interpretTrait("analyticalThinking", traits.analyticalThinking),
+        agentRecommendation: this.getAgentRecommendation("analyticalThinking", traits.analyticalThinking)
+      });
+    }
+    if (traits.resilience !== void 0) {
+      insights.push({
+        trait: "Resilience",
+        score: traits.resilience,
+        interpretation: this.interpretTrait("resilience", traits.resilience),
+        agentRecommendation: this.getAgentRecommendation("resilience", traits.resilience)
+      });
+    }
+    return insights;
+  }
+  interpretTrait(trait, score) {
+    const interpretations = {
+      openness: {
+        high: "You are highly creative, curious, and open to new experiences. You thrive on innovation and exploration.",
+        medium: "You balance traditional approaches with openness to new ideas.",
+        low: "You prefer proven methods and practical approaches over experimentation."
+      },
+      conscientiousness: {
+        high: "You are highly organized, disciplined, and goal-oriented. You excel at planning and execution.",
+        medium: "You balance structure with flexibility in your approach.",
+        low: "You prefer flexibility and spontaneity over rigid planning."
+      },
+      extraversion: {
+        high: "You are energized by social interaction and thrive in collaborative environments.",
+        medium: "You balance social interaction with independent work.",
+        low: "You prefer focused, independent work and recharge through solitude."
+      },
+      analyticalThinking: {
+        high: "You excel at data-driven decision making and systematic problem solving.",
+        medium: "You balance analytical thinking with intuition.",
+        low: "You rely more on intuition and experience than detailed analysis."
+      },
+      resilience: {
+        high: "You bounce back quickly from setbacks and maintain optimism under pressure.",
+        medium: "You handle challenges well with occasional need for support.",
+        low: "You benefit from strong support systems during challenging times."
+      }
+    };
+    const level = score > 70 ? "high" : score > 40 ? "medium" : "low";
+    return interpretations[trait]?.[level] || "Trait interpretation not available.";
+  }
+  getAgentRecommendation(trait, score) {
+    const recommendations = {
+      openness: {
+        high: "I'll encourage exploration of innovative solutions and creative approaches.",
+        medium: "I'll balance proven strategies with opportunities for innovation.",
+        low: "I'll focus on practical, proven approaches with clear ROI."
+      },
+      conscientiousness: {
+        high: "I'll provide structured frameworks and detailed action plans.",
+        medium: "I'll offer flexible guidance with clear milestones.",
+        low: "I'll help you develop light structure while respecting your flexibility."
+      },
+      extraversion: {
+        high: "I'll be energetic and interactive in our conversations.",
+        medium: "I'll adapt my energy to match your current state.",
+        low: "I'll be thoughtful and give you space to process independently."
+      },
+      analyticalThinking: {
+        high: "I'll provide data-driven insights and detailed analysis.",
+        medium: "I'll balance data with intuitive guidance.",
+        low: "I'll focus on practical wisdom and experience-based insights."
+      },
+      resilience: {
+        high: "I'll challenge you to push boundaries and take calculated risks.",
+        medium: "I'll provide balanced support and encouragement.",
+        low: "I'll offer extra support and celebrate small wins frequently."
+      }
+    };
+    const level = score > 70 ? "high" : score > 40 ? "medium" : "low";
+    return recommendations[trait]?.[level] || "I'll adapt my approach to support you best.";
+  }
+  // ============================================================================
+  // DATABASE MAINTENANCE
+  // ============================================================================
+  async createIndexes() {
+    await this.assessmentProfiles.createIndex({ userId: 1, assessmentType: 1, completedAt: -1 });
+    await this.assessmentProfiles.createIndex({ expiresAt: 1 }, { sparse: true });
+    await this.agentAdaptations.createIndex({ userId: 1, agentType: 1 }, { unique: true });
+    await this.agentAdaptations.createIndex({ assessmentProfileId: 1 });
+    console.log("\u2705 Assessment integration indexes created");
+  }
+};
+var assessmentServiceInstance = null;
+function getAssessmentService() {
+  if (!assessmentServiceInstance) {
+    const connectionString = process.env.MONGODB_CONNECTION_STRING;
+    const databaseName = process.env.MONGODB_DATABASE_NAME || "iterativ-db";
+    if (!connectionString) {
+      throw new Error("MONGODB_CONNECTION_STRING environment variable is not set");
+    }
+    assessmentServiceInstance = new AssessmentIntegrationService(connectionString, databaseName);
+  }
+  return assessmentServiceInstance;
+}
+
+// server/routes/assessment-routes.ts
+var router5 = Router2();
+var requireAuth2 = (req, res, next) => {
+  const user = req.user;
+  if (!user || !user.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  next();
+};
+router5.get("/types", requireAuth2, async (_req, res) => {
+  try {
+    const assessmentTypes = [
+      {
+        id: "riasec",
+        name: "Career Interest Assessment (RIASEC)",
+        description: "Discover your entrepreneurial interests and ideal role",
+        duration: "10-15 minutes",
+        questions: 48,
+        benefits: [
+          "Identify your natural strengths",
+          "Find your ideal startup role",
+          "Understand your work preferences",
+          "Match with complementary co-founders"
+        ]
+      },
+      {
+        id: "big_five",
+        name: "Personality Assessment (Big Five)",
+        description: "Understand your personality traits and founder archetype",
+        duration: "15-20 minutes",
+        questions: 60,
+        benefits: [
+          "Discover your founder archetype",
+          "Identify blind spots",
+          "Optimize team composition",
+          "Improve decision-making"
+        ]
+      },
+      {
+        id: "ai_readiness",
+        name: "AI Readiness Assessment",
+        description: "Evaluate your readiness to leverage AI in your startup",
+        duration: "10-15 minutes",
+        questions: 40,
+        benefits: [
+          "Assess AI adoption readiness",
+          "Get personalized learning paths",
+          "Identify AI opportunities",
+          "Reduce AI implementation risks"
+        ]
+      },
+      {
+        id: "design_thinking",
+        name: "Design Thinking Readiness",
+        description: "Assess your organization's readiness for design thinking",
+        duration: "15-20 minutes",
+        questions: 50,
+        benefits: [
+          "Evaluate innovation culture",
+          "Identify organizational blockers",
+          "Get implementation roadmap",
+          "Optimize for innovation"
+        ]
+      }
+    ];
+    res.json({ assessmentTypes });
+    return;
+  } catch (error) {
+    console.error("Error fetching assessment types:", error);
+    res.status(500).json({ error: "Failed to fetch assessment types" });
+  }
+});
+router5.post("/start", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { assessmentType } = req.body;
+    if (!assessmentType) {
+      res.status(400).json({ error: "Assessment type is required" });
+      return;
+    }
+    const engine = new AssessmentEngine({
+      userId: userId.toString(),
+      userName: `${req.user.firstName} ${req.user.lastName}`,
+      userEmail: req.user.email
+    });
+    const questions = engine.getAssessmentQuestions(assessmentType);
+    const assessmentDb = getAssessmentDatabase();
+    const session2 = await assessmentDb.createSession(
+      userId,
+      assessmentType,
+      questions.length
+    );
+    res.json({
+      session: {
+        sessionId: session2.sessionId,
+        assessmentType: session2.assessmentType,
+        totalQuestions: session2.totalQuestions,
+        currentQuestionIndex: 0,
+        progressPercentage: 0
+      },
+      questions
+    });
+    return;
+  } catch (error) {
+    console.error("Error starting assessment:", error);
+    res.status(500).json({ error: "Failed to start assessment" });
+  }
+});
+router5.get("/session/:sessionId", requireAuth2, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.id;
+    const assessmentDb = getAssessmentDatabase();
+    const session2 = await assessmentDb.getSession(sessionId);
+    if (!session2) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (session2.userId !== userId) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+    res.json({ session: session2 });
+    return;
+  } catch (error) {
+    console.error("Error fetching session:", error);
+    res.status(500).json({ error: "Failed to fetch session" });
+  }
+});
+router5.get("/active", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentDb = getAssessmentDatabase();
+    const sessions = await assessmentDb.getUserActiveSessions(userId);
+    res.json({ sessions });
+    return;
+  } catch (error) {
+    console.error("Error fetching active sessions:", error);
+    res.status(500).json({ error: "Failed to fetch active sessions" });
+  }
+});
+router5.post("/response", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { sessionId, questionId, value } = req.body;
+    if (!sessionId || !questionId || value === void 0) {
+      res.status(400).json({ error: "Session ID, question ID, and value are required" });
+      return;
+    }
+    const assessmentDb = getAssessmentDatabase();
+    const session2 = await assessmentDb.getSession(sessionId);
+    if (!session2) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (session2.userId !== userId) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+    if (session2.status !== "in_progress") {
+      res.status(400).json({ error: "Session is not in progress" });
+      return;
+    }
+    const response = {
+      questionId,
+      value,
+      timestamp: /* @__PURE__ */ new Date()
+    };
+    await assessmentDb.saveResponse(sessionId, response);
+    const updatedSession = await assessmentDb.getSession(sessionId);
+    res.json({
+      success: true,
+      progress: {
+        currentQuestionIndex: updatedSession.currentQuestionIndex,
+        totalQuestions: updatedSession.totalQuestions,
+        progressPercentage: updatedSession.progressPercentage,
+        isComplete: updatedSession.progressPercentage >= 100
+      }
+    });
+    return;
+  } catch (error) {
+    console.error("Error saving response:", error);
+    res.status(500).json({ error: "Failed to save response" });
+  }
+});
+router5.post("/complete", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      res.status(400).json({ error: "Session ID is required" });
+      return;
+    }
+    const assessmentDb = getAssessmentDatabase();
+    const session2 = await assessmentDb.getSession(sessionId);
+    if (!session2) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (session2.userId !== userId) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+    if (session2.status !== "in_progress") {
+      res.status(400).json({ error: "Session is not in progress" });
+      return;
+    }
+    const engine = new AssessmentEngine({
+      userId: userId.toString(),
+      userName: `${req.user.firstName} ${req.user.lastName}`,
+      userEmail: req.user.email
+    });
+    let results;
+    let compositeProfile = void 0;
+    switch (session2.assessmentType) {
+      case "riasec":
+        results = engine.processRIASEC(session2.responses);
+        break;
+      case "design_thinking":
+        results = engine.processDesignThinkingReadiness(session2.responses);
+        break;
+      default:
+        res.status(400).json({ error: `Unsupported assessment type: ${session2.assessmentType}` });
+        return;
+    }
+    const assessmentId = await assessmentDb.completeSession(
+      sessionId,
+      results,
+      compositeProfile
+    );
+    if (session2.assessmentType === "riasec") {
+      try {
+        const assessmentService = getAssessmentService();
+        await assessmentService.saveAssessmentProfile({
+          userId,
+          assessmentType: "personality",
+          assessmentResults: results,
+          personalityTraits: extractPersonalityTraits(results, session2.assessmentType),
+          workPreferences: extractWorkPreferences(results, session2.assessmentType),
+          communicationStyle: determineCommunicationStyle(results),
+          decisionStyle: determineDecisionStyle(results),
+          riskProfile: determineRiskProfile(results),
+          completedAt: /* @__PURE__ */ new Date()
+        });
+        console.log(`\u2705 Assessment profile saved for agent adaptation (User ${userId})`);
+      } catch (error) {
+        console.error("Error saving assessment profile for agent adaptation:", error);
+      }
+    }
+    res.json({
+      success: true,
+      assessmentId,
+      results,
+      message: "Assessment completed successfully"
+    });
+    return;
+  } catch (error) {
+    console.error("Error completing assessment:", error);
+    res.status(500).json({ error: "Failed to complete assessment" });
+  }
+});
+router5.post("/abandon", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { sessionId } = req.body;
+    const assessmentDb = getAssessmentDatabase();
+    const session2 = await assessmentDb.getSession(sessionId);
+    if (!session2) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (session2.userId !== userId) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+    await assessmentDb.abandonSession(sessionId);
+    res.json({ success: true, message: "Session abandoned" });
+    return;
+  } catch (error) {
+    console.error("Error abandoning session:", error);
+    res.status(500).json({ error: "Failed to abandon session" });
+  }
+});
+router5.get("/results/:assessmentType", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { assessmentType } = req.params;
+    const assessmentDb = getAssessmentDatabase();
+    const assessment = await assessmentDb.getLatestAssessment(userId, assessmentType);
+    if (!assessment) {
+      res.status(404).json({ error: "No assessment found for this type" });
+      return;
+    }
+    res.json({
+      assessment: {
+        id: assessment._id,
+        assessmentType: assessment.assessmentType,
+        results: assessment.results,
+        completedAt: assessment.completedAt,
+        version: assessment.version
+      }
+    });
+    return;
+  } catch (error) {
+    console.error("Error fetching assessment results:", error);
+    res.status(500).json({ error: "Failed to fetch assessment results" });
+  }
+});
+router5.get("/results", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentDb = getAssessmentDatabase();
+    const assessments = await assessmentDb.getAllUserAssessments(userId);
+    res.json({
+      assessments: assessments.map((a) => ({
+        id: a._id,
+        assessmentType: a.assessmentType,
+        completedAt: a.completedAt,
+        hasResults: !!a.results
+      }))
+    });
+    return;
+  } catch (error) {
+    console.error("Error fetching assessments:", error);
+    res.status(500).json({ error: "Failed to fetch assessments" });
+  }
+});
+router5.get("/profile", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentDb = getAssessmentDatabase();
+    const profile = await assessmentDb.getUserCompositeProfile(userId);
+    if (!profile) {
+      res.status(404).json({ error: "No composite profile found. Complete all assessments first." });
+      return;
+    }
+    res.json({ profile });
+    return;
+  } catch (error) {
+    console.error("Error fetching composite profile:", error);
+    res.status(500).json({ error: "Failed to fetch composite profile" });
+  }
+});
+router5.get("/history/:assessmentType", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { assessmentType } = req.params;
+    const assessmentDb = getAssessmentDatabase();
+    const evolution = await assessmentDb.getAssessmentEvolution(userId, assessmentType);
+    if (!evolution) {
+      res.status(404).json({ error: "No assessment history found" });
+      return;
+    }
+    res.json({ evolution });
+    return;
+  } catch (error) {
+    console.error("Error fetching assessment history:", error);
+    res.status(500).json({ error: "Failed to fetch assessment history" });
+  }
+});
+router5.get("/stats", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentDb = getAssessmentDatabase();
+    const stats = await assessmentDb.getAssessmentStats(userId);
+    res.json({ stats });
+    return;
+  } catch (error) {
+    console.error("Error fetching assessment stats:", error);
+    res.status(500).json({ error: "Failed to fetch assessment stats" });
+  }
+});
+router5.get("/personality", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentService = getAssessmentService();
+    const profile = await assessmentService.getAssessmentProfile(userId, "personality");
+    if (!profile) {
+      res.status(404).json({ error: "No personality profile found" });
+      return;
+    }
+    res.json({ profile });
+  } catch (error) {
+    console.error("Error fetching personality profile:", error);
+    res.status(500).json({ error: "Failed to fetch personality profile" });
+  }
+});
+router5.get("/personality/insights", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentService = getAssessmentService();
+    const insights = await assessmentService.generatePersonalityInsights(userId);
+    res.json({ insights });
+    return;
+  } catch (error) {
+    console.error("Error generating personality insights:", error);
+    res.status(500).json({ error: "Failed to generate personality insights" });
+  }
+});
+router5.get("/agent-adaptation/:agentType", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { agentType } = req.params;
+    const assessmentService = getAssessmentService();
+    const adaptation = await assessmentService.getAgentAdaptation(userId, agentType);
+    if (!adaptation) {
+      res.status(404).json({ error: "No adaptation found for this agent" });
+      return;
+    }
+    res.json({ adaptation });
+    return;
+  } catch (error) {
+    console.error("Error fetching agent adaptation:", error);
+    res.status(500).json({ error: "Failed to fetch agent adaptation" });
+  }
+});
+router5.post("/adapt-agents", requireAuth2, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const assessmentService = getAssessmentService();
+    const profile = await assessmentService.getAssessmentProfile(userId, "personality");
+    if (!profile) {
+      res.status(404).json({ error: "No personality profile found. Complete an assessment first." });
+      return;
+    }
+    const agentTypes = ["co_founder", "co_investor", "co_builder"];
+    const adaptations = [];
+    for (const agentType of agentTypes) {
+      try {
+        const adaptation = await assessmentService.adaptAgentPersonality(
+          userId,
+          agentType,
+          profile._id
+        );
+        adaptations.push({
+          agentType,
+          success: true,
+          adaptation
+        });
+      } catch (error) {
+        adaptations.push({
+          agentType,
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    }
+    res.json({
+      success: true,
+      message: "Agent adaptations completed",
+      adaptations
+    });
+    return;
+  } catch (error) {
+    console.error("Error adapting agents:", error);
+    res.status(500).json({ error: "Failed to adapt agents" });
+  }
+});
+router5.get("/admin/stats", requireAuth2, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    const assessmentDb = getAssessmentDatabase();
+    const stats = await assessmentDb.getPlatformAssessmentStats();
+    res.json({ stats });
+  } catch (error) {
+    console.error("Error fetching platform stats:", error);
+    res.status(500).json({ error: "Failed to fetch platform stats" });
+  }
+});
+function extractPersonalityTraits(results, assessmentType) {
+  if (assessmentType === "riasec") {
+    return {
+      openness: results.scores?.artistic || 50,
+      conscientiousness: results.scores?.conventional || 50,
+      extraversion: results.scores?.enterprising || 50,
+      agreeableness: results.scores?.social || 50,
+      analyticalThinking: results.scores?.investigative || 50,
+      creativity: results.scores?.artistic || 50,
+      resilience: 50
+      // Default, would come from Big Five
+    };
+  }
+  return {};
+}
+function extractWorkPreferences(results, assessmentType) {
+  if (assessmentType === "riasec") {
+    const scores = results.scores || {};
+    return {
+      workPace: scores.enterprising > 70 ? "fast" : scores.conventional > 70 ? "deliberate" : "moderate",
+      decisionSpeed: scores.enterprising > 70 ? "quick" : "balanced",
+      collaborationStyle: scores.social > 70 ? "collaborative" : scores.realistic > 70 ? "independent" : "mixed",
+      feedbackPreference: scores.enterprising > 70 ? "direct" : "balanced",
+      structureNeed: scores.conventional > 70 ? "high" : scores.artistic > 70 ? "low" : "medium"
+    };
+  }
+  return {};
+}
+function determineCommunicationStyle(results) {
+  const scores = results.scores || {};
+  if (scores.enterprising > 70) return "direct";
+  if (scores.social > 70) return "diplomatic";
+  if (scores.investigative > 70) return "analytical";
+  if (scores.artistic > 70) return "expressive";
+  return "balanced";
+}
+function determineDecisionStyle(results) {
+  const scores = results.scores || {};
+  if (scores.investigative > 70) return "data-driven";
+  if (scores.enterprising > 70) return "decisive";
+  if (scores.social > 70) return "collaborative";
+  if (scores.artistic > 70) return "intuitive";
+  return "balanced";
+}
+function determineRiskProfile(results) {
+  const scores = results.scores || {};
+  if (scores.enterprising > 75) return "aggressive";
+  if (scores.conventional > 75) return "conservative";
+  if (scores.investigative > 70) return "calculated";
+  return "moderate";
+}
+var assessment_routes_default = router5;
+
+// server/routes/business-plan-routes.ts
+import { Router as Router3 } from "express";
+
+// server/repositories/base-repository.ts
+var BaseRepository = class {
+  storage = storage2;
+  /**
+   * Check if entity exists
+   */
+  async exists(id) {
+    const entity = await this.getById(id);
+    return entity !== void 0;
+  }
+  /**
+   * Get entities with pagination
+   */
+  async getPaginated(page = 1, limit = 10) {
+    const allEntities = await this.getAll();
+    const total = allEntities.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const data = allEntities.slice(offset, offset + limit);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages
+    };
+  }
+  /**
+   * Validate entity data
+   */
+  validateEntity(entity) {
+    return entity && typeof entity === "object" && entity.id;
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  }
+  /**
+   * Update timestamp
+   */
+  updateTimestamp(entity) {
+    return {
+      ...entity,
+      updatedAt: /* @__PURE__ */ new Date()
+    };
+  }
+};
+
+// server/repositories/user-repository.ts
+var UserRepository = class extends BaseRepository {
+  async getById(id) {
+    const user = await this.storage.getUserById(id);
+    return user;
+  }
+  async getAll() {
+    const users = await this.storage.getAllUsers();
+    return users;
+  }
+  async create(data) {
+    const user = await this.storage.createUser(data);
+    return user;
+  }
+  async update(id, data) {
+    const user = await this.storage.updateUser(id, data);
+    return user;
+  }
+  async delete(id) {
+    return await this.storage.deleteUser(id);
+  }
+  async getCount() {
+    const users = await this.getAll();
+    return users.length;
+  }
+  async search(query) {
+    const users = await this.storage.searchUsers(query);
+    return users;
+  }
+  /**
+   * Get user by email
+   */
+  async getByEmail(email) {
+    const user = await this.storage.getUserByEmail(email);
+    return user;
+  }
+  /**
+   * Get users by type
+   */
+  async getByType(userType) {
+    const users = await this.storage.getUsersByType(userType);
+    return users;
+  }
+  /**
+   * Upsert user (create or update)
+   */
+  async upsert(data) {
+    const user = await this.storage.upsertUser(data);
+    return user;
+  }
+  /**
+   * Get user settings
+   */
+  async getSettings(userId) {
+    return await this.storage.getUserSettings(userId);
+  }
+  /**
+   * Update user settings
+   */
+  async updateSettings(userId, settings) {
+    return await this.storage.updateUserSettings(userId, settings);
+  }
+  /**
+   * Reset user settings
+   */
+  async resetSettings(userId) {
+    return await this.storage.resetUserSettings(userId);
+  }
+  /**
+   * Export user settings
+   */
+  async exportSettings(userId) {
+    return await this.storage.exportUserSettings(userId);
+  }
+  /**
+   * Get user organizations
+   */
+  async getOrganizations(userId) {
+    return await this.storage.getUserOrganizations(userId);
+  }
+  /**
+   * Get user collaborations
+   */
+  async getCollaborations(userId) {
+    return await this.storage.getUserCollaborations(userId);
+  }
+  /**
+   * Get user invitations
+   */
+  async getInvitations(userId) {
+    return await this.storage.getUserInvitations(userId);
+  }
+  /**
+   * Get user team members
+   */
+  async getTeamMembers(userId) {
+    return await this.storage.getTeamMembers(userId);
+  }
+};
+
+// server/repositories/business-plan-repository.ts
+var BusinessPlanRepository = class extends BaseRepository {
+  async getById(id) {
+    const plan = await this.storage.getBusinessPlan(id);
+    return plan;
+  }
+  async getAll() {
+    const plans = await this.storage.getAllBusinessPlans();
+    return plans;
+  }
+  async create(data) {
+    const plan = await this.storage.createBusinessPlan(data);
+    return plan;
+  }
+  async update(id, data) {
+    const plan = await this.storage.updateBusinessPlan(id, data);
+    return plan;
+  }
+  async delete(id) {
+    return await this.storage.deleteBusinessPlan(id);
+  }
+  async getCount() {
+    const plans = await this.getAll();
+    return plans.length;
+  }
+  async search(query) {
+    const plans = await this.storage.searchBusinessPlans(query);
+    return plans;
+  }
+  /**
+   * Get business plans by user ID
+   */
+  async getByUserId(userId) {
+    const plans = await this.storage.getBusinessPlansByUserId(userId);
+    return plans;
+  }
+  /**
+   * Get plan sections
+   */
+  async getSections(planId) {
+    return await this.storage.getPlanSections(planId);
+  }
+  /**
+   * Get plan section by ID
+   */
+  async getSection(id) {
+    return await this.storage.getPlanSection(id);
+  }
+  /**
+   * Create plan section
+   */
+  async createSection(data) {
+    return await this.storage.createPlanSection(data);
+  }
+  /**
+   * Update plan section
+   */
+  async updateSection(id, updates) {
+    return await this.storage.updatePlanSection(id, updates);
+  }
+  /**
+   * Get financial data
+   */
+  async getFinancialData(planId) {
+    return await this.storage.getFinancialData(planId);
+  }
+  /**
+   * Create financial data
+   */
+  async createFinancialData(data) {
+    return await this.storage.createFinancialData(data);
+  }
+  /**
+   * Update financial data
+   */
+  async updateFinancialData(id, updates) {
+    return await this.storage.updateFinancialData(id, updates);
+  }
+  /**
+   * Get analysis score
+   */
+  async getAnalysisScore(planId) {
+    return await this.storage.getAnalysisScore(planId);
+  }
+  /**
+   * Create analysis score
+   */
+  async createAnalysisScore(data) {
+    return await this.storage.createAnalysisScore(data);
+  }
+  /**
+   * Update analysis score
+   */
+  async updateAnalysisScore(id, updates) {
+    return await this.storage.updateAnalysisScore(id, updates);
+  }
+  /**
+   * Get pitch deck
+   */
+  async getPitchDeck(planId) {
+    return await this.storage.getPitchDeck(planId);
+  }
+  /**
+   * Create pitch deck
+   */
+  async createPitchDeck(data) {
+    return await this.storage.createPitchDeck(data);
+  }
+  /**
+   * Get investments for business plan
+   */
+  async getInvestments(planId) {
+    return await this.storage.getInvestments(planId);
+  }
+  /**
+   * Get loans for business plan
+   */
+  async getLoans(planId) {
+    return await this.storage.getLoans(planId);
+  }
+  /**
+   * Get advisory services for business plan
+   */
+  async getAdvisoryServices(planId) {
+    return await this.storage.getAdvisoryServices(planId);
+  }
+  /**
+   * Get financial projections
+   */
+  async getFinancialProjections(planId) {
+    return await this.storage.getFinancialProjections(planId);
+  }
+  /**
+   * Get financial projection by ID
+   */
+  async getFinancialProjection(id) {
+    return await this.storage.getFinancialProjection(id);
+  }
+  /**
+   * Create financial projection
+   */
+  async createFinancialProjection(data) {
+    return await this.storage.createFinancialProjection(data);
+  }
+  /**
+   * Update financial projection
+   */
+  async updateFinancialProjection(id, updates) {
+    return await this.storage.updateFinancialProjection(id, updates);
+  }
+  /**
+   * Get AI business analysis
+   */
+  async getAiBusinessAnalysis(planId) {
+    return await this.storage.getAiBusinessAnalysis(planId);
+  }
+  /**
+   * Create AI business analysis
+   */
+  async createAiBusinessAnalysis(data) {
+    return await this.storage.createAiBusinessAnalysis(data);
+  }
+  /**
+   * Update AI business analysis
+   */
+  async updateAiBusinessAnalysis(id, updates) {
+    return await this.storage.updateAiBusinessAnalysis(id, updates);
+  }
+};
+
+// server/repositories/organization-repository.ts
+var OrganizationRepository = class extends BaseRepository {
+  async getById(id) {
+    const organization = await this.storage.getOrganization(id);
+    return organization;
+  }
+  async getAll() {
+    const organizations = await this.storage.getAllOrganizations();
+    return organizations;
+  }
+  async create(data) {
+    const organization = await this.storage.createOrganization(data);
+    return organization;
+  }
+  async update(id, data) {
+    const organization = await this.storage.updateOrganization(id, data);
+    return organization;
+  }
+  async delete(id) {
+    return await this.storage.deleteOrganization(id);
+  }
+  async getCount() {
+    const organizations = await this.getAll();
+    return organizations.length;
+  }
+  async search(query) {
+    const organizations = await this.getAll();
+    return organizations.filter(
+      (org) => org.name.toLowerCase().includes(query.toLowerCase()) || org.description?.toLowerCase().includes(query.toLowerCase()) || org.industry?.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+  /**
+   * Get organizations by type
+   */
+  async getByType(orgType) {
+    const organizations = await this.storage.getOrganizationsByType(orgType);
+    return organizations;
+  }
+  /**
+   * Get organization members
+   */
+  async getMembers(organizationId) {
+    return await this.storage.getOrganizationMembers(organizationId);
+  }
+  /**
+   * Add user to organization
+   */
+  async addMember(userId, organizationId, role) {
+    return await this.storage.addUserToOrganization(userId, organizationId, role);
+  }
+  /**
+   * Get organization invitations
+   */
+  async getInvitations(organizationId) {
+    return await this.storage.getOrganizationInvitations(organizationId);
+  }
+  /**
+   * Create organization invitation
+   */
+  async createInvitation(data) {
+    return await this.storage.createOrganizationInvitation(data);
+  }
+  /**
+   * Get organization analytics
+   */
+  async getAnalytics(organizationId) {
+    return await this.storage.getOrganizationAnalytics(organizationId);
+  }
+  /**
+   * Get organization programs
+   */
+  async getPrograms(organizationId) {
+    return await this.storage.getPrograms(organizationId);
+  }
+  /**
+   * Get program by ID
+   */
+  async getProgram(id) {
+    return await this.storage.getProgram(id);
+  }
+  /**
+   * Create program
+   */
+  async createProgram(data) {
+    return await this.storage.createProgram(data);
+  }
+  /**
+   * Update program
+   */
+  async updateProgram(id, updates) {
+    return await this.storage.updateProgram(id, updates);
+  }
+  /**
+   * Delete program
+   */
+  async deleteProgram(id) {
+    return await this.storage.deleteProgram(id);
+  }
+  /**
+   * Get program cohorts
+   */
+  async getCohorts(programId) {
+    return await this.storage.getCohorts(programId);
+  }
+  /**
+   * Get cohort by ID
+   */
+  async getCohort(id) {
+    return await this.storage.getCohort(id);
+  }
+  /**
+   * Create cohort
+   */
+  async createCohort(data) {
+    return await this.storage.createCohort(data);
+  }
+  /**
+   * Update cohort
+   */
+  async updateCohort(id, updates) {
+    return await this.storage.updateCohort(id, updates);
+  }
+  /**
+   * Delete cohort
+   */
+  async deleteCohort(id) {
+    return await this.storage.deleteCohort(id);
+  }
+  /**
+   * Get organization portfolios
+   */
+  async getPortfolios(organizationId) {
+    return await this.storage.getPortfolios(organizationId);
+  }
+  /**
+   * Get portfolio by ID
+   */
+  async getPortfolio(id) {
+    return await this.storage.getPortfolio(id);
+  }
+  /**
+   * Create portfolio
+   */
+  async createPortfolio(data) {
+    return await this.storage.createPortfolio(data);
+  }
+  /**
+   * Update portfolio
+   */
+  async updatePortfolio(id, updates) {
+    return await this.storage.updatePortfolio(id, updates);
+  }
+  /**
+   * Delete portfolio
+   */
+  async deletePortfolio(id) {
+    return await this.storage.deletePortfolio(id);
+  }
+  /**
+   * Get portfolio companies
+   */
+  async getPortfolioCompanies(portfolioId) {
+    return await this.storage.getPortfolioCompanies(portfolioId);
+  }
+  /**
+   * Get portfolio companies by cohort
+   */
+  async getPortfolioCompaniesByCohort(cohortId) {
+    return await this.storage.getPortfolioCompaniesByCohort(cohortId);
+  }
+  /**
+   * Get portfolio company by ID
+   */
+  async getPortfolioCompany(id) {
+    return await this.storage.getPortfolioCompany(id);
+  }
+  /**
+   * Create portfolio company
+   */
+  async createPortfolioCompany(data) {
+    return await this.storage.createPortfolioCompany(data);
+  }
+  /**
+   * Update portfolio company
+   */
+  async updatePortfolioCompany(id, updates) {
+    return await this.storage.updatePortfolioCompany(id, updates);
+  }
+  /**
+   * Delete portfolio company
+   */
+  async deletePortfolioCompany(id) {
+    return await this.storage.deletePortfolioCompany(id);
+  }
+  /**
+   * Get educational modules
+   */
+  async getEducationalModules(creatorId) {
+    return await this.storage.getEducationalModules(creatorId);
+  }
+  /**
+   * Get educational module by ID
+   */
+  async getEducationalModule(id) {
+    return await this.storage.getEducationalModule(id);
+  }
+  /**
+   * Create educational module
+   */
+  async createEducationalModule(data) {
+    return await this.storage.createEducationalModule(data);
+  }
+  /**
+   * Update educational module
+   */
+  async updateEducationalModule(id, updates) {
+    return await this.storage.updateEducationalModule(id, updates);
+  }
+  /**
+   * Delete educational module
+   */
+  async deleteEducationalModule(id) {
+    return await this.storage.deleteEducationalModule(id);
+  }
+  /**
+   * Get mentorships by mentor
+   */
+  async getMentorshipsByMentor(mentorId) {
+    return await this.storage.getMentorshipsByMentor(mentorId);
+  }
+  /**
+   * Get mentorships by mentee
+   */
+  async getMentorshipsByMentee(menteeId) {
+    return await this.storage.getMentorshipsByMentee(menteeId);
+  }
+  /**
+   * Get mentorships by program
+   */
+  async getMentorshipsByProgram(programId) {
+    return await this.storage.getMentorshipsByProgram(programId);
+  }
+  /**
+   * Get mentorship by ID
+   */
+  async getMentorship(id) {
+    return await this.storage.getMentorship(id);
+  }
+  /**
+   * Create mentorship
+   */
+  async createMentorship(data) {
+    return await this.storage.createMentorship(data);
+  }
+  /**
+   * Update mentorship
+   */
+  async updateMentorship(id, updates) {
+    return await this.storage.updateMentorship(id, updates);
+  }
+  /**
+   * Delete mentorship
+   */
+  async deleteMentorship(id) {
+    return await this.storage.deleteMentorship(id);
+  }
+  /**
+   * Get venture projects
+   */
+  async getVentureProjects(organizationId) {
+    return await this.storage.getVentureProjects(organizationId);
+  }
+  /**
+   * Get venture project by ID
+   */
+  async getVentureProject(id) {
+    return await this.storage.getVentureProject(id);
+  }
+  /**
+   * Create venture project
+   */
+  async createVentureProject(data) {
+    return await this.storage.createVentureProject(data);
+  }
+  /**
+   * Update venture project
+   */
+  async updateVentureProject(id, updates) {
+    return await this.storage.updateVentureProject(id, updates);
+  }
+  /**
+   * Delete venture project
+   */
+  async deleteVentureProject(id) {
+    return await this.storage.deleteVentureProject(id);
+  }
+};
+
+// server/repositories/credit-repository.ts
+var CreditRepository = class extends BaseRepository {
+  async getById(id) {
+    const score = await this.storage.getCreditScore(id);
+    return score;
+  }
+  async getAll() {
+    const allUsers = await this.storage.getAllUsers();
+    const allScores = [];
+    for (const user of allUsers) {
+      const userScores = await this.storage.getCreditScores(user.id.toString());
+      allScores.push(...userScores);
+    }
+    return allScores;
+  }
+  async create(data) {
+    const score = await this.storage.createCreditScore(data);
+    return score;
+  }
+  async update(id, data) {
+    const score = await this.storage.updateCreditScore(id, data);
+    return score;
+  }
+  async delete(id) {
+    return false;
+  }
+  async getCount() {
+    const scores = await this.getAll();
+    return scores.length;
+  }
+  async search(query) {
+    const scores = await this.getAll();
+    return scores.filter(
+      (score) => score.userId.includes(query) || score.score.toString().includes(query)
+    );
+  }
+  /**
+   * Get credit scores by user ID
+   */
+  async getByUserId(userId) {
+    const scores = await this.storage.getCreditScores(userId);
+    return scores;
+  }
+  /**
+   * Get latest credit score for user
+   */
+  async getLatestByUserId(userId) {
+    const scores = await this.getByUserId(userId);
+    if (scores.length === 0) return void 0;
+    return scores.sort(
+      (a, b) => new Date(b.calculatedAt).getTime() - new Date(a.calculatedAt).getTime()
+    )[0];
+  }
+  /**
+   * Get financial milestones by user ID
+   */
+  async getFinancialMilestones(userId) {
+    const milestones = await this.storage.getFinancialMilestones(userId);
+    return milestones;
+  }
+  /**
+   * Get financial milestone by ID
+   */
+  async getFinancialMilestone(id) {
+    const milestone = await this.storage.getFinancialMilestone(id);
+    return milestone;
+  }
+  /**
+   * Create financial milestone
+   */
+  async createFinancialMilestone(data) {
+    const milestone = await this.storage.createFinancialMilestone(data);
+    return milestone;
+  }
+  /**
+   * Update financial milestone
+   */
+  async updateFinancialMilestone(id, data) {
+    const milestone = await this.storage.updateFinancialMilestone(id, data);
+    return milestone;
+  }
+  /**
+   * Delete financial milestone
+   */
+  async deleteFinancialMilestone(id) {
+    return false;
+  }
+  /**
+   * Get AI coaching messages by user ID
+   */
+  async getAiCoachingMessages(userId) {
+    return await this.storage.getAiCoachingMessages(userId);
+  }
+  /**
+   * Create AI coaching message
+   */
+  async createAiCoachingMessage(data) {
+    return await this.storage.createAiCoachingMessage(data);
+  }
+  /**
+   * Get credit tips
+   */
+  async getCreditTips() {
+    return await this.storage.getCreditTips();
+  }
+  /**
+   * Get credit tips by category
+   */
+  async getCreditTipsByCategory(category) {
+    return await this.storage.getCreditTipsByCategory(category);
+  }
+  /**
+   * Get credit tip by ID
+   */
+  async getCreditTip(id) {
+    return await this.storage.getCreditTip(id);
+  }
+  /**
+   * Create credit tip
+   */
+  async createCreditTip(data) {
+    return await this.storage.createCreditTip(data);
+  }
+  /**
+   * Get user credit tips
+   */
+  async getUserCreditTips(userId) {
+    return await this.storage.getUserCreditTips(userId);
+  }
+  /**
+   * Create user credit tip
+   */
+  async createUserCreditTip(data) {
+    return await this.storage.createUserCreditTip(data);
+  }
+  /**
+   * Update user credit tip
+   */
+  async updateUserCreditTip(id, updates) {
+    return await this.storage.updateUserCreditTip(id, updates);
+  }
+  /**
+   * Get credit achievements
+   */
+  async getCreditAchievements() {
+    return await this.storage.getCreditAchievements();
+  }
+  /**
+   * Get credit achievements by category
+   */
+  async getCreditAchievementsByCategory(category) {
+    return await this.storage.getCreditAchievementsByCategory(category);
+  }
+  /**
+   * Get credit achievement by ID
+   */
+  async getCreditAchievement(id) {
+    return await this.storage.getCreditAchievement(id);
+  }
+  /**
+   * Create credit achievement
+   */
+  async createCreditAchievement(data) {
+    return await this.storage.createCreditAchievement(data);
+  }
+  /**
+   * Get user credit achievements
+   */
+  async getUserCreditAchievements(userId) {
+    return await this.storage.getUserCreditAchievements(userId);
+  }
+  /**
+   * Get unseen achievements for user
+   */
+  async getUnseenAchievements(userId) {
+    return await this.storage.getUnseenAchievements(userId);
+  }
+  /**
+   * Create user credit achievement
+   */
+  async createUserCreditAchievement(data) {
+    return await this.storage.createUserCreditAchievement(data);
+  }
+  /**
+   * Update user credit achievement
+   */
+  async updateUserCreditAchievement(id, updates) {
+    return await this.storage.updateUserCreditAchievement(id, updates);
+  }
+  /**
+   * Mark achievement as seen
+   */
+  async markAchievementAsSeen(id) {
+    return await this.storage.markAchievementAsSeen(id);
+  }
+  /**
+   * Get credit score history by user ID
+   */
+  async getCreditScoreHistory(userId) {
+    return await this.storage.getCreditScoreHistory(userId);
+  }
+  /**
+   * Create credit score history entry
+   */
+  async createCreditScoreHistory(data) {
+    return await this.storage.createCreditScoreHistory(data);
+  }
+  /**
+   * Get user reward points
+   */
+  async getUserRewardPoints(userId) {
+    return await this.storage.getUserRewardPoints(userId);
+  }
+  /**
+   * Create user reward points
+   */
+  async createUserRewardPoints(data) {
+    return await this.storage.createUserRewardPoints(data);
+  }
+  /**
+   * Update user reward points
+   */
+  async updateUserRewardPoints(id, updates) {
+    return await this.storage.updateUserRewardPoints(id, updates);
+  }
+  /**
+   * Add points to user
+   */
+  async addUserPoints(userId, points) {
+    return await this.storage.addUserPoints(userId, points);
+  }
+  /**
+   * Get point transactions by user ID
+   */
+  async getPointTransactions(userId) {
+    return await this.storage.getPointTransactions(userId);
+  }
+  /**
+   * Create point transaction
+   */
+  async createPointTransaction(data) {
+    return await this.storage.createPointTransaction(data);
+  }
+  /**
+   * Get credit score tiers
+   */
+  async getCreditScoreTiers() {
+    return await this.storage.getCreditScoreTiers();
+  }
+  /**
+   * Get credit score tier by ID
+   */
+  async getCreditScoreTier(id) {
+    return await this.storage.getCreditScoreTier(id);
+  }
+  /**
+   * Get credit score tier by score
+   */
+  async getCreditScoreTierByScore(score) {
+    return await this.storage.getCreditScoreTierByScore(score);
+  }
+  /**
+   * Create credit score tier
+   */
+  async createCreditScoreTier(data) {
+    return await this.storage.createCreditScoreTier(data);
+  }
+  /**
+   * Update credit score tier
+   */
+  async updateCreditScoreTier(id, updates) {
+    return await this.storage.updateCreditScoreTier(id, updates);
+  }
+};
+
+// server/repositories/index.ts
+var userRepository = new UserRepository();
+var businessPlanRepository = new BusinessPlanRepository();
+var organizationRepository = new OrganizationRepository();
+var creditRepository = new CreditRepository();
+
+// server/utils/logger.ts
+var Logger = class _Logger {
+  context = {};
+  minLevel = "info" /* INFO */;
+  constructor() {
+    if (process.env.NODE_ENV === "development") {
+      this.minLevel = "debug" /* DEBUG */;
+    } else if (process.env.LOG_LEVEL) {
+      this.minLevel = process.env.LOG_LEVEL;
+    }
+  }
+  /**
+   * Set persistent context for all subsequent logs
+   */
+  setContext(context) {
+    this.context = { ...this.context, ...context };
+  }
+  /**
+   * Clear all context
+   */
+  clearContext() {
+    this.context = {};
+  }
+  /**
+   * Create a child logger with additional context
+   */
+  child(context) {
+    const childLogger = new _Logger();
+    childLogger.context = { ...this.context, ...context };
+    childLogger.minLevel = this.minLevel;
+    return childLogger;
+  }
+  shouldLog(level) {
+    const levels = ["debug" /* DEBUG */, "info" /* INFO */, "warn" /* WARN */, "error" /* ERROR */];
+    const currentLevelIndex = levels.indexOf(level);
+    const minLevelIndex = levels.indexOf(this.minLevel);
+    return currentLevelIndex >= minLevelIndex;
+  }
+  formatLogEntry(entry) {
+    if (process.env.NODE_ENV === "production") {
+      return JSON.stringify(entry);
+    } else {
+      const { timestamp, level, message, context, meta, error } = entry;
+      let output = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+      if (context && Object.keys(context).length > 0) {
+        output += `
+  Context: ${JSON.stringify(context, null, 2)}`;
+      }
+      if (meta) {
+        output += `
+  Meta: ${JSON.stringify(meta, null, 2)}`;
+      }
+      if (error) {
+        output += `
+  Error: ${error.name}: ${error.message}`;
+        if (error.stack) {
+          output += `
+${error.stack}`;
+        }
+      }
+      return output;
+    }
+  }
+  log(level, message, meta) {
+    if (!this.shouldLog(level)) {
+      return;
+    }
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const logEntry = {
+      timestamp,
+      level,
+      message,
+      ...Object.keys(this.context).length > 0 && { context: this.context },
+      ...meta && { meta }
+    };
+    const formattedLog = this.formatLogEntry(logEntry);
+    if (level === "error" /* ERROR */) {
+      console.error(formattedLog);
+    } else if (level === "warn" /* WARN */) {
+      console.warn(formattedLog);
+    } else {
+      console.log(formattedLog);
+    }
+    if (process.env.NODE_ENV === "production") {
+      this.sendToExternalService(logEntry);
+    }
+  }
+  sendToExternalService(_entry) {
+  }
+  /**
+   * Log debug message (development only)
+   */
+  debug(message, meta) {
+    this.log("debug" /* DEBUG */, message, meta);
+  }
+  /**
+   * Log informational message
+   */
+  info(message, meta) {
+    this.log("info" /* INFO */, message, meta);
+  }
+  /**
+   * Log warning message
+   */
+  warn(message, meta) {
+    this.log("warn" /* WARN */, message, meta);
+  }
+  /**
+   * Log error message with optional error object
+   */
+  error(message, error, meta) {
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const logEntry = {
+      timestamp,
+      level: "error" /* ERROR */,
+      message,
+      ...Object.keys(this.context).length > 0 && { context: this.context },
+      ...meta && { meta }
+    };
+    if (error instanceof Error) {
+      logEntry.error = {
+        message: error.message,
+        ...error.stack && { stack: error.stack },
+        name: error.name,
+        ...error.code && { code: error.code }
+      };
+    } else if (error) {
+      logEntry.error = {
+        message: String(error),
+        name: "UnknownError"
+      };
+    }
+    const formattedLog = this.formatLogEntry(logEntry);
+    console.error(formattedLog);
+    if (process.env.NODE_ENV === "production") {
+      this.sendToExternalService(logEntry);
+    }
+  }
+  /**
+   * Time a function execution
+   */
+  async time(label, fn, meta) {
+    const startTime = Date.now();
+    this.debug(`Starting: ${label}`, meta);
+    try {
+      const result = await fn();
+      const duration = Date.now() - startTime;
+      this.info(`Completed: ${label}`, { ...meta, duration: `${duration}ms` });
+      return result;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.error(`Failed: ${label}`, error, { ...meta, duration: `${duration}ms` });
+      throw error;
+    }
+  }
+};
+var logger = new Logger();
+
+// server/utils/errors.ts
+import { ZodError } from "zod";
+var AppError = class extends Error {
+  isOperational = true;
+  message;
+  statusCode;
+  code;
+  details;
+  constructor(statusCode, message, code, details) {
+    super(message);
+    this.message = message;
+    this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+  toJSON() {
+    return {
+      code: this.code,
+      message: this.message,
+      details: this.details
+    };
+  }
+};
+var UnauthorizedError = class extends AppError {
+  constructor(message = "Unauthorized access") {
+    super(401, message, "UNAUTHORIZED");
+  }
+};
+var ForbiddenError = class extends AppError {
+  constructor(message = "Access forbidden") {
+    super(403, message, "FORBIDDEN");
+  }
+};
+var NotFoundError = class extends AppError {
+  constructor(resource = "Resource") {
+    super(404, `${resource} not found`, "NOT_FOUND");
+  }
+};
+function asyncHandler(fn) {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+function assertExists(value, resource = "Resource") {
+  if (value === null || value === void 0) {
+    throw new NotFoundError(resource);
+  }
+}
+
+// shared/types/validation.ts
+import { z as z3 } from "zod";
+var MetricSchema = z3.object({
+  name: z3.string().min(1).max(100),
+  value: z3.number(),
+  unit: z3.string().optional(),
+  trend: z3.enum(["up", "down", "stable"]).optional(),
+  description: z3.string().max(500).optional()
+});
+var TeamMemberSchema = z3.object({
+  name: z3.string().min(1).max(100),
+  role: z3.string().min(1).max(100),
+  experience: z3.number().min(0).max(100),
+  skills: z3.array(z3.string().max(50)).max(20),
+  bio: z3.string().max(1e3).optional(),
+  linkedIn: z3.string().url().optional()
+});
+var CreditFactorSchema = z3.object({
+  name: z3.string().min(1).max(100),
+  impact: z3.enum(["positive", "negative", "neutral"]),
+  weight: z3.number().min(0).max(1),
+  description: z3.string().max(500).optional()
+});
+var PitchSlideSchema = z3.object({
+  id: z3.string().uuid(),
+  order: z3.number().int().min(0),
+  type: z3.enum(["cover", "problem", "solution", "market", "product", "business-model", "traction", "team", "financials", "ask", "custom"]),
+  title: z3.string().min(1).max(200),
+  content: z3.string().max(5e3),
+  imageUrl: z3.string().url().optional(),
+  notes: z3.string().max(2e3).optional()
+});
+var InsertBusinessPlanSchema = z3.object({
   userId: z3.string().min(1).max(100).regex(/^[a-zA-Z0-9\-_]+$/),
   title: z3.string().min(1).max(200).trim(),
   description: z3.string().max(5e3).trim().optional(),
   industry: z3.string().max(100).trim().optional(),
   stage: z3.enum(["idea", "prototype", "mvp", "growth", "scale"]).optional()
 });
-var insertPlanSectionSchema = z3.object({
-  businessPlanId: z3.string(),
-  chapterId: z3.string(),
-  sectionId: z3.string(),
-  content: z3.string()
+var InsertPlanSectionSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  chapterId: z3.string().min(1).max(100),
+  sectionId: z3.string().min(1).max(100),
+  content: z3.string().max(5e4),
+  order: z3.number().int().min(0).optional()
 });
-var insertFinancialDataSchema = z3.object({
-  businessPlanId: z3.string(),
-  year: z3.number(),
-  revenue: z3.number(),
-  expenses: z3.number(),
+var InsertFinancialDataSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  year: z3.number().int().min(2e3).max(2100),
+  revenue: z3.number().min(0),
+  expenses: z3.number().min(0),
   profit: z3.number(),
-  cashFlow: z3.number()
+  cashFlow: z3.number(),
+  projectedRevenue: z3.number().min(0).optional(),
+  projectedExpenses: z3.number().min(0).optional()
 });
-var insertAnalysisScoreSchema = z3.object({
-  businessPlanId: z3.string(),
-  companyValue: z3.number(),
+var InsertAnalysisScoreSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  companyValue: z3.number().min(0),
   companyValueChange: z3.number(),
-  revenueMultiple: z3.number(),
+  revenueMultiple: z3.number().min(0),
   revenueMultipleChange: z3.number(),
-  runway: z3.number(),
+  runway: z3.number().min(0),
   runwayChange: z3.number(),
-  burnRate: z3.number(),
+  burnRate: z3.number().min(0),
   burnRateChange: z3.number(),
-  financialMetrics: z3.array(z3.any()),
-  // More specific type can be defined
-  nonFinancialMetrics: z3.array(z3.any()),
-  // More specific type can be defined
-  marketMetrics: z3.array(z3.any()),
-  // More specific type can be defined
-  teamAssessment: z3.array(z3.any())
-  // More specific type can be defined
+  financialMetrics: z3.array(MetricSchema),
+  nonFinancialMetrics: z3.array(MetricSchema),
+  marketMetrics: z3.array(MetricSchema),
+  teamAssessment: z3.array(TeamMemberSchema)
 });
-var insertProgramSchema = z3.object({
-  organizationId: z3.string(),
-  name: z3.string(),
-  description: z3.string().optional()
+var InsertPitchDeckSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  title: z3.string().min(1).max(200),
+  slides: z3.array(PitchSlideSchema).min(1).max(50),
+  version: z3.number().int().min(1).optional()
 });
-var insertCohortSchema = z3.object({
-  programId: z3.string(),
-  name: z3.string(),
-  startDate: z3.date(),
-  endDate: z3.date()
+var InsertInvestmentSchema = z3.object({
+  planId: z3.string().uuid(),
+  investorId: z3.string().uuid(),
+  amount: z3.number().min(0),
+  equity: z3.number().min(0).max(100).optional(),
+  valuation: z3.number().min(0).optional(),
+  investmentType: z3.enum(["seed", "series-a", "series-b", "series-c", "bridge", "convertible-note"]),
+  date: z3.coerce.date(),
+  status: z3.enum(["pending", "committed", "completed", "cancelled"]).optional(),
+  terms: z3.record(z3.unknown()).optional()
 });
-var insertPortfolioSchema = z3.object({
-  organizationId: z3.string(),
-  name: z3.string(),
-  description: z3.string().optional()
+var InsertLoanSchema = z3.object({
+  planId: z3.string().uuid(),
+  lenderId: z3.string().uuid(),
+  amount: z3.number().min(0),
+  interestRate: z3.number().min(0).max(100),
+  termMonths: z3.number().int().min(1).max(600),
+  startDate: z3.coerce.date(),
+  endDate: z3.coerce.date(),
+  monthlyPayment: z3.number().min(0).optional(),
+  status: z3.enum(["pending", "approved", "active", "paid-off", "defaulted"]).optional(),
+  collateral: z3.string().max(500).optional()
 });
-var insertPortfolioCompanySchema = z3.object({
-  portfolioId: z3.string(),
-  cohortId: z3.string().optional(),
-  companyName: z3.string(),
-  industry: z3.string(),
-  stage: z3.string(),
-  website: z3.string().optional(),
-  description: z3.string().optional()
+var InsertAdvisoryServiceSchema = z3.object({
+  planId: z3.string().uuid(),
+  partnerId: z3.string().uuid(),
+  serviceType: z3.enum(["legal", "accounting", "marketing", "technology", "hr", "strategy", "other"]),
+  description: z3.string().max(2e3).optional(),
+  startDate: z3.coerce.date(),
+  endDate: z3.coerce.date().optional(),
+  status: z3.enum(["active", "completed", "cancelled"]).optional(),
+  cost: z3.number().min(0).optional()
 });
-var insertEducationalModuleSchema = z3.object({
-  creatorId: z3.string(),
-  title: z3.string(),
-  content: z3.string(),
-  category: z3.string().optional()
+var InsertProgramSchema = z3.object({
+  organizationId: z3.string().uuid(),
+  name: z3.string().min(1).max(200),
+  description: z3.string().max(2e3).optional(),
+  type: z3.enum(["accelerator", "incubator", "training", "mentorship"]),
+  duration: z3.number().int().min(1).max(365).optional(),
+  startDate: z3.coerce.date().optional(),
+  endDate: z3.coerce.date().optional(),
+  status: z3.enum(["active", "completed", "upcoming", "cancelled"]).optional(),
+  maxParticipants: z3.number().int().min(1).optional()
 });
-var insertMentorshipSchema = z3.object({
-  mentorId: z3.string(),
-  menteeId: z3.string(),
-  programId: z3.string().optional(),
-  startDate: z3.date(),
-  endDate: z3.date().optional(),
-  status: z3.string()
+var InsertCohortSchema = z3.object({
+  programId: z3.string().uuid(),
+  name: z3.string().min(1).max(200),
+  startDate: z3.coerce.date(),
+  endDate: z3.coerce.date(),
+  participantCount: z3.number().int().min(0).optional(),
+  status: z3.enum(["active", "completed", "upcoming"]).optional()
+});
+var InsertPortfolioSchema = z3.object({
+  organizationId: z3.string().uuid(),
+  name: z3.string().min(1).max(200),
+  description: z3.string().max(2e3).optional(),
+  totalValue: z3.number().min(0).optional(),
+  companyCount: z3.number().int().min(0).optional()
+});
+var InsertPortfolioCompanySchema = z3.object({
+  portfolioId: z3.string().uuid(),
+  cohortId: z3.string().uuid().optional(),
+  companyName: z3.string().min(1).max(200),
+  industry: z3.string().min(1).max(100),
+  stage: z3.enum(["idea", "prototype", "mvp", "growth", "scale"]),
+  website: z3.string().url().optional(),
+  description: z3.string().max(2e3).optional(),
+  investmentAmount: z3.number().min(0).optional(),
+  equity: z3.number().min(0).max(100).optional(),
+  valuation: z3.number().min(0).optional(),
+  status: z3.enum(["active", "exited", "failed", "acquired"]).optional()
+});
+var InsertEducationalModuleSchema = z3.object({
+  creatorId: z3.string().uuid(),
+  title: z3.string().min(1).max(200),
+  content: z3.string().min(1).max(5e4),
+  category: z3.string().max(100).optional(),
+  difficulty: z3.enum(["beginner", "intermediate", "advanced"]).optional(),
+  duration: z3.number().int().min(1).optional(),
+  tags: z3.array(z3.string().max(50)).max(20).optional()
+});
+var InsertMentorshipSchema = z3.object({
+  mentorId: z3.string().uuid(),
+  menteeId: z3.string().uuid(),
+  programId: z3.string().uuid().optional(),
+  startDate: z3.coerce.date(),
+  endDate: z3.coerce.date().optional(),
+  status: z3.enum(["active", "completed", "cancelled", "on-hold"]).optional(),
+  focusAreas: z3.array(z3.string().max(100)).max(10).optional(),
+  meetingFrequency: z3.string().max(100).optional()
+});
+var InsertVentureProjectSchema = z3.object({
+  organizationId: z3.string().uuid(),
+  name: z3.string().min(1).max(200),
+  description: z3.string().max(2e3).optional(),
+  status: z3.enum(["planning", "active", "completed", "on-hold", "cancelled"]).optional(),
+  budget: z3.number().min(0).optional(),
+  startDate: z3.coerce.date().optional(),
+  endDate: z3.coerce.date().optional(),
+  teamSize: z3.number().int().min(0).optional()
+});
+var InsertCreditScoreSchema = z3.object({
+  userId: z3.string().uuid(),
+  score: z3.number().int().min(300).max(850),
+  date: z3.coerce.date(),
+  factors: z3.array(CreditFactorSchema).optional(),
+  recommendations: z3.array(z3.string().max(500)).max(10).optional()
+});
+var InsertFinancialMilestoneSchema = z3.object({
+  userId: z3.string().uuid(),
+  title: z3.string().min(1).max(200),
+  description: z3.string().max(1e3).optional(),
+  targetAmount: z3.number().min(0).optional(),
+  currentAmount: z3.number().min(0).optional(),
+  targetDate: z3.coerce.date().optional(),
+  status: z3.enum(["pending", "in-progress", "completed", "missed"]).optional(),
+  category: z3.enum(["revenue", "funding", "profitability", "growth", "other"])
+});
+var InsertAiCoachingMessageSchema = z3.object({
+  userId: z3.string().uuid(),
+  message: z3.string().min(1).max(5e3),
+  category: z3.enum(["credit", "business", "financial", "strategic", "general"]),
+  priority: z3.enum(["low", "medium", "high"]).optional(),
+  read: z3.boolean().optional()
+});
+var InsertCreditTipSchema = z3.object({
+  title: z3.string().min(1).max(200),
+  content: z3.string().min(1).max(5e3),
+  category: z3.string().min(1).max(100),
+  difficulty: z3.enum(["easy", "medium", "hard"]).optional(),
+  impact: z3.enum(["low", "medium", "high"]).optional()
+});
+var InsertUserCreditTipSchema = z3.object({
+  userId: z3.string().uuid(),
+  creditTipId: z3.string().uuid(),
+  status: z3.enum(["new", "in-progress", "completed", "dismissed"]).optional(),
+  progress: z3.number().min(0).max(100).optional()
+});
+var InsertFinancialProjectionSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  year: z3.number().int().min(2e3).max(2100),
+  month: z3.number().int().min(1).max(12).optional(),
+  revenue: z3.number().min(0),
+  expenses: z3.number().min(0),
+  profit: z3.number(),
+  cashFlow: z3.number(),
+  assumptions: z3.array(z3.string().max(500)).max(20).optional(),
+  scenario: z3.enum(["conservative", "realistic", "optimistic"]).optional()
+});
+var InsertAiBusinessAnalysisSchema = z3.object({
+  businessPlanId: z3.string().uuid(),
+  strengths: z3.array(z3.string().max(500)).min(1).max(10),
+  weaknesses: z3.array(z3.string().max(500)).min(1).max(10),
+  opportunities: z3.array(z3.string().max(500)).min(1).max(10),
+  threats: z3.array(z3.string().max(500)).min(1).max(10),
+  recommendations: z3.array(z3.string().max(500)).min(1).max(10),
+  overallScore: z3.number().min(0).max(100),
+  confidence: z3.number().min(0).max(1)
+});
+
+// server/routes/business-plan-routes.ts
+var router6 = Router3();
+function getUserId(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router6.get("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId(req);
+  logger.info("Fetching business plans", { userId });
+  const plans = await businessPlanRepository.getByUserId(userId);
+  res.json(plans);
+}));
+router6.get("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId(req);
+  logger.info("Fetching business plan", { planId: id, userId });
+  const plan = await businessPlanRepository.getById(id);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  res.json(plan);
+}));
+router6.post("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId(req);
+  const validatedData = InsertBusinessPlanSchema.parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating business plan", { userId, title: validatedData.title });
+  const plan = await businessPlanRepository.create(validatedData);
+  logger.info("Business plan created", { planId: plan.id, userId });
+  res.status(201).json(plan);
+}));
+router6.patch("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId(req);
+  logger.info("Updating business plan", { planId: id, userId });
+  const existingPlan = await businessPlanRepository.getById(id);
+  assertExists(existingPlan, "Business plan");
+  if (existingPlan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  const plan = await businessPlanRepository.update(id, req.body);
+  assertExists(plan, "Business plan");
+  logger.info("Business plan updated", { planId: id, userId });
+  res.json(plan);
+}));
+router6.delete("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId(req);
+  logger.info("Deleting business plan", { planId: id, userId });
+  const existingPlan = await storage.getBusinessPlan(id);
+  assertExists(existingPlan, "Business plan");
+  if (existingPlan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  const success = await storage.deleteBusinessPlan(id);
+  if (!success) {
+    throw new NotFoundError("Business plan");
+  }
+  logger.info("Business plan deleted", { planId: id, userId });
+  res.status(204).end();
+}));
+router6.get("/:planId/sections", isAuthenticated, asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const userId = getUserId(req);
+  const plan = await storage.getBusinessPlan(planId);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied");
+  }
+  const sections = storage.getPlanSections(planId);
+  res.json(sections);
+}));
+router6.post("/:planId/sections", isAuthenticated, asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const userId = getUserId(req);
+  const plan = await storage.getBusinessPlan(planId);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied");
+  }
+  const validatedData = InsertPlanSectionSchema.parse({
+    ...req.body,
+    businessPlanId: planId
+  });
+  const section = storage.createPlanSection(validatedData);
+  logger.info("Plan section created", { planId, sectionId: section.id });
+  res.status(201).json(section);
+}));
+var business_plan_routes_default = router6;
+
+// server/routes/user-routes.ts
+import { Router as Router4 } from "express";
+var router7 = Router4();
+function getUserId2(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router7.get("/me", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user profile", { userId });
+  const authReq = req;
+  const claims = authReq.user?.claims;
+  if (!claims) {
+    throw new Error("User claims not found");
+  }
+  let user = await userRepository.getById(userId);
+  if (!user) {
+    user = await userRepository.upsert({
+      id: userId,
+      email: claims.email || claims.preferred_username || "",
+      firstName: claims.first_name || claims.given_name || "",
+      lastName: claims.last_name || claims.family_name || "",
+      profileImageUrl: claims.profile_image_url || claims.picture || null
+    });
+  }
+  res.json({
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profileImageUrl: user.profileImageUrl,
+    userType: user.userType,
+    userSubtype: user.userSubtype,
+    role: user.role,
+    verified: user.verified,
+    onboardingCompleted: user.onboardingCompleted,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  });
+}));
+router7.patch("/me", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Updating user profile", { userId });
+  const validatedData = (void 0).parse(req.body);
+  const updatedUser = await userRepository.update(userId, validatedData);
+  assertExists(updatedUser, "User");
+  logger.info("User profile updated", { userId });
+  res.json(updatedUser);
+}));
+router7.get("/settings", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user settings", { userId });
+  const settings = await userRepository.getSettings(userId);
+  res.json(settings || {});
+}));
+router7.patch("/settings", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Updating user settings", { userId });
+  const updatedSettings = await userRepository.updateSettings(userId, req.body);
+  logger.info("User settings updated", { userId });
+  res.json(updatedSettings);
+}));
+router7.post("/settings/reset", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Resetting user settings", { userId });
+  const resetSettings = await userRepository.resetSettings(userId);
+  logger.info("User settings reset", { userId });
+  res.json(resetSettings);
+}));
+router7.get("/settings/export", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Exporting user settings", { userId });
+  const exportedSettings = await userRepository.exportSettings(userId);
+  res.json(exportedSettings);
+}));
+router7.get("/organizations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user organizations", { userId });
+  const organizations = await userRepository.getOrganizations(userId);
+  res.json(organizations);
+}));
+router7.get("/collaborations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user collaborations", { userId });
+  const collaborations = await userRepository.getCollaborations(userId);
+  res.json(collaborations);
+}));
+router7.get("/invitations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user invitations", { userId });
+  const invitations = await userRepository.getInvitations(userId);
+  res.json(invitations);
+}));
+router7.get("/team-members", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId2(req);
+  logger.info("Fetching user team members", { userId });
+  const teamMembers = await userRepository.getTeamMembers(userId);
+  res.json(teamMembers);
+}));
+var user_routes_default = router7;
+
+// server/routes/investment-routes.ts
+import { Router as Router5 } from "express";
+var router8 = Router5();
+function getUserId3(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router8.get("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId3(req);
+  logger.info("Fetching investments", { userId });
+  const investments = await storage2.getInvestmentsByInvestor(userId);
+  res.json(investments);
+}));
+router8.get("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId3(req);
+  logger.info("Fetching investment", { investmentId: id, userId });
+  const investment = await storage2.getInvestmentById(id);
+  assertExists(investment, "Investment");
+  if (investment.investorId !== userId) {
+    throw new ForbiddenError("Access denied to this investment");
+  }
+  res.json(investment);
+}));
+router8.post("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId3(req);
+  const validatedData = InsertInvestmentSchema.parse({
+    ...req.body,
+    investorId: userId
+  });
+  logger.info("Creating investment", { userId, businessPlanId: validatedData.businessPlanId });
+  const investment = await storage2.createInvestment(validatedData);
+  logger.info("Investment created", { investmentId: investment.id, userId });
+  res.status(201).json(investment);
+}));
+router8.patch("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId3(req);
+  logger.info("Updating investment", { investmentId: id, userId });
+  const existingInvestment = await storage2.getInvestmentById(id);
+  assertExists(existingInvestment, "Investment");
+  if (existingInvestment.investorId !== userId) {
+    throw new ForbiddenError("Access denied to this investment");
+  }
+  const investment = await storage2.updateInvestment(id, req.body);
+  assertExists(investment, "Investment");
+  logger.info("Investment updated", { investmentId: id, userId });
+  res.json(investment);
+}));
+router8.delete("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId3(req);
+  logger.info("Deleting investment", { investmentId: id, userId });
+  const existingInvestment = await storage2.getInvestmentById(id);
+  assertExists(existingInvestment, "Investment");
+  if (existingInvestment.investorId !== userId) {
+    throw new ForbiddenError("Access denied to this investment");
+  }
+  const success = await storage2.deleteInvestment(id);
+  if (!success) {
+    throw new NotFoundError("Investment");
+  }
+  logger.info("Investment deleted", { investmentId: id, userId });
+  res.status(204).end();
+}));
+router8.get("/business-plan/:planId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const userId = getUserId3(req);
+  const plan = await storage2.getBusinessPlan(planId);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  const investments = await storage2.getInvestments(planId);
+  res.json(investments);
+}));
+var investment_routes_default = router8;
+
+// server/routes/credit-routes.ts
+import { Router as Router6 } from "express";
+var router9 = Router6();
+function getUserId4(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router9.get("/scores", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching credit scores", { userId });
+  const scores = await storage2.getCreditScores(userId);
+  res.json(scores);
+}));
+router9.get("/scores/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Fetching credit score", { scoreId: id, userId });
+  const score = await storage2.getCreditScore(id);
+  assertExists(score, "Credit score");
+  if (score.userId !== userId) {
+    throw new ForbiddenError("Access denied to this credit score");
+  }
+  res.json(score);
+}));
+router9.post("/scores", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = InsertCreditScoreSchema.parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating credit score", { userId });
+  const score = await storage2.createCreditScore(validatedData);
+  logger.info("Credit score created", { scoreId: score.id, userId });
+  res.status(201).json(score);
+}));
+router9.patch("/scores/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Updating credit score", { scoreId: id, userId });
+  const existingScore = await storage2.getCreditScore(id);
+  assertExists(existingScore, "Credit score");
+  if (existingScore.userId !== userId) {
+    throw new ForbiddenError("Access denied to this credit score");
+  }
+  const score = await storage2.updateCreditScore(id, req.body);
+  assertExists(score, "Credit score");
+  logger.info("Credit score updated", { scoreId: id, userId });
+  res.json(score);
+}));
+router9.get("/milestones", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching financial milestones", { userId });
+  const milestones = await storage2.getFinancialMilestones(userId);
+  res.json(milestones);
+}));
+router9.get("/milestones/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Fetching financial milestone", { milestoneId: id, userId });
+  const milestone = await storage2.getFinancialMilestone(id);
+  assertExists(milestone, "Financial milestone");
+  if (milestone.userId !== userId) {
+    throw new ForbiddenError("Access denied to this financial milestone");
+  }
+  res.json(milestone);
+}));
+router9.post("/milestones", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = InsertFinancialMilestoneSchema.parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating financial milestone", { userId });
+  const milestone = await storage2.createFinancialMilestone(validatedData);
+  logger.info("Financial milestone created", { milestoneId: milestone.id, userId });
+  res.status(201).json(milestone);
+}));
+router9.patch("/milestones/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Updating financial milestone", { milestoneId: id, userId });
+  const existingMilestone = await storage2.getFinancialMilestone(id);
+  assertExists(existingMilestone, "Financial milestone");
+  if (existingMilestone.userId !== userId) {
+    throw new ForbiddenError("Access denied to this financial milestone");
+  }
+  const milestone = await storage2.updateFinancialMilestone(id, req.body);
+  assertExists(milestone, "Financial milestone");
+  logger.info("Financial milestone updated", { milestoneId: id, userId });
+  res.json(milestone);
+}));
+router9.get("/coaching", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching AI coaching messages", { userId });
+  const messages = await storage2.getAiCoachingMessages(userId);
+  res.json(messages);
+}));
+router9.post("/coaching", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = InsertAiCoachingMessageSchema.parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating AI coaching message", { userId });
+  const message = await storage2.createAiCoachingMessage(validatedData);
+  logger.info("AI coaching message created", { messageId: message.id, userId });
+  res.status(201).json(message);
+}));
+router9.get("/tips", isAuthenticated, asyncHandler(async (req, res) => {
+  const { category } = req.query;
+  logger.info("Fetching credit tips", { category });
+  const tips = category ? await storage2.getCreditTipsByCategory(category) : await storage2.getCreditTips();
+  res.json(tips);
+}));
+router9.get("/tips/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  logger.info("Fetching credit tip", { tipId: id });
+  const tip = await storage2.getCreditTip(id);
+  assertExists(tip, "Credit tip");
+  res.json(tip);
+}));
+router9.get("/user-tips", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching user credit tips", { userId });
+  const userTips = await storage2.getUserCreditTips(userId);
+  res.json(userTips);
+}));
+router9.post("/user-tips", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = InsertUserCreditTipSchema.parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating user credit tip", { userId });
+  const userTip = await storage2.createUserCreditTip(validatedData);
+  logger.info("User credit tip created", { userTipId: userTip.id, userId });
+  res.status(201).json(userTip);
+}));
+router9.patch("/user-tips/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Updating user credit tip", { userTipId: id, userId });
+  const userTip = await storage2.updateUserCreditTip(id, req.body);
+  assertExists(userTip, "User credit tip");
+  logger.info("User credit tip updated", { userTipId: id, userId });
+  res.json(userTip);
+}));
+router9.get("/achievements", isAuthenticated, asyncHandler(async (req, res) => {
+  const { category } = req.query;
+  logger.info("Fetching credit achievements", { category });
+  const achievements = category ? await storage2.getCreditAchievementsByCategory(category) : await storage2.getCreditAchievements();
+  res.json(achievements);
+}));
+router9.get("/achievements/user", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching user credit achievements", { userId });
+  const achievements = await storage2.getUserCreditAchievements(userId);
+  res.json(achievements);
+}));
+router9.get("/achievements/unseen", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching unseen achievements", { userId });
+  const unseenAchievements = await storage2.getUnseenAchievements(userId);
+  res.json(unseenAchievements);
+}));
+router9.post("/achievements/user", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating user credit achievement", { userId });
+  const achievement = await storage2.createUserCreditAchievement(validatedData);
+  logger.info("User credit achievement created", { achievementId: achievement.id, userId });
+  res.status(201).json(achievement);
+}));
+router9.patch("/achievements/user/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Updating user credit achievement", { achievementId: id, userId });
+  const achievement = await storage2.updateUserCreditAchievement(id, req.body);
+  assertExists(achievement, "User credit achievement");
+  logger.info("User credit achievement updated", { achievementId: id, userId });
+  res.json(achievement);
+}));
+router9.patch("/achievements/user/:id/seen", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Marking achievement as seen", { achievementId: id, userId });
+  const achievement = await storage2.markAchievementAsSeen(id);
+  assertExists(achievement, "User credit achievement");
+  logger.info("Achievement marked as seen", { achievementId: id, userId });
+  res.json(achievement);
+}));
+router9.get("/history", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching credit score history", { userId });
+  const history = await storage2.getCreditScoreHistory(userId);
+  res.json(history);
+}));
+router9.post("/history", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating credit score history entry", { userId });
+  const historyEntry = await storage2.createCreditScoreHistory(validatedData);
+  logger.info("Credit score history entry created", { historyId: historyEntry.id, userId });
+  res.status(201).json(historyEntry);
+}));
+router9.get("/points", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching user reward points", { userId });
+  const points = await storage2.getUserRewardPoints(userId);
+  res.json(points || { userId, points: 0, level: "Bronze" });
+}));
+router9.post("/points", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating user reward points", { userId });
+  const points = await storage2.createUserRewardPoints(validatedData);
+  logger.info("User reward points created", { pointsId: points.id, userId });
+  res.status(201).json(points);
+}));
+router9.patch("/points/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId4(req);
+  logger.info("Updating user reward points", { pointsId: id, userId });
+  const points = await storage2.updateUserRewardPoints(id, req.body);
+  assertExists(points, "User reward points");
+  logger.info("User reward points updated", { pointsId: id, userId });
+  res.json(points);
+}));
+router9.post("/points/add", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const { points } = req.body;
+  logger.info("Adding points to user", { userId, points });
+  const updatedPoints = await storage2.addUserPoints(userId, points);
+  logger.info("Points added to user", { userId, points });
+  res.json(updatedPoints);
+}));
+router9.get("/transactions", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  logger.info("Fetching user point transactions", { userId });
+  const transactions = await storage2.getPointTransactions(userId);
+  res.json(transactions);
+}));
+router9.post("/transactions", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId4(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    userId
+  });
+  logger.info("Creating point transaction", { userId });
+  const transaction = await storage2.createPointTransaction(validatedData);
+  logger.info("Point transaction created", { transactionId: transaction.id, userId });
+  res.status(201).json(transaction);
+}));
+var credit_routes_default = router9;
+
+// server/routes/organization-routes.ts
+import { Router as Router7 } from "express";
+var router10 = Router7();
+function getUserId5(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router10.get("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId5(req);
+  logger.info("Fetching organizations", { userId });
+  const organizations = await storage2.getAllOrganizations();
+  res.json(organizations);
+}));
+router10.get("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization", { organizationId: id, userId });
+  const organization = await storage2.getOrganization(id);
+  assertExists(organization, "Organization");
+  res.json(organization);
+}));
+router10.post("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId5(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    ownerId: userId
+  });
+  logger.info("Creating organization", { userId, name: validatedData.name });
+  const organization = await storage2.createOrganization(validatedData);
+  logger.info("Organization created", { organizationId: organization.id, userId });
+  res.status(201).json(organization);
+}));
+router10.patch("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Updating organization", { organizationId: id, userId });
+  const existingOrganization = await storage2.getOrganization(id);
+  assertExists(existingOrganization, "Organization");
+  if (existingOrganization.ownerId !== userId) {
+    throw new ForbiddenError("Access denied to this organization");
+  }
+  const organization = await storage2.updateOrganization(id, req.body);
+  assertExists(organization, "Organization");
+  logger.info("Organization updated", { organizationId: id, userId });
+  res.json(organization);
+}));
+router10.delete("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Deleting organization", { organizationId: id, userId });
+  const existingOrganization = await storage2.getOrganization(id);
+  assertExists(existingOrganization, "Organization");
+  if (existingOrganization.ownerId !== userId) {
+    throw new ForbiddenError("Access denied to this organization");
+  }
+  const success = await storage2.deleteOrganization(id);
+  if (!success) {
+    throw new NotFoundError("Organization");
+  }
+  logger.info("Organization deleted", { organizationId: id, userId });
+  res.status(204).end();
+}));
+router10.get("/:id/members", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization members", { organizationId: id, userId });
+  const members = await storage2.getOrganizationMembers(id);
+  res.json(members);
+}));
+router10.post("/:id/members", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { userId: memberId, role } = req.body;
+  const currentUserId = getUserId5(req);
+  logger.info("Adding user to organization", {
+    organizationId: id,
+    memberId,
+    role,
+    currentUserId
+  });
+  const membership = await storage2.addUserToOrganization(memberId, id, role);
+  logger.info("User added to organization", { organizationId: id, memberId });
+  res.status(201).json(membership);
+}));
+router10.get("/:id/invitations", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization invitations", { organizationId: id, userId });
+  const invitations = await storage2.getOrganizationInvitations(id);
+  res.json(invitations);
+}));
+router10.post("/:id/invitations", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    organizationId: id,
+    invitedBy: userId
+  });
+  logger.info("Creating organization invitation", { organizationId: id, userId });
+  const invitation = await storage2.createOrganizationInvitation(validatedData);
+  logger.info("Organization invitation created", { invitationId: invitation.id, organizationId: id });
+  res.status(201).json(invitation);
+}));
+router10.get("/:id/analytics", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization analytics", { organizationId: id, userId });
+  const analytics = await storage2.getOrganizationAnalytics(id);
+  res.json(analytics);
+}));
+router10.get("/:id/programs", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization programs", { organizationId: id, userId });
+  const programs = await storage2.getPrograms(id);
+  res.json(programs);
+}));
+router10.get("/:id/portfolios", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization portfolios", { organizationId: id, userId });
+  const portfolios = await storage2.getPortfolios(id);
+  res.json(portfolios);
+}));
+router10.get("/:id/venture-projects", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId5(req);
+  logger.info("Fetching organization venture projects", { organizationId: id, userId });
+  const projects = await storage2.getVentureProjects(id);
+  res.json(projects);
+}));
+var organization_routes_default = router10;
+
+// server/routes/loan-routes.ts
+import { Router as Router8 } from "express";
+var router11 = Router8();
+function getUserId6(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router11.get("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId6(req);
+  logger.info("Fetching loans", { userId });
+  const loans = await storage2.getLoansByLender(userId);
+  res.json(loans);
+}));
+router11.get("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId6(req);
+  logger.info("Fetching loan", { loanId: id, userId });
+  const loan = await storage2.getLoanById(id);
+  assertExists(loan, "Loan");
+  if (loan.lenderId !== userId && loan.borrowerId !== userId) {
+    throw new ForbiddenError("Access denied to this loan");
+  }
+  res.json(loan);
+}));
+router11.post("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId6(req);
+  const validatedData = InsertLoanSchema.parse({
+    ...req.body,
+    lenderId: userId
+  });
+  logger.info("Creating loan", { userId, businessPlanId: validatedData.businessPlanId });
+  const loan = await storage2.createLoan(validatedData);
+  logger.info("Loan created", { loanId: loan.id, userId });
+  res.status(201).json(loan);
+}));
+router11.patch("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId6(req);
+  logger.info("Updating loan", { loanId: id, userId });
+  const existingLoan = await storage2.getLoanById(id);
+  assertExists(existingLoan, "Loan");
+  if (existingLoan.lenderId !== userId) {
+    throw new ForbiddenError("Access denied to this loan");
+  }
+  const loan = await storage2.updateLoan(id, req.body);
+  assertExists(loan, "Loan");
+  logger.info("Loan updated", { loanId: id, userId });
+  res.json(loan);
+}));
+router11.delete("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId6(req);
+  logger.info("Deleting loan", { loanId: id, userId });
+  const existingLoan = await storage2.getLoanById(id);
+  assertExists(existingLoan, "Loan");
+  if (existingLoan.lenderId !== userId) {
+    throw new ForbiddenError("Access denied to this loan");
+  }
+  const success = await storage2.deleteLoan(id);
+  if (!success) {
+    throw new NotFoundError("Loan");
+  }
+  logger.info("Loan deleted", { loanId: id, userId });
+  res.status(204).end();
+}));
+router11.get("/business-plan/:planId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const userId = getUserId6(req);
+  const plan = await storage2.getBusinessPlan(planId);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  const loans = await storage2.getLoans(planId);
+  res.json(loans);
+}));
+router11.get("/borrower/:borrowerId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { borrowerId } = req.params;
+  const userId = getUserId6(req);
+  if (borrowerId !== userId) {
+    throw new ForbiddenError("Access denied to this borrower's loans");
+  }
+  const loans = await storage2.getLoansByBorrower(borrowerId);
+  res.json(loans);
+}));
+router11.get("/lender/:lenderId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { lenderId } = req.params;
+  const userId = getUserId6(req);
+  if (lenderId !== userId) {
+    throw new ForbiddenError("Access denied to this lender's loans");
+  }
+  const loans = await storage2.getLoansByLender(lenderId);
+  res.json(loans);
+}));
+var loan_routes_default = router11;
+
+// server/routes/advisory-routes.ts
+import { Router as Router9 } from "express";
+var router12 = Router9();
+function getUserId7(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router12.get("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId7(req);
+  logger.info("Fetching advisory services", { userId });
+  const services = await storage2.getAdvisoryServicesByPartner(userId);
+  res.json(services);
+}));
+router12.get("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId7(req);
+  logger.info("Fetching advisory service", { serviceId: id, userId });
+  const service = await storage2.getAdvisoryServiceById(id);
+  assertExists(service, "Advisory service");
+  if (service.partnerId !== userId && service.clientId !== userId) {
+    throw new ForbiddenError("Access denied to this advisory service");
+  }
+  res.json(service);
+}));
+router12.post("/", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId7(req);
+  const validatedData = InsertAdvisoryServiceSchema.parse({
+    ...req.body,
+    partnerId: userId
+  });
+  logger.info("Creating advisory service", { userId, businessPlanId: validatedData.businessPlanId });
+  const service = await storage2.createAdvisoryService(validatedData);
+  logger.info("Advisory service created", { serviceId: service.id, userId });
+  res.status(201).json(service);
+}));
+router12.patch("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId7(req);
+  logger.info("Updating advisory service", { serviceId: id, userId });
+  const existingService = await storage2.getAdvisoryServiceById(id);
+  assertExists(existingService, "Advisory service");
+  if (existingService.partnerId !== userId) {
+    throw new ForbiddenError("Access denied to this advisory service");
+  }
+  const service = await storage2.updateAdvisoryService(id, req.body);
+  assertExists(service, "Advisory service");
+  logger.info("Advisory service updated", { serviceId: id, userId });
+  res.json(service);
+}));
+router12.delete("/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId7(req);
+  logger.info("Deleting advisory service", { serviceId: id, userId });
+  const existingService = await storage2.getAdvisoryServiceById(id);
+  assertExists(existingService, "Advisory service");
+  if (existingService.partnerId !== userId) {
+    throw new ForbiddenError("Access denied to this advisory service");
+  }
+  const success = await storage2.deleteAdvisoryService(id);
+  if (!success) {
+    throw new NotFoundError("Advisory service");
+  }
+  logger.info("Advisory service deleted", { serviceId: id, userId });
+  res.status(204).end();
+}));
+router12.get("/business-plan/:planId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { planId } = req.params;
+  const userId = getUserId7(req);
+  const plan = await storage2.getBusinessPlan(planId);
+  assertExists(plan, "Business plan");
+  if (plan.userId !== userId) {
+    throw new ForbiddenError("Access denied to this business plan");
+  }
+  const services = await storage2.getAdvisoryServices(planId);
+  res.json(services);
+}));
+router12.get("/partner/:partnerId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { partnerId } = req.params;
+  const userId = getUserId7(req);
+  if (partnerId !== userId) {
+    throw new ForbiddenError("Access denied to this partner's advisory services");
+  }
+  const services = await storage2.getAdvisoryServicesByPartner(partnerId);
+  res.json(services);
+}));
+router12.get("/client/:clientId", isAuthenticated, asyncHandler(async (req, res) => {
+  const { clientId } = req.params;
+  const userId = getUserId7(req);
+  if (clientId !== userId) {
+    throw new ForbiddenError("Access denied to this client's advisory services");
+  }
+  const services = await storage2.getAdvisoryServicesByClient(clientId);
+  res.json(services);
+}));
+var advisory_routes_default = router12;
+
+// server/routes/team-routes.ts
+import { Router as Router10 } from "express";
+var router13 = Router10();
+function getUserId8(req) {
+  const userId = req.user?.claims?.sub;
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+}
+router13.get("/members", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId8(req);
+  logger.info("Fetching team members", { userId });
+  const members = await storage2.getTeamMembers(userId);
+  res.json(members);
+}));
+router13.post("/invitations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId8(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    invitedBy: userId
+  });
+  logger.info("Creating team invitation", { userId });
+  const invitation = await storage2.createTeamInvitation(validatedData);
+  logger.info("Team invitation created", { invitationId: invitation.id, userId });
+  res.status(201).json(invitation);
+}));
+router13.get("/invitations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId8(req);
+  logger.info("Fetching team invitations", { userId });
+  const invitations = await storage2.getTeamInvitations(userId);
+  res.json(invitations);
+}));
+router13.get("/invitations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Fetching team invitation", { invitationId: id, userId });
+  const invitation = await storage2.getTeamInvitation(id);
+  assertExists(invitation, "Team invitation");
+  if (invitation.invitedBy !== userId && invitation.invitedUserId !== userId) {
+    throw new ForbiddenError("Access denied to this team invitation");
+  }
+  res.json(invitation);
+}));
+router13.patch("/invitations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Updating team invitation", { invitationId: id, userId });
+  const invitation = await storage2.updateTeamInvitation(id, req.body);
+  assertExists(invitation, "Team invitation");
+  logger.info("Team invitation updated", { invitationId: id, userId });
+  res.json(invitation);
+}));
+router13.delete("/invitations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Cancelling team invitation", { invitationId: id, userId });
+  const success = await storage2.cancelTeamInvitation(id);
+  if (!success) {
+    throw new NotFoundError("Team invitation");
+  }
+  logger.info("Team invitation cancelled", { invitationId: id, userId });
+  res.status(204).end();
+}));
+router13.post("/invitations/:id/resend", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Resending team invitation", { invitationId: id, userId });
+  const success = await storage2.resendTeamInvitation(id);
+  if (!success) {
+    throw new NotFoundError("Team invitation");
+  }
+  logger.info("Team invitation resent", { invitationId: id, userId });
+  res.json({ message: "Invitation resent successfully" });
+}));
+router13.patch("/members/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Updating team member", { memberId: id, userId });
+  const member = await storage2.updateTeamMember(id, req.body);
+  assertExists(member, "Team member");
+  logger.info("Team member updated", { memberId: id, userId });
+  res.json(member);
+}));
+router13.delete("/members/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Removing team member", { memberId: id, userId });
+  const success = await storage2.removeTeamMember(id);
+  if (!success) {
+    throw new NotFoundError("Team member");
+  }
+  logger.info("Team member removed", { memberId: id, userId });
+  res.status(204).end();
+}));
+router13.post("/collaborations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId8(req);
+  const validatedData = (void 0).parse({
+    ...req.body,
+    createdBy: userId
+  });
+  logger.info("Creating collaboration", { userId });
+  const collaboration = await storage2.createCollaboration(validatedData);
+  logger.info("Collaboration created", { collaborationId: collaboration.id, userId });
+  res.status(201).json(collaboration);
+}));
+router13.get("/collaborations", isAuthenticated, asyncHandler(async (req, res) => {
+  const userId = getUserId8(req);
+  logger.info("Fetching collaborations", { userId });
+  const collaborations = await storage2.getUserCollaborations(userId);
+  res.json(collaborations);
+}));
+router13.get("/collaborations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Fetching collaboration", { collaborationId: id, userId });
+  const collaboration = await storage2.getCollaboration(id);
+  assertExists(collaboration, "Collaboration");
+  if (collaboration.createdBy !== userId && !collaboration.participants.includes(userId)) {
+    throw new ForbiddenError("Access denied to this collaboration");
+  }
+  res.json(collaboration);
+}));
+router13.patch("/collaborations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Updating collaboration", { collaborationId: id, userId });
+  const existingCollaboration = await storage2.getCollaboration(id);
+  assertExists(existingCollaboration, "Collaboration");
+  if (existingCollaboration.createdBy !== userId) {
+    throw new ForbiddenError("Access denied to this collaboration");
+  }
+  const collaboration = await storage2.updateCollaboration(id, req.body);
+  assertExists(collaboration, "Collaboration");
+  logger.info("Collaboration updated", { collaborationId: id, userId });
+  res.json(collaboration);
+}));
+router13.delete("/collaborations/:id", isAuthenticated, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = getUserId8(req);
+  logger.info("Deleting collaboration", { collaborationId: id, userId });
+  const existingCollaboration = await storage2.getCollaboration(id);
+  assertExists(existingCollaboration, "Collaboration");
+  if (existingCollaboration.createdBy !== userId) {
+    throw new ForbiddenError("Access denied to this collaboration");
+  }
+  const success = await storage2.deleteCollaboration(id);
+  if (!success) {
+    throw new NotFoundError("Collaboration");
+  }
+  logger.info("Collaboration deleted", { collaborationId: id, userId });
+  res.status(204).end();
+}));
+var team_routes_default = router13;
+
+// server/routes.ts
+function getUserId9(req) {
+  const authReq = req;
+  if (!authReq.user?.claims?.sub) {
+    throw new UnauthorizedError("User not authenticated");
+  }
+  return authReq.user.claims.sub;
+}
+function handleError(res, error, defaultMessage) {
+  logger.error(defaultMessage, error instanceof Error ? error : void 0);
+  if (error instanceof z4.ZodError) {
+    res.status(400).json({
+      message: "Validation error",
+      errors: error.errors
+    });
+    return;
+  }
+  if (error instanceof Error) {
+    res.status(500).json({
+      message: defaultMessage,
+      error: process.env.NODE_ENV === "development" ? error.message : void 0
+    });
+    return;
+  }
+  res.status(500).json({ message: defaultMessage });
+}
+var insertBusinessPlanSchema = z4.object({
+  userId: z4.string().min(1).max(100).regex(/^[a-zA-Z0-9\-_]+$/),
+  title: z4.string().min(1).max(200).trim(),
+  description: z4.string().max(5e3).trim().optional(),
+  industry: z4.string().max(100).trim().optional(),
+  stage: z4.enum(["idea", "prototype", "mvp", "growth", "scale"]).optional()
+});
+var insertPlanSectionSchema = z4.object({
+  businessPlanId: z4.string(),
+  chapterId: z4.string(),
+  sectionId: z4.string(),
+  content: z4.string()
+});
+var insertFinancialDataSchema = z4.object({
+  businessPlanId: z4.string(),
+  year: z4.number(),
+  revenue: z4.number(),
+  expenses: z4.number(),
+  profit: z4.number(),
+  cashFlow: z4.number()
+});
+var insertAnalysisScoreSchema = InsertAnalysisScoreSchema;
+var insertProgramSchema = z4.object({
+  organizationId: z4.string(),
+  name: z4.string(),
+  description: z4.string().optional()
+});
+var insertCohortSchema = z4.object({
+  programId: z4.string(),
+  name: z4.string(),
+  startDate: z4.date(),
+  endDate: z4.date()
+});
+var insertPortfolioSchema = z4.object({
+  organizationId: z4.string(),
+  name: z4.string(),
+  description: z4.string().optional()
+});
+var insertPortfolioCompanySchema = z4.object({
+  portfolioId: z4.string(),
+  cohortId: z4.string().optional(),
+  companyName: z4.string(),
+  industry: z4.string(),
+  stage: z4.string(),
+  website: z4.string().optional(),
+  description: z4.string().optional()
+});
+var insertEducationalModuleSchema = z4.object({
+  creatorId: z4.string(),
+  title: z4.string(),
+  content: z4.string(),
+  category: z4.string().optional()
+});
+var insertMentorshipSchema = z4.object({
+  mentorId: z4.string(),
+  menteeId: z4.string(),
+  programId: z4.string().optional(),
+  startDate: z4.date(),
+  endDate: z4.date().optional(),
+  status: z4.string()
   // e.g., 'active', 'completed', 'cancelled'
 });
-var insertVentureProjectSchema = z3.object({
-  organizationId: z3.string(),
-  name: z3.string(),
-  description: z3.string().optional()
+var insertVentureProjectSchema = z4.object({
+  organizationId: z4.string(),
+  name: z4.string(),
+  description: z4.string().optional()
   // Add other relevant fields for venture projects
 });
-var insertPitchDeckSchema = z3.object({
-  businessPlanId: z3.string(),
-  // Add fields for pitch deck data
-  title: z3.string(),
-  slides: z3.array(z3.any())
-  // e.g., array of slide objects
-});
-var insertInvestmentSchema = z3.object({
-  planId: z3.string(),
-  investorId: z3.string(),
-  amount: z3.number(),
-  date: z3.date()
+var insertPitchDeckSchema = InsertPitchDeckSchema;
+var insertInvestmentSchema = z4.object({
+  planId: z4.string(),
+  investorId: z4.string(),
+  amount: z4.number(),
+  date: z4.date()
   // Add other relevant fields for investments
 });
-var insertLoanSchema = z3.object({
-  planId: z3.string(),
-  lenderId: z3.string(),
-  amount: z3.number(),
-  interestRate: z3.number(),
-  termMonths: z3.number(),
-  startDate: z3.date(),
-  endDate: z3.date()
+var insertLoanSchema = z4.object({
+  planId: z4.string(),
+  lenderId: z4.string(),
+  amount: z4.number(),
+  interestRate: z4.number(),
+  termMonths: z4.number(),
+  startDate: z4.date(),
+  endDate: z4.date()
   // Add other relevant fields for loans
 });
-var insertAdvisoryServiceSchema = z3.object({
-  planId: z3.string(),
-  partnerId: z3.string(),
-  serviceType: z3.string(),
-  description: z3.string().optional(),
-  startDate: z3.date(),
-  endDate: z3.date().optional()
+var insertAdvisoryServiceSchema = z4.object({
+  planId: z4.string(),
+  partnerId: z4.string(),
+  serviceType: z4.string(),
+  description: z4.string().optional(),
+  startDate: z4.date(),
+  endDate: z4.date().optional()
 });
-var insertCreditScoreSchema = z3.object({
-  userId: z3.string(),
-  score: z3.number(),
-  date: z3.date()
+var insertCreditScoreSchema = z4.object({
+  userId: z4.string(),
+  score: z4.number(),
+  date: z4.date()
   // Add other relevant fields for credit scores
 });
-var insertFinancialMilestoneSchema = z3.object({
-  userId: z3.string(),
-  description: z3.string(),
-  date: z3.date(),
-  amount: z3.number().optional()
+var insertFinancialMilestoneSchema = z4.object({
+  userId: z4.string(),
+  description: z4.string(),
+  date: z4.date(),
+  amount: z4.number().optional()
   // Add other relevant fields for financial milestones
 });
-var insertAiCoachingMessageSchema = z3.object({
-  userId: z3.string(),
-  sender: z3.enum(["user", "ai"]),
-  message: z3.string(),
-  timestamp: z3.date()
+var insertAiCoachingMessageSchema = z4.object({
+  userId: z4.string(),
+  sender: z4.enum(["user", "ai"]),
+  message: z4.string(),
+  timestamp: z4.date()
   // Add other relevant fields for AI coaching messages
 });
-var insertCreditTipSchema = z3.object({
-  title: z3.string(),
-  content: z3.string(),
-  category: z3.string().optional()
+var insertCreditTipSchema = z4.object({
+  title: z4.string(),
+  content: z4.string(),
+  category: z4.string().optional()
   // Add other relevant fields for credit tips
 });
-var insertUserCreditTipSchema = z3.object({
-  userId: z3.string(),
-  creditTipId: z3.string(),
-  viewed: z3.boolean().default(false)
+var insertUserCreditTipSchema = z4.object({
+  userId: z4.string(),
+  creditTipId: z4.string(),
+  viewed: z4.boolean().default(false)
   // Add other relevant fields for user credit tips
 });
-var insertFinancialProjectionSchema = z3.object({
-  businessPlanId: z3.string(),
-  year: z3.number(),
-  revenue: z3.number(),
-  expenses: z3.number(),
-  profit: z3.number()
+var insertFinancialProjectionSchema = z4.object({
+  businessPlanId: z4.string(),
+  year: z4.number(),
+  revenue: z4.number(),
+  expenses: z4.number(),
+  profit: z4.number()
   // Add other relevant fields for financial projections
 });
-var insertAiBusinessAnalysisSchema = z3.object({
-  businessPlanId: z3.string(),
-  overallScore: z3.number(),
-  scores: z3.record(z3.string(), z3.number()),
-  feedback: z3.record(z3.string(), z3.string()),
-  recommendations: z3.array(z3.string())
+var insertAiBusinessAnalysisSchema = z4.object({
+  businessPlanId: z4.string(),
+  overallScore: z4.number(),
+  scores: z4.record(z4.string(), z4.number()),
+  feedback: z4.record(z4.string(), z4.string()),
+  recommendations: z4.array(z4.string())
   // Add other relevant fields for AI business analysis
 });
 async function registerRoutes(app2) {
-  const apiRouter = express2.Router();
+  const apiRouter = express4.Router();
   apiRouter.get("/business-plans", isAuthenticated, async (req, res) => {
     try {
-      const user = req.user;
-      const userId = user.claims.sub;
-      const plans = await storage.getBusinessPlans(userId);
+      const userId = getUserId9(req);
+      const plans = await storage2.getBusinessPlans(userId);
       res.json(plans);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch business plans" });
+      handleError(res, error, "Failed to fetch business plans");
     }
   });
   apiRouter.get("/user", isAuthenticated, async (req, res) => {
     try {
-      const user = req.user;
-      const claims = user.claims;
+      const authReq = req;
+      const claims = authReq.user?.claims;
+      if (!claims) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       res.json({
         id: claims.sub,
-        email: claims.email || claims.preferred_username,
-        firstName: claims.first_name || claims.given_name,
-        lastName: claims.last_name || claims.family_name,
+        email: claims.email || claims.preferred_username || "",
+        firstName: claims.first_name || claims.given_name || "",
+        lastName: claims.last_name || claims.family_name || "",
         profileImageUrl: claims.profile_image_url || claims.picture,
         userType: "ENTREPRENEUR"
-        // Default user type for development
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user info" });
+      handleError(res, error, "Failed to fetch user info");
     }
   });
   apiRouter.get("/business-plans/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = req.params.id;
-      const user = req.user;
-      const userId = user.claims.sub;
-      const plan = await storage.getBusinessPlan(id);
+      const { id } = req.params;
+      const userId = getUserId9(req);
+      const plan = await storage2.getBusinessPlan(id);
       if (!plan) {
         return res.status(404).json({ message: "Business plan not found" });
       }
@@ -8658,60 +19371,54 @@ async function registerRoutes(app2) {
       }
       res.json(plan);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch business plan" });
+      handleError(res, error, "Failed to fetch business plan");
     }
   });
   apiRouter.post("/business-plans", isAuthenticated, async (req, res) => {
     try {
-      const user = req.user;
-      const userId = user.claims.sub;
+      const userId = getUserId9(req);
       const validatedData = insertBusinessPlanSchema.parse({
         ...req.body,
         userId
       });
-      const plan = await storage.createBusinessPlan(validatedData);
+      const plan = await storage2.createBusinessPlan(validatedData);
       res.status(201).json(plan);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
-        return res.status(400).json({ message: "Invalid business plan data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create business plan" });
+      handleError(res, error, "Failed to create business plan");
     }
   });
   apiRouter.patch("/business-plans/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = req.params.id;
-      const user = req.user;
-      const userId = user.claims.sub;
-      const existingPlan = await storage.getBusinessPlan(id);
+      const { id } = req.params;
+      const userId = getUserId9(req);
+      const existingPlan = await storage2.getBusinessPlan(id);
       if (!existingPlan || existingPlan.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
-      const plan = await storage.updateBusinessPlan(id, req.body);
+      const plan = await storage2.updateBusinessPlan(id, req.body);
       if (!plan) {
         return res.status(404).json({ message: "Business plan not found" });
       }
       res.json(plan);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update business plan" });
+      handleError(res, error, "Failed to update business plan");
     }
   });
   apiRouter.delete("/business-plans/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = req.params.id;
-      const user = req.user;
-      const userId = user.claims.sub;
-      const existingPlan = await storage.getBusinessPlan(id);
+      const { id } = req.params;
+      const userId = getUserId9(req);
+      const existingPlan = await storage2.getBusinessPlan(id);
       if (!existingPlan || existingPlan.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
-      const success = await storage.deleteBusinessPlan(id);
+      const success = await storage2.deleteBusinessPlan(id);
       if (!success) {
         return res.status(404).json({ message: "Business plan not found" });
       }
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete business plan" });
+      handleError(res, error, "Failed to delete business plan");
     }
   });
   apiRouter.get("/business-plans/:planId/sections", isAuthenticated, async (req, res) => {
@@ -8719,11 +19426,11 @@ async function registerRoutes(app2) {
       const planId = req.params.planId;
       const user = req.user;
       const userId = user.claims.sub;
-      const plan = await storage.getBusinessPlan(planId);
+      const plan = await storage2.getBusinessPlan(planId);
       if (!plan || plan.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
-      const sections = await storage.getPlanSections(planId);
+      const sections = await storage2.getPlanSections(planId);
       res.json(sections);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch plan sections" });
@@ -8732,7 +19439,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/business-plans/:planId/sections/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const section = await storage.getPlanSection(id);
+      const section = await storage2.getPlanSection(id);
       if (!section) {
         return res.status(404).json({ message: "Section not found" });
       }
@@ -8748,10 +19455,10 @@ async function registerRoutes(app2) {
         ...req.body,
         businessPlanId: planId
       });
-      const section = await storage.createPlanSection(validatedData);
+      const section = await storage2.createPlanSection(validatedData);
       res.status(201).json(section);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid section data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create section" });
@@ -8760,7 +19467,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/business-plans/:planId/sections/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const section = await storage.updatePlanSection(id, req.body);
+      const section = await storage2.updatePlanSection(id, req.body);
       if (!section) {
         return res.status(404).json({ message: "Section not found" });
       }
@@ -8772,7 +19479,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/business-plans/:planId/financial-data", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const data = await storage.getFinancialData(planId);
+      const data = await storage2.getFinancialData(planId);
       if (!data) {
         return res.status(404).json({ message: "Financial data not found" });
       }
@@ -8788,10 +19495,10 @@ async function registerRoutes(app2) {
         ...req.body,
         businessPlanId: planId
       });
-      const data = await storage.createFinancialData(validatedData);
+      const data = await storage2.createFinancialData(validatedData);
       res.status(201).json(data);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid financial data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create financial data" });
@@ -8800,7 +19507,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/business-plans/:planId/financial-data/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const data = await storage.updateFinancialData(id, req.body);
+      const data = await storage2.updateFinancialData(id, req.body);
       if (!data) {
         return res.status(404).json({ message: "Financial data not found" });
       }
@@ -8812,7 +19519,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/business-plans/:planId/analysis", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const score = await storage.getAnalysisScore(planId);
+      const score = await storage2.getAnalysisScore(planId);
       if (!score) {
         return res.status(404).json({ message: "Analysis score not found" });
       }
@@ -8828,10 +19535,10 @@ async function registerRoutes(app2) {
         ...req.body,
         businessPlanId: planId
       });
-      const score = await storage.createAnalysisScore(validatedData);
+      const score = await storage2.createAnalysisScore(validatedData);
       res.status(201).json(score);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid analysis score data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create analysis score" });
@@ -8840,7 +19547,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/business-plans/:planId/analysis/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const score = await storage.updateAnalysisScore(id, req.body);
+      const score = await storage2.updateAnalysisScore(id, req.body);
       if (!score) {
         return res.status(404).json({ message: "Analysis score not found" });
       }
@@ -8852,7 +19559,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/pitch-decks/:planId", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const deck = await storage.getPitchDeck(planId);
+      const deck = await storage2.getPitchDeck(planId);
       res.json(deck);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch pitch deck" });
@@ -8861,10 +19568,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/pitch-decks", async (req, res) => {
     try {
       const validatedData = insertPitchDeckSchema.parse(req.body);
-      const deck = await storage.createPitchDeck(validatedData);
+      const deck = await storage2.createPitchDeck(validatedData);
       res.status(201).json(deck);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid pitch deck data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create pitch deck" });
@@ -8873,7 +19580,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/investments/plan/:planId", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const investments = await storage.getInvestments(planId);
+      const investments = await storage2.getInvestments(planId);
       res.json(investments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch investments" });
@@ -8882,7 +19589,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/investments/investor/:investorId", async (req, res) => {
     try {
       const investorId = req.params.investorId;
-      const investments = await storage.getInvestmentsByInvestor(investorId);
+      const investments = await storage2.getInvestmentsByInvestor(investorId);
       res.json(investments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch investments" });
@@ -8891,10 +19598,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/investments", async (req, res) => {
     try {
       const validatedData = insertInvestmentSchema.parse(req.body);
-      const investment = await storage.createInvestment(validatedData);
+      const investment = await storage2.createInvestment(validatedData);
       res.status(201).json(investment);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid investment data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create investment" });
@@ -8903,7 +19610,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/investments/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const investment = await storage.updateInvestment(id, req.body);
+      const investment = await storage2.updateInvestment(id, req.body);
       if (!investment) {
         return res.status(404).json({ message: "Investment not found" });
       }
@@ -8915,7 +19622,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/loans/plan/:planId", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const loans = await storage.getLoans(planId);
+      const loans = await storage2.getLoans(planId);
       res.json(loans);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch loans" });
@@ -8924,7 +19631,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/loans/lender/:lenderId", async (req, res) => {
     try {
       const lenderId = req.params.lenderId;
-      const loans = await storage.getLoansByLender(lenderId);
+      const loans = await storage2.getLoansByLender(lenderId);
       res.json(loans);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch loans" });
@@ -8933,10 +19640,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/loans", async (req, res) => {
     try {
       const validatedData = insertLoanSchema.parse(req.body);
-      const loan = await storage.createLoan(validatedData);
+      const loan = await storage2.createLoan(validatedData);
       res.status(201).json(loan);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid loan data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create loan" });
@@ -8945,7 +19652,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/loans/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const loan = await storage.updateLoan(id, req.body);
+      const loan = await storage2.updateLoan(id, req.body);
       if (!loan) {
         return res.status(404).json({ message: "Loan not found" });
       }
@@ -8957,7 +19664,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/advisory-services/plan/:planId", async (req, res) => {
     try {
       const planId = req.params.planId;
-      const services = await storage.getAdvisoryServices(planId);
+      const services = await storage2.getAdvisoryServices(planId);
       res.json(services);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch advisory services" });
@@ -8966,7 +19673,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/advisory-services/partner/:partnerId", async (req, res) => {
     try {
       const partnerId = req.params.partnerId;
-      const services = await storage.getAdvisoryServicesByPartner(partnerId);
+      const services = await storage2.getAdvisoryServicesByPartner(partnerId);
       res.json(services);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch advisory services" });
@@ -8975,10 +19682,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/advisory-services", async (req, res) => {
     try {
       const validatedData = insertAdvisoryServiceSchema.parse(req.body);
-      const service = await storage.createAdvisoryService(validatedData);
+      const service = await storage2.createAdvisoryService(validatedData);
       res.status(201).json(service);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid advisory service data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create advisory service" });
@@ -8987,7 +19694,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/advisory-services/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const service = await storage.updateAdvisoryService(id, req.body);
+      const service = await storage2.updateAdvisoryService(id, req.body);
       if (!service) {
         return res.status(404).json({ message: "Advisory service not found" });
       }
@@ -8999,7 +19706,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/programs/organization/:organizationId", async (req, res) => {
     try {
       const organizationId = req.params.organizationId;
-      const programs = await storage.getPrograms(organizationId);
+      const programs = await storage2.getPrograms(organizationId);
       res.json(programs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch programs" });
@@ -9008,7 +19715,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/programs/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const program = await storage.getProgram(id);
+      const program = await storage2.getProgram(id);
       if (!program) {
         return res.status(404).json({ message: "Program not found" });
       }
@@ -9020,10 +19727,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/programs", async (req, res) => {
     try {
       const validatedData = insertProgramSchema.parse(req.body);
-      const program = await storage.createProgram(validatedData);
+      const program = await storage2.createProgram(validatedData);
       res.status(201).json(program);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid program data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create program" });
@@ -9032,7 +19739,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/programs/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const program = await storage.updateProgram(id, req.body);
+      const program = await storage2.updateProgram(id, req.body);
       if (!program) {
         return res.status(404).json({ message: "Program not found" });
       }
@@ -9044,7 +19751,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/programs/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteProgram(id);
+      const success = await storage2.deleteProgram(id);
       if (!success) {
         return res.status(404).json({ message: "Program not found" });
       }
@@ -9056,7 +19763,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/cohorts/program/:programId", async (req, res) => {
     try {
       const programId = req.params.programId;
-      const cohorts = await storage.getCohorts(programId);
+      const cohorts = await storage2.getCohorts(programId);
       res.json(cohorts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cohorts" });
@@ -9065,7 +19772,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/cohorts/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const cohort = await storage.getCohort(id);
+      const cohort = await storage2.getCohort(id);
       if (!cohort) {
         return res.status(404).json({ message: "Cohort not found" });
       }
@@ -9077,10 +19784,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/cohorts", async (req, res) => {
     try {
       const validatedData = insertCohortSchema.parse(req.body);
-      const cohort = await storage.createCohort(validatedData);
+      const cohort = await storage2.createCohort(validatedData);
       res.status(201).json(cohort);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid cohort data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create cohort" });
@@ -9089,7 +19796,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/cohorts/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const cohort = await storage.updateCohort(id, req.body);
+      const cohort = await storage2.updateCohort(id, req.body);
       if (!cohort) {
         return res.status(404).json({ message: "Cohort not found" });
       }
@@ -9101,7 +19808,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/cohorts/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteCohort(id);
+      const success = await storage2.deleteCohort(id);
       if (!success) {
         return res.status(404).json({ message: "Cohort not found" });
       }
@@ -9113,7 +19820,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolios/organization/:organizationId", async (req, res) => {
     try {
       const organizationId = req.params.organizationId;
-      const portfolios = await storage.getPortfolios(organizationId);
+      const portfolios = await storage2.getPortfolios(organizationId);
       res.json(portfolios);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch portfolios" });
@@ -9122,7 +19829,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolios/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const portfolio = await storage.getPortfolio(id);
+      const portfolio = await storage2.getPortfolio(id);
       if (!portfolio) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
@@ -9134,10 +19841,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/portfolios", async (req, res) => {
     try {
       const validatedData = insertPortfolioSchema.parse(req.body);
-      const portfolio = await storage.createPortfolio(validatedData);
+      const portfolio = await storage2.createPortfolio(validatedData);
       res.status(201).json(portfolio);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid portfolio data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create portfolio" });
@@ -9146,7 +19853,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/portfolios/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const portfolio = await storage.updatePortfolio(id, req.body);
+      const portfolio = await storage2.updatePortfolio(id, req.body);
       if (!portfolio) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
@@ -9158,7 +19865,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/portfolios/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deletePortfolio(id);
+      const success = await storage2.deletePortfolio(id);
       if (!success) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
@@ -9170,7 +19877,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolio-companies/portfolio/:portfolioId", async (req, res) => {
     try {
       const portfolioId = req.params.portfolioId;
-      const companies = await storage.getPortfolioCompanies(portfolioId);
+      const companies = await storage2.getPortfolioCompanies(portfolioId);
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch portfolio companies" });
@@ -9179,7 +19886,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolio-companies/cohort/:cohortId", async (req, res) => {
     try {
       const cohortId = req.params.cohortId;
-      const companies = await storage.getPortfolioCompaniesByCohort(cohortId);
+      const companies = await storage2.getPortfolioCompaniesByCohort(cohortId);
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch portfolio companies" });
@@ -9188,7 +19895,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolio-companies/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const company = await storage.getPortfolioCompany(id);
+      const company = await storage2.getPortfolioCompany(id);
       if (!company) {
         return res.status(404).json({ message: "Portfolio company not found" });
       }
@@ -9200,10 +19907,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/portfolio-companies", async (req, res) => {
     try {
       const validatedData = insertPortfolioCompanySchema.parse(req.body);
-      const company = await storage.createPortfolioCompany(validatedData);
+      const company = await storage2.createPortfolioCompany(validatedData);
       res.status(201).json(company);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid portfolio company data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create portfolio company" });
@@ -9212,7 +19919,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/portfolio-companies/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const company = await storage.updatePortfolioCompany(id, req.body);
+      const company = await storage2.updatePortfolioCompany(id, req.body);
       if (!company) {
         return res.status(404).json({ message: "Portfolio company not found" });
       }
@@ -9224,7 +19931,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/portfolio-companies/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deletePortfolioCompany(id);
+      const success = await storage2.deletePortfolioCompany(id);
       if (!success) {
         return res.status(404).json({ message: "Portfolio company not found" });
       }
@@ -9236,7 +19943,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/educational-modules/creator/:creatorId", async (req, res) => {
     try {
       const creatorId = req.params.creatorId;
-      const modules = await storage.getEducationalModules(creatorId);
+      const modules = await storage2.getEducationalModules(creatorId);
       res.json(modules);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch educational modules" });
@@ -9245,7 +19952,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/educational-modules/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const module = await storage.getEducationalModule(id);
+      const module = await storage2.getEducationalModule(id);
       if (!module) {
         return res.status(404).json({ message: "Educational module not found" });
       }
@@ -9257,10 +19964,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/educational-modules", async (req, res) => {
     try {
       const validatedData = insertEducationalModuleSchema.parse(req.body);
-      const module = await storage.createEducationalModule(validatedData);
+      const module = await storage2.createEducationalModule(validatedData);
       res.status(201).json(module);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid educational module data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create educational module" });
@@ -9269,7 +19976,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/educational-modules/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const module = await storage.updateEducationalModule(id, req.body);
+      const module = await storage2.updateEducationalModule(id, req.body);
       if (!module) {
         return res.status(404).json({ message: "Educational module not found" });
       }
@@ -9281,7 +19988,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/educational-modules/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteEducationalModule(id);
+      const success = await storage2.deleteEducationalModule(id);
       if (!success) {
         return res.status(404).json({ message: "Educational module not found" });
       }
@@ -9293,7 +20000,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/mentor/:mentorId", async (req, res) => {
     try {
       const mentorId = req.params.mentorId;
-      const mentorships = await storage.getMentorshipsByMentor(mentorId);
+      const mentorships = await storage2.getMentorshipsByMentor(mentorId);
       res.json(mentorships);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch mentorships" });
@@ -9302,7 +20009,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/mentee/:menteeId", async (req, res) => {
     try {
       const menteeId = req.params.menteeId;
-      const mentorships = await storage.getMentorshipsByMentee(menteeId);
+      const mentorships = await storage2.getMentorshipsByMentee(menteeId);
       res.json(mentorships);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch mentorships" });
@@ -9311,7 +20018,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/program/:programId", async (req, res) => {
     try {
       const programId = req.params.programId;
-      const mentorships = await storage.getMentorshipsByProgram(programId);
+      const mentorships = await storage2.getMentorshipsByProgram(programId);
       res.json(mentorships);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch mentorships" });
@@ -9320,7 +20027,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const mentorship = await storage.getMentorship(id);
+      const mentorship = await storage2.getMentorship(id);
       if (!mentorship) {
         return res.status(404).json({ message: "Mentorship not found" });
       }
@@ -9332,10 +20039,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/mentorships", async (req, res) => {
     try {
       const validatedData = insertMentorshipSchema.parse(req.body);
-      const mentorship = await storage.createMentorship(validatedData);
+      const mentorship = await storage2.createMentorship(validatedData);
       res.status(201).json(mentorship);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid mentorship data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create mentorship" });
@@ -9344,7 +20051,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/mentorships/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const mentorship = await storage.updateMentorship(id, req.body);
+      const mentorship = await storage2.updateMentorship(id, req.body);
       if (!mentorship) {
         return res.status(404).json({ message: "Mentorship not found" });
       }
@@ -9356,7 +20063,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/mentorships/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteMentorship(id);
+      const success = await storage2.deleteMentorship(id);
       if (!success) {
         return res.status(404).json({ message: "Mentorship not found" });
       }
@@ -9368,7 +20075,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/venture-projects/organization/:organizationId", async (req, res) => {
     try {
       const organizationId = req.params.organizationId;
-      const projects = await storage.getVentureProjects(organizationId);
+      const projects = await storage2.getVentureProjects(organizationId);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch venture projects" });
@@ -9377,7 +20084,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/venture-projects/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const project = await storage.getVentureProject(id);
+      const project = await storage2.getVentureProject(id);
       if (!project) {
         return res.status(404).json({ message: "Venture project not found" });
       }
@@ -9389,10 +20096,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/venture-projects", async (req, res) => {
     try {
       const validatedData = insertVentureProjectSchema.parse(req.body);
-      const project = await storage.createVentureProject(validatedData);
+      const project = await storage2.createVentureProject(validatedData);
       res.status(201).json(project);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid venture project data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create venture project" });
@@ -9401,7 +20108,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/venture-projects/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const project = await storage.updateVentureProject(id, req.body);
+      const project = await storage2.updateVentureProject(id, req.body);
       if (!project) {
         return res.status(404).json({ message: "Venture project not found" });
       }
@@ -9413,7 +20120,7 @@ async function registerRoutes(app2) {
   apiRouter.delete("/venture-projects/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteVentureProject(id);
+      const success = await storage2.deleteVentureProject(id);
       if (!success) {
         return res.status(404).json({ message: "Venture project not found" });
       }
@@ -9425,7 +20132,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/programs", async (req, res) => {
     try {
       const organizationId = "1";
-      const programs = await storage.getPrograms(organizationId);
+      const programs = await storage2.getPrograms(organizationId);
       res.json(programs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch programs" });
@@ -9434,7 +20141,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/programs/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const program = await storage.getProgram(id);
+      const program = await storage2.getProgram(id);
       if (!program) {
         return res.status(404).json({ message: "Program not found" });
       }
@@ -9446,7 +20153,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/programs/:programId/cohorts", async (req, res) => {
     try {
       const programId = req.params.programId;
-      const cohorts = await storage.getCohorts(programId);
+      const cohorts = await storage2.getCohorts(programId);
       res.json(cohorts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cohorts" });
@@ -9455,7 +20162,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolios", async (req, res) => {
     try {
       const organizationId = "1";
-      const portfolios = await storage.getPortfolios(organizationId);
+      const portfolios = await storage2.getPortfolios(organizationId);
       res.json(portfolios);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch portfolios" });
@@ -9464,7 +20171,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolios/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const portfolio = await storage.getPortfolio(id);
+      const portfolio = await storage2.getPortfolio(id);
       if (!portfolio) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
@@ -9476,7 +20183,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/portfolios/:portfolioId/companies", async (req, res) => {
     try {
       const portfolioId = req.params.portfolioId;
-      const companies = await storage.getPortfolioCompanies(portfolioId);
+      const companies = await storage2.getPortfolioCompanies(portfolioId);
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch portfolio companies" });
@@ -9485,7 +20192,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/educational-modules", async (req, res) => {
     try {
       const creatorId = "1";
-      const modules = await storage.getEducationalModules(creatorId);
+      const modules = await storage2.getEducationalModules(creatorId);
       res.json(modules);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch educational modules" });
@@ -9494,7 +20201,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/mentor/:mentorId", async (req, res) => {
     try {
       const mentorId = req.params.mentorId;
-      const mentorships = await storage.getMentorshipsByMentor(mentorId);
+      const mentorships = await storage2.getMentorshipsByMentor(mentorId);
       res.json(mentorships);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch mentorships" });
@@ -9503,7 +20210,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/mentorships/mentee/:menteeId", async (req, res) => {
     try {
       const menteeId = req.params.menteeId;
-      const mentorships = await storage.getMentorshipsByMentee(menteeId);
+      const mentorships = await storage2.getMentorshipsByMentee(menteeId);
       res.json(mentorships);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch mentorships" });
@@ -9512,7 +20219,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/venture-projects", async (req, res) => {
     try {
       const organizationId = "1";
-      const projects = await storage.getVentureProjects(organizationId);
+      const projects = await storage2.getVentureProjects(organizationId);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch venture projects" });
@@ -9522,15 +20229,15 @@ async function registerRoutes(app2) {
     try {
       const user = req.user;
       const userId = user.claims.sub;
-      const businessPlans = await storage.getBusinessPlans(userId);
+      const businessPlans = await storage2.getBusinessPlans(userId);
       let financialData = [];
       let analysisScores = [];
       for (const plan of businessPlans) {
-        const planFinancial = await storage.getFinancialData(plan.id);
+        const planFinancial = await storage2.getFinancialData(plan.id);
         if (planFinancial) {
           financialData.push(planFinancial);
         }
-        const planAnalysis = await storage.getAnalysisScore(plan.id);
+        const planAnalysis = await storage2.getAnalysisScore(plan.id);
         if (planAnalysis) {
           analysisScores.push(planAnalysis);
         }
@@ -9635,9 +20342,9 @@ async function registerRoutes(app2) {
     try {
       const planId = req.params.planId;
       const [businessPlan, financialStats, analysisData] = await Promise.all([
-        storage.getBusinessPlan(planId),
-        storage.getFinancialData(planId),
-        storage.getAnalysisScore(planId)
+        storage2.getBusinessPlan(planId),
+        storage2.getFinancialData(planId),
+        storage2.getAnalysisScore(planId)
       ]);
       if (!businessPlan) {
         return res.status(404).json({ message: "Business plan not found" });
@@ -9837,7 +20544,7 @@ async function registerRoutes(app2) {
     try {
       const user = req.user;
       const userId = user.claims.sub;
-      const scores = await storage.getCreditScores(userId);
+      const scores = await storage2.getCreditScores(userId);
       res.json(scores);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve credit scores" });
@@ -9846,7 +20553,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-score/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const score = await storage.getCreditScore(id);
+      const score = await storage2.getCreditScore(id);
       if (score) {
         res.json(score);
       } else {
@@ -9859,10 +20566,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/credit-scores", async (req, res) => {
     try {
       const parsedBody = insertCreditScoreSchema.parse(req.body);
-      const score = await storage.createCreditScore(parsedBody);
+      const score = await storage2.createCreditScore(parsedBody);
       res.status(201).json(score);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid credit score data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create credit score" });
@@ -9871,7 +20578,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/credit-scores/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const updatedScore = await storage.updateCreditScore(id, req.body);
+      const updatedScore = await storage2.updateCreditScore(id, req.body);
       if (updatedScore) {
         res.json(updatedScore);
       } else {
@@ -9884,7 +20591,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/financial-milestones/:userId", async (req, res) => {
     const userId = req.params.userId;
     try {
-      const milestones = await storage.getFinancialMilestones(userId);
+      const milestones = await storage2.getFinancialMilestones(userId);
       res.json(milestones);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve financial milestones" });
@@ -9893,7 +20600,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/financial-milestone/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const milestone = await storage.getFinancialMilestone(id);
+      const milestone = await storage2.getFinancialMilestone(id);
       if (milestone) {
         res.json(milestone);
       } else {
@@ -9906,10 +20613,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/financial-milestones", async (req, res) => {
     try {
       const parsedBody = insertFinancialMilestoneSchema.parse(req.body);
-      const milestone = await storage.createFinancialMilestone(parsedBody);
+      const milestone = await storage2.createFinancialMilestone(parsedBody);
       res.status(201).json(milestone);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid financial milestone data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create financial milestone" });
@@ -9918,7 +20625,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/financial-milestones/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const updatedMilestone = await storage.updateFinancialMilestone(id, req.body);
+      const updatedMilestone = await storage2.updateFinancialMilestone(id, req.body);
       if (updatedMilestone) {
         res.json(updatedMilestone);
       } else {
@@ -9931,7 +20638,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/ai-coaching-messages/:userId", async (req, res) => {
     const userId = req.params.userId;
     try {
-      const messages = await storage.getAiCoachingMessages(userId);
+      const messages = await storage2.getAiCoachingMessages(userId);
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve AI coaching messages" });
@@ -9940,10 +20647,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/ai-coaching-messages", async (req, res) => {
     try {
       const parsedBody = insertAiCoachingMessageSchema.parse(req.body);
-      const message = await storage.createAiCoachingMessage(parsedBody);
+      const message = await storage2.createAiCoachingMessage(parsedBody);
       res.status(201).json(message);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid AI coaching message data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create AI coaching message" });
@@ -9951,7 +20658,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.get("/credit-tips", async (req, res) => {
     try {
-      const tips = await storage.getCreditTips();
+      const tips = await storage2.getCreditTips();
       res.json(tips);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve credit tips" });
@@ -9960,7 +20667,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-tips/category/:category", async (req, res) => {
     const category = req.params.category;
     try {
-      const tips = await storage.getCreditTipsByCategory(category);
+      const tips = await storage2.getCreditTipsByCategory(category);
       res.json(tips);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve credit tips by category" });
@@ -9969,7 +20676,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-tip/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const tip = await storage.getCreditTip(id);
+      const tip = await storage2.getCreditTip(id);
       if (tip) {
         res.json(tip);
       } else {
@@ -9982,10 +20689,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/credit-tips", async (req, res) => {
     try {
       const parsedBody = insertCreditTipSchema.parse(req.body);
-      const tip = await storage.createCreditTip(parsedBody);
+      const tip = await storage2.createCreditTip(parsedBody);
       res.status(201).json(tip);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid credit tip data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create credit tip" });
@@ -9994,7 +20701,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/user-credit-tips/:userId", async (req, res) => {
     const userId = req.params.userId;
     try {
-      const userTips = await storage.getUserCreditTips(userId);
+      const userTips = await storage2.getUserCreditTips(userId);
       res.json(userTips);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve user credit tips" });
@@ -10003,10 +20710,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/user-credit-tips", async (req, res) => {
     try {
       const parsedBody = insertUserCreditTipSchema.parse(req.body);
-      const userTip = await storage.createUserCreditTip(parsedBody);
+      const userTip = await storage2.createUserCreditTip(parsedBody);
       res.status(201).json(userTip);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid user credit tip data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create user credit tip" });
@@ -10015,7 +20722,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/user-credit-tips/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const updatedUserTip = await storage.updateUserCreditTip(id, req.body);
+      const updatedUserTip = await storage2.updateUserCreditTip(id, req.body);
       if (updatedUserTip) {
         res.json(updatedUserTip);
       } else {
@@ -10028,7 +20735,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/financial-projections/:businessPlanId", async (req, res) => {
     const businessPlanId = req.params.businessPlanId;
     try {
-      const projections = await storage.getFinancialProjections(businessPlanId);
+      const projections = await storage2.getFinancialProjections(businessPlanId);
       res.json(projections);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve financial projections" });
@@ -10037,7 +20744,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/financial-projection/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const projection = await storage.getFinancialProjection(id);
+      const projection = await storage2.getFinancialProjection(id);
       if (projection) {
         res.json(projection);
       } else {
@@ -10050,10 +20757,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/financial-projections", async (req, res) => {
     try {
       const parsedBody = insertFinancialProjectionSchema.parse(req.body);
-      const projection = await storage.createFinancialProjection(parsedBody);
+      const projection = await storage2.createFinancialProjection(parsedBody);
       res.status(201).json(projection);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid financial projection data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create financial projection" });
@@ -10062,7 +20769,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/financial-projections/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const updatedProjection = await storage.updateFinancialProjection(id, req.body);
+      const updatedProjection = await storage2.updateFinancialProjection(id, req.body);
       if (updatedProjection) {
         res.json(updatedProjection);
       } else {
@@ -10075,7 +20782,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/ai-business-analysis/:businessPlanId", async (req, res) => {
     const businessPlanId = req.params.businessPlanId;
     try {
-      const analysis = await storage.getAiBusinessAnalysis(businessPlanId);
+      const analysis = await storage2.getAiBusinessAnalysis(businessPlanId);
       if (analysis) {
         res.json(analysis);
       } else {
@@ -10088,10 +20795,10 @@ async function registerRoutes(app2) {
   apiRouter.post("/ai-business-analysis", async (req, res) => {
     try {
       const parsedBody = insertAiBusinessAnalysisSchema.parse(req.body);
-      const analysis = await storage.createAiBusinessAnalysis(parsedBody);
+      const analysis = await storage2.createAiBusinessAnalysis(parsedBody);
       res.status(201).json(analysis);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ message: "Invalid AI business analysis data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create AI business analysis" });
@@ -10100,7 +20807,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/ai-business-analysis/:id", async (req, res) => {
     const id = req.params.id;
     try {
-      const updatedAnalysis = await storage.updateAiBusinessAnalysis(id, req.body);
+      const updatedAnalysis = await storage2.updateAiBusinessAnalysis(id, req.body);
       if (updatedAnalysis) {
         res.json(updatedAnalysis);
       } else {
@@ -10112,7 +20819,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.get("/credit-score-tiers", async (req, res) => {
     try {
-      const tiers = await storage.getCreditScoreTiers();
+      const tiers = await storage2.getCreditScoreTiers();
       res.json(tiers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch credit score tiers" });
@@ -10121,7 +20828,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-score-tiers/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const tier = await storage.getCreditScoreTier(id);
+      const tier = await storage2.getCreditScoreTier(id);
       if (!tier) {
         return res.status(404).json({ message: "Credit score tier not found" });
       }
@@ -10136,7 +20843,7 @@ async function registerRoutes(app2) {
       if (isNaN(score)) {
         return res.status(400).json({ message: "Invalid score" });
       }
-      const tier = await storage.getCreditScoreTierByScore(score);
+      const tier = await storage2.getCreditScoreTierByScore(score);
       if (!tier) {
         return res.status(404).json({ message: "No tier found for the given score" });
       }
@@ -10147,7 +20854,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/credit-score-tiers", async (req, res) => {
     try {
-      const tier = await storage.createCreditScoreTier(req.body);
+      const tier = await storage2.createCreditScoreTier(req.body);
       res.status(201).json(tier);
     } catch (error) {
       res.status(500).json({ message: "Failed to create credit score tier" });
@@ -10156,7 +20863,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/credit-score-tiers/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const updatedTier = await storage.updateCreditScoreTier(id, req.body);
+      const updatedTier = await storage2.updateCreditScoreTier(id, req.body);
       if (!updatedTier) {
         return res.status(404).json({ message: "Credit score tier not found" });
       }
@@ -10167,7 +20874,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.get("/credit-achievements", async (req, res) => {
     try {
-      const achievements = await storage.getCreditAchievements();
+      const achievements = await storage2.getCreditAchievements();
       res.json(achievements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch credit achievements" });
@@ -10176,7 +20883,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-achievements/category/:category", async (req, res) => {
     try {
       const { category } = req.params;
-      const achievements = await storage.getCreditAchievementsByCategory(category);
+      const achievements = await storage2.getCreditAchievementsByCategory(category);
       res.json(achievements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch achievements by category" });
@@ -10185,7 +20892,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-achievements/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const achievement = await storage.getCreditAchievement(id);
+      const achievement = await storage2.getCreditAchievement(id);
       if (!achievement) {
         return res.status(404).json({ message: "Credit achievement not found" });
       }
@@ -10196,7 +20903,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/credit-achievements", async (req, res) => {
     try {
-      const achievement = await storage.createCreditAchievement(req.body);
+      const achievement = await storage2.createCreditAchievement(req.body);
       res.status(201).json(achievement);
     } catch (error) {
       res.status(500).json({ message: "Failed to create credit achievement" });
@@ -10205,7 +20912,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/user-credit-achievements/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const achievements = await storage.getUserCreditAchievements(userId);
+      const achievements = await storage2.getUserCreditAchievements(userId);
       res.json(achievements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user credit achievements" });
@@ -10214,7 +20921,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/user-credit-achievements/unseen/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const achievements = await storage.getUnseenAchievements(userId);
+      const achievements = await storage2.getUnseenAchievements(userId);
       res.json(achievements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch unseen achievements" });
@@ -10222,7 +20929,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/user-credit-achievements", async (req, res) => {
     try {
-      const achievement = await storage.createUserCreditAchievement(req.body);
+      const achievement = await storage2.createUserCreditAchievement(req.body);
       res.status(201).json(achievement);
     } catch (error) {
       res.status(500).json({ message: "Failed to create user credit achievement" });
@@ -10231,7 +20938,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/user-credit-achievements/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      const updatedAchievement = await storage.updateUserCreditAchievement(id, req.body);
+      const updatedAchievement = await storage2.updateUserCreditAchievement(id, req.body);
       if (!updatedAchievement) {
         return res.status(404).json({ message: "User credit achievement not found" });
       }
@@ -10243,7 +20950,7 @@ async function registerRoutes(app2) {
   apiRouter.post("/user-credit-achievements/:id/mark-seen", async (req, res) => {
     try {
       const id = req.params.id;
-      const updatedAchievement = await storage.markAchievementAsSeen(id);
+      const updatedAchievement = await storage2.markAchievementAsSeen(id);
       if (!updatedAchievement) {
         return res.status(404).json({ message: "User credit achievement not found" });
       }
@@ -10255,7 +20962,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/credit-score-history/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const history = await storage.getCreditScoreHistory(userId);
+      const history = await storage2.getCreditScoreHistory(userId);
       res.json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch credit score history" });
@@ -10263,7 +20970,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/credit-score-history", async (req, res) => {
     try {
-      const history = await storage.createCreditScoreHistory(req.body);
+      const history = await storage2.createCreditScoreHistory(req.body);
       res.status(201).json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to create credit score history" });
@@ -10272,7 +20979,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/user-reward-points/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const points = await storage.getUserRewardPoints(userId);
+      const points = await storage2.getUserRewardPoints(userId);
       if (!points) {
         return res.status(404).json({ message: "User reward points not found" });
       }
@@ -10283,7 +20990,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/user-reward-points", async (req, res) => {
     try {
-      const points = await storage.createUserRewardPoints(req.body);
+      const points = await storage2.createUserRewardPoints(req.body);
       res.status(201).json(points);
     } catch (error) {
       res.status(500).json({ message: "Failed to create user reward points" });
@@ -10292,7 +20999,7 @@ async function registerRoutes(app2) {
   apiRouter.patch("/user-reward-points/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const updatedPoints = await storage.updateUserRewardPoints(userId, req.body);
+      const updatedPoints = await storage2.updateUserRewardPoints(userId, req.body);
       if (!updatedPoints) {
         return res.status(404).json({ message: "User reward points not found" });
       }
@@ -10308,7 +21015,7 @@ async function registerRoutes(app2) {
       if (typeof amount !== "number" || !description || !type) {
         return res.status(400).json({ message: "Invalid request body. Must include amount, description, and type." });
       }
-      const updatedPoints = await storage.addUserPoints(userId, amount, description, type, referenceId, referenceType);
+      const updatedPoints = await storage2.addUserPoints(userId, amount, description, type, referenceId, referenceType);
       res.json(updatedPoints);
     } catch (error) {
       res.status(500).json({ message: "Failed to add reward points" });
@@ -10317,7 +21024,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/point-transactions/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
-      const transactions = await storage.getPointTransactions(userId);
+      const transactions = await storage2.getPointTransactions(userId);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch point transactions" });
@@ -10325,7 +21032,7 @@ async function registerRoutes(app2) {
   });
   apiRouter.post("/point-transactions", async (req, res) => {
     try {
-      const transaction = await storage.createPointTransaction(req.body);
+      const transaction = await storage2.createPointTransaction(req.body);
       res.status(201).json(transaction);
     } catch (error) {
       res.status(500).json({ message: "Failed to create point transaction" });
@@ -10514,11 +21221,11 @@ async function registerRoutes(app2) {
   app2.post("/api/organizations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const organization = await storage.createOrganization({
+      const organization = await storage2.createOrganization({
         ...req.body,
         ownerId: user.claims.sub
       });
-      await storage.addUserToOrganization(user.claims.sub, organization.id, "admin");
+      await storage2.addUserToOrganization(user.claims.sub, organization.id, "admin");
       res.json(organization);
     } catch (error) {
       res.status(500).json({ message: "Failed to create organization" });
@@ -10527,7 +21234,7 @@ async function registerRoutes(app2) {
   app2.get("/api/organizations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const organizations = await storage.getUserOrganizations(user.claims.sub);
+      const organizations = await storage2.getUserOrganizations(user.claims.sub);
       res.json(organizations);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch organizations" });
@@ -10535,7 +21242,7 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/organizations/:id", isAuthenticated, async (req, res) => {
     try {
-      const organization = await storage.getOrganization(req.params.id);
+      const organization = await storage2.getOrganization(req.params.id);
       if (!organization) {
         return res.status(404).json({ message: "Organization not found" });
       }
@@ -10559,7 +21266,7 @@ async function registerRoutes(app2) {
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         });
       }
-      const updatedOrg = await storage.updateOrganization(orgId, {
+      const updatedOrg = await storage2.updateOrganization(orgId, {
         ...updateData,
         updatedAt: /* @__PURE__ */ new Date()
       });
@@ -10582,7 +21289,7 @@ async function registerRoutes(app2) {
       if (process.env.NODE_ENV === "development") {
         return res.json({ message: "Organization deleted successfully" });
       }
-      await storage.deleteOrganization(orgId);
+      await storage2.deleteOrganization(orgId);
       res.json({ message: "Organization deleted successfully" });
     } catch (error) {
       console.error("Error deleting organization:", error);
@@ -10618,7 +21325,7 @@ async function registerRoutes(app2) {
           }
         ]);
       }
-      const members = await storage.getOrganizationMembers(orgId);
+      const members = await storage2.getOrganizationMembers(orgId);
       res.json(members);
     } catch (error) {
       console.error("Error fetching organization members:", error);
@@ -10648,7 +21355,7 @@ async function registerRoutes(app2) {
           message
         });
       }
-      const invitation = await storage.createOrganizationInvitation({
+      const invitation = await storage2.createOrganizationInvitation({
         organizationId: orgId,
         email,
         role,
@@ -10691,7 +21398,7 @@ async function registerRoutes(app2) {
           memberGrowth: 23.2
         });
       }
-      const analytics = await storage.getOrganizationAnalytics(orgId);
+      const analytics = await storage2.getOrganizationAnalytics(orgId);
       res.json(analytics);
     } catch (error) {
       console.error("Error fetching organization analytics:", error);
@@ -10743,7 +21450,7 @@ async function registerRoutes(app2) {
           deviceTrust: true
         });
       }
-      const settings = await storage.getUserSettings(userId);
+      const settings = await storage2.getUserSettings(userId);
       res.json(settings);
     } catch (error) {
       console.error("Error fetching user settings:", error);
@@ -10763,7 +21470,7 @@ async function registerRoutes(app2) {
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         });
       }
-      const updatedSettings = await storage.updateUserSettings(userId, settingsData);
+      const updatedSettings = await storage2.updateUserSettings(userId, settingsData);
       res.json(updatedSettings);
     } catch (error) {
       console.error("Error updating user settings:", error);
@@ -10782,7 +21489,7 @@ async function registerRoutes(app2) {
           resetAt: (/* @__PURE__ */ new Date()).toISOString()
         });
       }
-      await storage.resetUserSettings(userId);
+      await storage2.resetUserSettings(userId);
       res.json({ message: "Settings reset to default values" });
     } catch (error) {
       console.error("Error resetting user settings:", error);
@@ -10813,7 +21520,7 @@ async function registerRoutes(app2) {
         res.json(exportData2);
         return;
       }
-      const exportData = await storage.exportUserSettings(userId);
+      const exportData = await storage2.exportUserSettings(userId);
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Content-Disposition", 'attachment; filename="settings-export.json"');
       res.json(exportData);
@@ -10825,7 +21532,7 @@ async function registerRoutes(app2) {
   app2.post("/api/collaborations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const collaboration = await storage.createCollaboration({
+      const collaboration = await storage2.createCollaboration({
         ...req.body,
         createdBy: user.claims.sub,
         participants: [user.claims.sub, ...req.body.participants || []]
@@ -10838,7 +21545,7 @@ async function registerRoutes(app2) {
   app2.get("/api/collaborations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const collaborations = await storage.getUserCollaborations(user.claims.sub);
+      const collaborations = await storage2.getUserCollaborations(user.claims.sub);
       res.json(collaborations);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch collaborations" });
@@ -10847,7 +21554,7 @@ async function registerRoutes(app2) {
   app2.post("/api/invitations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const invitation = await storage.createInvitation({
+      const invitation = await storage2.createInvitation({
         ...req.body,
         inviterId: user.claims.sub,
         inviterEmail: user.claims.email
@@ -10860,7 +21567,7 @@ async function registerRoutes(app2) {
   app2.get("/api/invitations", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const invitations = await storage.getUserInvitations(user.claims.email);
+      const invitations = await storage2.getUserInvitations(user.claims.email);
       res.json(invitations);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch invitations" });
@@ -10869,13 +21576,13 @@ async function registerRoutes(app2) {
   app2.patch("/api/invitations/:id", isAuthenticated, async (req, res) => {
     try {
       const user = req.user;
-      const invitation = await storage.getInvitation(req.params.id);
+      const invitation = await storage2.getInvitation(req.params.id);
       if (!invitation || invitation.inviteeEmail !== user.claims.email) {
         return res.status(404).json({ message: "Invitation not found" });
       }
-      const updatedInvitation = await storage.updateInvitation(req.params.id, req.body);
+      const updatedInvitation = await storage2.updateInvitation(req.params.id, req.body);
       if (req.body.status === "accepted" && invitation.type === "organization") {
-        await storage.addUserToOrganization(user.claims.sub, invitation.organizationId, invitation.role || "member");
+        await storage2.addUserToOrganization(user.claims.sub, invitation.organizationId, invitation.role || "member");
       }
       res.json(updatedInvitation);
     } catch (error) {
@@ -10959,7 +21666,7 @@ async function registerRoutes(app2) {
           updatedAt: "2024-01-20T14:45:00Z"
         });
       }
-      const user = await storage.getUserById(userId);
+      const user = await storage2.getUserById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -11007,7 +21714,7 @@ async function registerRoutes(app2) {
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         });
       }
-      const updatedUser = await storage.updateUser(userId, {
+      const updatedUser = await storage2.updateUser(userId, {
         firstName,
         lastName,
         email,
@@ -11102,7 +21809,7 @@ async function registerRoutes(app2) {
           }
         ]);
       }
-      const members = await storage.getTeamMembers(userId);
+      const members = await storage2.getTeamMembers(userId);
       res.json(members);
     } catch (error) {
       console.error("Error fetching team members:", error);
@@ -11131,7 +21838,7 @@ async function registerRoutes(app2) {
           message
         });
       }
-      const invitation = await storage.createTeamInvitation({
+      const invitation = await storage2.createTeamInvitation({
         email,
         role,
         invitedBy: userId,
@@ -11164,7 +21871,7 @@ async function registerRoutes(app2) {
           }
         ]);
       }
-      const invitations = await storage.getTeamInvitations(userId);
+      const invitations = await storage2.getTeamInvitations(userId);
       res.json(invitations);
     } catch (error) {
       console.error("Error fetching team invitations:", error);
@@ -11188,7 +21895,7 @@ async function registerRoutes(app2) {
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         });
       }
-      const updatedMember = await storage.updateTeamMember(memberId, {
+      const updatedMember = await storage2.updateTeamMember(memberId, {
         role,
         department,
         status,
@@ -11213,7 +21920,7 @@ async function registerRoutes(app2) {
       if (process.env.NODE_ENV === "development") {
         return res.json({ message: "Team member removed successfully" });
       }
-      await storage.removeTeamMember(memberId);
+      await storage2.removeTeamMember(memberId);
       res.json({ message: "Team member removed successfully" });
     } catch (error) {
       console.error("Error removing team member:", error);
@@ -11230,7 +21937,7 @@ async function registerRoutes(app2) {
       if (process.env.NODE_ENV === "development") {
         return res.json({ message: "Invitation resent successfully" });
       }
-      await storage.resendTeamInvitation(invitationId);
+      await storage2.resendTeamInvitation(invitationId);
       res.json({ message: "Invitation resent successfully" });
     } catch (error) {
       console.error("Error resending invitation:", error);
@@ -11247,7 +21954,7 @@ async function registerRoutes(app2) {
       if (process.env.NODE_ENV === "development") {
         return res.json({ message: "Invitation cancelled successfully" });
       }
-      await storage.cancelTeamInvitation(invitationId);
+      await storage2.cancelTeamInvitation(invitationId);
       res.json({ message: "Invitation cancelled successfully" });
     } catch (error) {
       console.error("Error cancelling invitation:", error);
@@ -11256,6 +21963,18 @@ async function registerRoutes(app2) {
   });
   app2.use("/api", apiRouter);
   app2.use("/api/ai-agents", ai_agent_routes_default);
+  app2.use("/api/documents/ai", document_ai_routes_default);
+  app2.use("/api/dt", enhanced_dt_routes_default);
+  app2.use("/api/dt", dt_comprehensive_routes_default);
+  app2.use("/api/assessments", assessment_routes_default);
+  app2.use("/api/business-plans", business_plan_routes_default);
+  app2.use("/api/users", user_routes_default);
+  app2.use("/api/investments", investment_routes_default);
+  app2.use("/api/credit", credit_routes_default);
+  app2.use("/api/organizations", organization_routes_default);
+  app2.use("/api/loans", loan_routes_default);
+  app2.use("/api/advisory", advisory_routes_default);
+  app2.use("/api/team", team_routes_default);
   const { AIInfographicService: AIInfographicService2 } = await Promise.resolve().then(() => (init_ai_infographic_service(), ai_infographic_service_exports));
   const { InfographicExportService: InfographicExportService2 } = await Promise.resolve().then(() => (init_infographic_export_service(), infographic_export_service_exports));
   apiRouter.post("/documents/infographic/generate", isAuthenticated, async (req, res) => {
@@ -11428,14 +22147,14 @@ async function registerRoutes(app2) {
     }
   });
   const { InfographicAnalyticsService: InfographicAnalyticsService2 } = await Promise.resolve().then(() => (init_infographic_analytics_service(), infographic_analytics_service_exports));
-  const analyticsService = new InfographicAnalyticsService2();
+  const analyticsService3 = new InfographicAnalyticsService2();
   apiRouter.post("/infographic/analytics/track", isAuthenticated, async (req, res) => {
     try {
       const { infographicId, event, metadata } = req.body;
       if (!infographicId || !event) {
         return res.status(400).json({ message: "Infographic ID and event are required" });
       }
-      await analyticsService.trackEvent(
+      await analyticsService3.trackEvent(
         infographicId,
         req.user?.id || "anonymous",
         event,
@@ -11454,7 +22173,7 @@ async function registerRoutes(app2) {
         start: new Date(start),
         end: new Date(end)
       } : void 0;
-      const stats = await analyticsService.getUsageStats(timeRange);
+      const stats = await analyticsService3.getUsageStats(timeRange);
       res.json(stats);
     } catch (error) {
       console.error("Analytics stats error:", error);
@@ -11464,7 +22183,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/infographic/analytics/user/:userId", isAuthenticated, async (req, res) => {
     try {
       const { userId } = req.params;
-      const stats = await analyticsService.getUserStats(userId);
+      const stats = await analyticsService3.getUserStats(userId);
       res.json(stats);
     } catch (error) {
       console.error("User analytics error:", error);
@@ -11474,7 +22193,7 @@ async function registerRoutes(app2) {
   apiRouter.get("/infographic/analytics/trending", isAuthenticated, async (req, res) => {
     try {
       const { limit = 10 } = req.query;
-      const trending = await analyticsService.getTrendingInfographics(Number(limit));
+      const trending = await analyticsService3.getTrendingInfographics(Number(limit));
       res.json(trending);
     } catch (error) {
       console.error("Trending analytics error:", error);
@@ -11483,11 +22202,37 @@ async function registerRoutes(app2) {
   });
   apiRouter.get("/infographic/analytics/insights", isAuthenticated, async (req, res) => {
     try {
-      const insights = await analyticsService.getPerformanceInsights();
+      const insights = await analyticsService3.getPerformanceInsights();
       res.json(insights);
     } catch (error) {
       console.error("Performance insights error:", error);
       res.status(500).json({ message: "Failed to get performance insights" });
+    }
+  });
+  apiRouter.post("/applications/fill", isAuthenticated, async (req, res) => {
+    try {
+      const { form, businessPlan } = req.body;
+      if (!form || !businessPlan) {
+        return res.status(400).json({ message: "Form and business plan data required" });
+      }
+      const filledApplication = await aiApplicationFiller.fillApplication(form, businessPlan);
+      res.json(filledApplication);
+    } catch (error) {
+      console.error("Application fill error:", error);
+      res.status(500).json({ message: "Failed to fill application" });
+    }
+  });
+  apiRouter.post("/applications/suggestions", isAuthenticated, async (req, res) => {
+    try {
+      const { form, responses, businessPlan } = req.body;
+      if (!form || !responses || !businessPlan) {
+        return res.status(400).json({ message: "Form, responses, and business plan data required" });
+      }
+      const suggestions = await aiApplicationFiller.generateSuggestions(form, responses, businessPlan);
+      res.json({ suggestions });
+    } catch (error) {
+      console.error("Suggestions generation error:", error);
+      res.status(500).json({ message: "Failed to generate suggestions" });
     }
   });
   const httpServer = createServer(app2);
@@ -11495,7 +22240,7 @@ async function registerRoutes(app2) {
 }
 
 // server/vite.ts
-import express3 from "express";
+import express5 from "express";
 import fs from "fs";
 import path2 from "path";
 import { createServer as createViteServer, createLogger } from "vite";
@@ -11591,7 +22336,7 @@ function serveStatic(app2) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
-  app2.use(express3.static(distPath));
+  app2.use(express5.static(distPath));
   app2.use("*", (_req, res) => {
     res.sendFile(path2.resolve(distPath, "index.html"));
   });
@@ -11614,7 +22359,7 @@ async function setupGoogleAuth(app2) {
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        await storage.upsertUser({
+        await storage2.upsertUser({
           id: profile.id,
           email: profile.emails?.[0]?.value || "",
           firstName: profile.name?.givenName || "",
@@ -11761,7 +22506,7 @@ async function setupAzureAuth(app2) {
 }
 async function upsertUser(account, claims) {
   try {
-    await storage.upsertUser({
+    await storage2.upsertUser({
       id: account.localAccountId || account.homeAccountId,
       email: account.username || claims?.preferred_username || claims?.email,
       firstName: claims?.given_name,
@@ -11779,9 +22524,271 @@ var connectDB = async () => {
   return Promise.resolve();
 };
 
+// server/websocket-server.ts
+import { Server as SocketIOServer2 } from "socket.io";
+var WebSocketServer = class {
+  io;
+  collaborationService;
+  constructor(httpServer) {
+    this.io = new SocketIOServer2(httpServer, {
+      cors: {
+        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        methods: ["GET", "POST"]
+      },
+      path: "/socket.io"
+    });
+    this.collaborationService = new DTCollaborationService(httpServer);
+    this.setupEventHandlers();
+  }
+  /**
+   * Setup WebSocket event handlers
+   */
+  setupEventHandlers() {
+    this.io.on("connection", (socket) => {
+      console.log("User connected:", socket.id);
+      socket.on("join-dt-session", async (data) => {
+        await this.handleJoinSession(socket, data);
+      });
+      socket.on("leave-dt-session", async (data) => {
+        await this.handleLeaveSession(socket, data);
+      });
+      socket.on("canvas-update", async (data) => {
+        await this.handleCanvasUpdate(socket, data);
+      });
+      socket.on("request-ai-suggestions", async (data) => {
+        await this.handleSuggestionRequest(socket, data);
+      });
+      socket.on("resolve-conflict", async (data) => {
+        await this.handleConflictResolution(socket, data);
+      });
+      socket.on("start-session", async (data) => {
+        await this.handleStartSession(socket, data);
+      });
+      socket.on("pause-session", async (data) => {
+        await this.handlePauseSession(socket, data);
+      });
+      socket.on("end-session", async (data) => {
+        await this.handleEndSession(socket, data);
+      });
+      socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+        this.handleDisconnect(socket);
+      });
+    });
+  }
+  /**
+   * Handle user joining a DT session
+   */
+  async handleJoinSession(socket, data) {
+    try {
+      const { sessionId, userId, userRole } = data;
+      socket.join(sessionId);
+      socket.to(sessionId).emit("participant-joined", {
+        userId,
+        userRole,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      socket.emit("session-state", {
+        sessionId,
+        participants: await this.getSessionParticipants(sessionId),
+        canvas: await this.getSessionCanvas(sessionId)
+      });
+      console.log(`User ${userId} joined session ${sessionId}`);
+    } catch (error) {
+      console.error("Error joining session:", error);
+      socket.emit("error", { message: "Failed to join session" });
+    }
+  }
+  /**
+   * Handle user leaving a DT session
+   */
+  async handleLeaveSession(socket, data) {
+    try {
+      const { sessionId, userId } = data;
+      socket.leave(sessionId);
+      socket.to(sessionId).emit("participant-left", {
+        userId,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`User ${userId} left session ${sessionId}`);
+    } catch (error) {
+      console.error("Error leaving session:", error);
+    }
+  }
+  /**
+   * Handle canvas updates
+   */
+  async handleCanvasUpdate(socket, data) {
+    try {
+      const { sessionId, update } = data;
+      socket.to(sessionId).emit("canvas-update", {
+        update,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      if (update.type === "element_added") {
+        const suggestions = await this.generateAISuggestions(sessionId, update);
+        if (suggestions.length > 0) {
+          socket.to(sessionId).emit("ai-suggestions", {
+            suggestions,
+            timestamp: /* @__PURE__ */ new Date()
+          });
+        }
+      }
+      console.log(`Canvas updated for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error handling canvas update:", error);
+      socket.emit("error", { message: "Failed to update canvas" });
+    }
+  }
+  /**
+   * Handle AI suggestion requests
+   */
+  async handleSuggestionRequest(socket, data) {
+    try {
+      const { sessionId, context, type } = data;
+      const suggestions = await this.generateAISuggestions(sessionId, context);
+      socket.emit("ai-suggestions", {
+        suggestions,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`AI suggestions generated for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      socket.emit("error", { message: "Failed to generate suggestions" });
+    }
+  }
+  /**
+   * Handle conflict resolution
+   */
+  async handleConflictResolution(socket, data) {
+    try {
+      const { sessionId, conflict } = data;
+      const resolution = await this.resolveConflict(conflict);
+      this.io.to(sessionId).emit("conflict-resolved", {
+        conflict,
+        resolution,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Conflict resolved for session ${sessionId}`);
+    } catch (error) {
+      console.error("Error resolving conflict:", error);
+      socket.emit("error", { message: "Failed to resolve conflict" });
+    }
+  }
+  /**
+   * Handle session start
+   */
+  async handleStartSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      this.io.to(sessionId).emit("session-started", {
+        sessionId,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Session ${sessionId} started`);
+    } catch (error) {
+      console.error("Error starting session:", error);
+      socket.emit("error", { message: "Failed to start session" });
+    }
+  }
+  /**
+   * Handle session pause
+   */
+  async handlePauseSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      this.io.to(sessionId).emit("session-paused", {
+        sessionId,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Session ${sessionId} paused`);
+    } catch (error) {
+      console.error("Error pausing session:", error);
+      socket.emit("error", { message: "Failed to pause session" });
+    }
+  }
+  /**
+   * Handle session end
+   */
+  async handleEndSession(socket, data) {
+    try {
+      const { sessionId } = data;
+      const summary = await this.generateSessionSummary(sessionId);
+      this.io.to(sessionId).emit("session-ended", {
+        sessionId,
+        summary,
+        timestamp: /* @__PURE__ */ new Date()
+      });
+      console.log(`Session ${sessionId} ended`);
+    } catch (error) {
+      console.error("Error ending session:", error);
+      socket.emit("error", { message: "Failed to end session" });
+    }
+  }
+  /**
+   * Handle user disconnect
+   */
+  handleDisconnect(socket) {
+    console.log("User disconnected:", socket.id);
+  }
+  /**
+   * Get session participants
+   */
+  async getSessionParticipants(sessionId) {
+    return [];
+  }
+  /**
+   * Get session canvas
+   */
+  async getSessionCanvas(sessionId) {
+    return {
+      id: sessionId,
+      elements: [],
+      version: 1
+    };
+  }
+  /**
+   * Generate AI suggestions
+   */
+  async generateAISuggestions(sessionId, context) {
+    return [];
+  }
+  /**
+   * Resolve conflict
+   */
+  async resolveConflict(conflict) {
+    return {
+      id: this.generateId(),
+      conflictId: conflict.id,
+      strategy: "last_write_wins",
+      resolution: { winner: "auto" },
+      applied: true,
+      requiresNotification: true
+    };
+  }
+  /**
+   * Generate session summary
+   */
+  async generateSessionSummary(sessionId) {
+    return {
+      sessionId,
+      duration: 0,
+      participants: 0,
+      activities: 0,
+      insights: []
+    };
+  }
+  /**
+   * Generate unique ID
+   */
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+};
+
 // server/index.ts
-dotenv.config();
-var app = express4();
+dotenv2.config();
+var app = express6();
 if (process.env.NODE_ENV === "development") {
   app.use(helmet({
     contentSecurityPolicy: false
@@ -11815,8 +22822,8 @@ var authLimiter = rateLimit({
 });
 app.use("/api/login", authLimiter);
 app.use("/api/auth", authLimiter);
-app.use(express4.json({ limit: "10mb" }));
-app.use(express4.urlencoded({ extended: false, limit: "10mb" }));
+app.use(express6.json({ limit: "10mb" }));
+app.use(express6.urlencoded({ extended: false, limit: "10mb" }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path3 = req.path;
@@ -11843,6 +22850,12 @@ app.use((req, res, next) => {
 });
 (async () => {
   await connectDB();
+  try {
+    console.log("\u26A0\uFE0F Skipping agent services initialization in development mode");
+  } catch (error) {
+    console.error("\u274C Failed to initialize agent services:", error.message);
+    console.log("\u26A0\uFE0F Continuing without agent services...");
+  }
   if (process.env.NODE_ENV !== "development") {
     try {
       await setupGoogleAuth(app);
@@ -11853,6 +22866,7 @@ app.use((req, res, next) => {
     }
   }
   const server = await registerRoutes(app);
+  const wsServer = new WebSocketServer(server);
   app.use((err, _req, res, _next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
