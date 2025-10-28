@@ -58,6 +58,7 @@
     "@types/memoizee": "^0.4.12",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/react-router-dom": "^5.3.3",
+    "adm-zip": "^0.5.16",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
