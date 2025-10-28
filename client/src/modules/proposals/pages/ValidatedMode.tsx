@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Users, Target, Lightbulb, TestTube, RefreshCw, CheckCircle, Circle, Sparkles, Brain, FileText, ArrowRight, Play, GitBranch, BookOpen, Award, AlertTriangle, X, BarChart3, TrendingUp, FileBadge, Eye } from 'lucide-react';
-import { PROPOSAL_PHASES, PROPOSAL_TOOLS, PROPOSAL_COMPETITOR_COMPARISON, PROPOSAL_PRICING_TIERS } from '@/constants-hub';
+import { PROPOSAL_PHASES, PROPOSAL_TOOLS, PROPOSAL_COMPETITOR_COMPARISON, PROPOSAL_PRICING_TIERS } from '../constants';
 import { PIVOT_TYPES, NAV_TABS } from '@/constants-hub';
 import { PlatformTab, Assumption, Tool, ToastType } from '@/types-hub';
-import PivotModal from '../../../components/PivotModal';
-import ToolModal from '../../../components/ToolModal';
-import AssumptionDashboard from '../../../components/AssumptionDashboard';
+import PivotModal from '@/components-hub/PivotModal';
+import ToolModal from '@/components-hub/ToolModal';
+import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
 import { useProposalProject } from '../ProposalsApp';
 
 interface ValidatedModeProps {

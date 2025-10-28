@@ -3,7 +3,7 @@ import { Eye, ChevronRight, Sparkles, Loader2, Copy, Check } from 'lucide-react'
 import { sections } from './editorConstants';
 import { Project, BusinessPlan, User, CoFounderPersonality, ToastType } from '@/types-hub';
 import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
-import { getSystemPrompt } from '../../../components/cofounder/CoFounderHub';
+import { getSystemPrompt } from '@/components-hub/cofounder/CoFounderHub';
 
 interface PlanEditorProps {
     project: Project<BusinessPlan>;

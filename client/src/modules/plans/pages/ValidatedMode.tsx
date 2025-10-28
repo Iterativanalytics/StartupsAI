@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Sparkles, Brain, X, FileBadge, LayoutDashboard, Edit, Eye, ShieldCheck, CheckCircle, Circle, GitBranch, RefreshCw } from 'lucide-react';
-import { PLAN_PHASES, PLAN_TOOLS } from '@/constants-hub';
+import { PLAN_PHASES, PLAN_TOOLS } from '../constants';
 import { PIVOT_TYPES } from '@/constants-hub';
 import { Tool, ToastType, Assumption, User, CoFounderPersonality } from '@/types-hub';
-import PivotModal from '../../../components/PivotModal';
-import ToolModal from '../../../components/ToolModal';
-import AssumptionDashboard from '../../../components/AssumptionDashboard';
+import PivotModal from '@/components-hub/PivotModal';
+import ToolModal from '@/components-hub/ToolModal';
+import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
 import { usePlanProject } from '../PlansApp';
 import PlanEditor from '../components/PlanEditor';
 import PlanViewer from '../components/PlanViewer';

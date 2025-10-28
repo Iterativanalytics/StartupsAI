@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ApplicationForm, AISuggestion, ToastType } from '@/types-hub';
-import { MOCK_BUSINESS_PLAN } from '@/constants-hub';
+import { MOCK_BUSINESS_PLAN } from '../constants';
 import { ArrowLeft, Sparkles, Loader2, Lightbulb, Clipboard } from 'lucide-react';
 
 interface ApplicationFillerPageProps {

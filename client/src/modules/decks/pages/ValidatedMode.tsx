@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Users, Target, Lightbulb, TestTube, TrendingUp, RefreshCw, CheckCircle, Circle, Sparkles, Brain, FileText, ArrowRight, Play, GitBranch, BookOpen, Award, AlertTriangle, X, Eye, LayoutGrid, BarChart2, Tag, FileBadge } from 'lucide-react';
-import { DECK_PHASES, DECK_TOOLS, DECK_COMPETITOR_COMPARISON, DECK_PRICING_TIERS, DECK_REVENUE_STREAMS } from '@/constants-hub';
+import { DECK_PHASES, DECK_TOOLS, DECK_COMPETITOR_COMPARISON, DECK_PRICING_TIERS, DECK_REVENUE_STREAMS } from '../constants';
 import { PIVOT_TYPES } from '@/constants-hub';
 import { PlatformTab, Assumption, Tool, ToastType } from '@/types-hub';
-import PivotModal from '../../../components/PivotModal';
-import ToolModal from '../../../components/ToolModal';
-import AssumptionDashboard from '../../../components/AssumptionDashboard';
+import PivotModal from '@/components-hub/PivotModal';
+import ToolModal from '@/components-hub/ToolModal';
+import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
 import { useDeckProject } from '../DecksApp';
 
 interface ValidatedModeProps {
