@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mode, ApplicationForm, ToastType, User } from '@/types-hub';
 import ApplicationFillerPage from './pages/ApplicationFillerPage';
-import ApplicationsListPage from './pages/ApplicationsListPage';
+import IterativFormsListPage from './pages/IterativFormsListPage';
 import ModeToggle from './components/ModeToggle';
 import { MOCK_APPLICATIONS } from './constants';
 import { createProjectContext } from '@/contexts-hub/ProjectContext';
@@ -59,7 +59,7 @@ const IterativFormsAppContent: React.FC<IterativFormsAppProps> = ({ addToast, us
           addToast={addToast}
         />
       ) : (
-        <ApplicationsListPage 
+        <IterativFormsListPage 
           applications={MOCK_APPLICATIONS} 
           onSelectApplication={handleSelectIterativForm} 
         />

@@ -4,7 +4,7 @@ dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupGoogleAuth } from "./googleAuth";
 import { setupAzureAuth } from "./azureAuth";

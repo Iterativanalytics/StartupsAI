@@ -6,7 +6,7 @@ import { PlatformTab, Assumption, Tool, ToastType } from '@/types-hub';
 import PivotModal from '@/components-hub/PivotModal';
 import ToolModal from '@/components-hub/ToolModal';
 import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
-import { useIterativProposalProject } from '../IterativProposalsApp';
+import { useIterativProposalProject } from '../ProposalsApp';
 
 interface ValidatedModeProps {
   addToast: (message: string, type: ToastType) => void;

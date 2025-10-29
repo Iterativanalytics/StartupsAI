@@ -46,11 +46,11 @@ const IterativProposalsAppContent: React.FC<IterativProposalsAppProps> = ({ addT
       </div>
 
       {mode === 'validated' && project ? (
-        <IterativProposalsPage 
+        <ProposalsPage 
           addToast={addToast}
         />
       ) : (
-        <IterativProposalsFastTrackMode addToast={addToast} user={user} />
+        <FastTrackMode addToast={addToast} user={user} />
       )}
     </div>
   );
