@@ -14,15 +14,60 @@ interface PersonalitySettingsProps {
 const personalityPresets = {
   'supportive-mentor': {
     traits: { assertiveness: 5, optimism: 8, detail_orientation: 6, risk_tolerance: 5, directness: 6 },
-    style: { formality: 'casual' as const, humor: 'occasional' as const }
+    style: { 
+      formality: 'casual' as const, 
+      humor: 'occasional' as const,
+      storytelling: true,
+      questioning: 'socratic' as const
+    },
+    expertise: {
+      primary: ['mentoring', 'support'],
+      secondary: ['guidance', 'coaching'],
+      learning: ['personal-development']
+    },
+    interaction: {
+      proactivity: 'medium' as const,
+      checkInFrequency: 'weekly' as const,
+      challengeLevel: 'supportive' as const
+    }
   },
   'challenging-advisor': {
     traits: { assertiveness: 8, optimism: 5, detail_orientation: 8, risk_tolerance: 4, directness: 9 },
-    style: { formality: 'professional' as const, humor: 'rare' as const }
+    style: { 
+      formality: 'professional' as const, 
+      humor: 'rare' as const,
+      storytelling: false,
+      questioning: 'direct' as const
+    },
+    expertise: {
+      primary: ['analysis', 'strategy'],
+      secondary: ['critical-thinking', 'evaluation'],
+      learning: ['advanced-concepts']
+    },
+    interaction: {
+      proactivity: 'high' as const,
+      checkInFrequency: 'daily' as const,
+      challengeLevel: 'challenging' as const
+    }
   },
   'growth-partner': {
     traits: { assertiveness: 7, optimism: 7, detail_orientation: 5, risk_tolerance: 7, directness: 7 },
-    style: { formality: 'adaptive' as const, humor: 'frequent' as const }
+    style: { 
+      formality: 'adaptive' as const, 
+      humor: 'frequent' as const,
+      storytelling: true,
+      questioning: 'exploratory' as const
+    },
+    expertise: {
+      primary: ['growth', 'innovation'],
+      secondary: ['scaling', 'expansion'],
+      learning: ['emerging-trends']
+    },
+    interaction: {
+      proactivity: 'high' as const,
+      checkInFrequency: 'weekly' as const,
+      challengeLevel: 'balanced' as const
+    }
   }
 };
 

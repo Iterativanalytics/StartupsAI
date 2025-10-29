@@ -6,8 +6,8 @@ export const PROPOSAL_PHASES: Phases = {
     name: 'Client Discovery',
     icon: Search,
     color: 'bg-purple-500',
-    description: 'Deep research to uncover the client\'s real, underlying problems.',
-    methodology: 'Design Thinking',
+    description: 'Deep research to uncover the client\'s real, underlying problems. This phase embodies the core of Design Thinking - before proposing any solution, we must deeply understand the client and their authentic needs.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
       { id: 'd1', title: 'Stakeholder Mapping', description: 'Identify all decision-makers, influencers, and users.', tool: 'ai-stakeholder-mapper' },
       { id: 'd2', title: 'RFP & Document Analysis', description: 'Go beyond the text to find unstated needs and goals.', tool: 'document-analyzer' },
@@ -19,8 +19,8 @@ export const PROPOSAL_PHASES: Phases = {
     name: 'Define',
     icon: Target,
     color: 'bg-blue-500',
-    description: 'Frame the problem and develop a core proposal narrative.',
-    methodology: 'Lean + Design Thinking',
+    description: 'Frame the problem and develop a core proposal narrative. This phase completes the Design Thinking foundation by ensuring we\'ve identified the right problem before moving to solution development.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
       { id: 'df1', title: 'Problem Statement Framing', description: 'Craft a human-centered problem frame.', tool: 'problem-framer' },
       { id: 'df2', title: 'Hypothesis Formation', description: 'Convert insights to testable assumptions.', tool: 'hypothesis-builder' },
@@ -32,8 +32,8 @@ export const PROPOSAL_PHASES: Phases = {
     name: 'Ideate',
     icon: Lightbulb,
     color: 'bg-yellow-500',
-    description: 'Generate and prioritize testable solution concepts.',
-    methodology: 'Design Thinking',
+    description: 'Generate and prioritize testable solution concepts. This is the critical handoff from Design Thinking to Lean Startup - transforming creative ideas into a backlog of testable hypotheses through assumption mapping.',
+    methodology: 'Lean Design Thinking™ - Methodology Bridge',
     steps: [
       { id: 'i1', title: 'Solution Brainstorming', description: 'Generate 10+ solution concepts.', tool: 'ai-idea-multiplier' },
       { id: 'i2', title: 'Assumption Mapping', description: 'Identify the riskiest assumption for each solution.', tool: 'assumption-mapper' },
@@ -45,8 +45,8 @@ export const PROPOSAL_PHASES: Phases = {
     name: 'Experiment',
     icon: TestTube,
     color: 'bg-green-500',
-    description: 'Test proposal concepts with minimum viable experiments.',
-    methodology: 'Lean Startup',
+    description: 'Test proposal concepts with minimum viable experiments. This is the "Build" phase of the Lean Startup loop - creating the minimum viable experiment to validate our riskiest assumptions efficiently.',
+    methodology: 'Lean Design Thinking™ - Lean Startup Core',
     steps: [
       { id: 'e1', title: 'Executive Summary Test', description: 'Validate the core narrative with a one-pager.', tool: 'summary-writer' },
       { id: 'e2', title: 'Solution Mock-up Test', description: 'Get feedback on a visual representation of the solution.', tool: 'visual-creator' },
@@ -135,7 +135,7 @@ export const PROPOSAL_TOOLS: Tools = {
 export const PROPOSAL_COMPETITOR_COMPARISON: PlanCompetitorRow[] = [
   {
     feature: 'Methodology',
-    iterativePlans: 'Lean Design Thinking',
+    iterativePlans: 'Lean Design Thinking™',
     growthWheel: 'Traditional Proposal Management',
     venturePlanner: 'AI Content Generation',
     livePlan: 'Template-based Writing'
@@ -184,7 +184,7 @@ export const PROPOSAL_PRICING_TIERS: PricingTier[] = [
     description: 'For individuals crafting key proposals',
     features: [
       '1 active proposal',
-      'Full Lean Design Thinking workflow',
+      'Full Lean Design Thinking™ workflow',
       'Basic AI assistance',
       'Community access'
     ],

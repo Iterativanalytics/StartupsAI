@@ -1,7 +1,7 @@
 import { DatabaseService } from './database-service';
 
 /**
- * Conflict Resolution Service for Design Thinking Collaboration
+ * Conflict Resolution Service for Lean Design Thinking™ Collaboration
  * 
  * Handles conflict resolution in real-time collaborative sessions:
  * - Conflict detection

@@ -130,20 +130,20 @@ export class AgentSelector {
         [QueryType.GENERAL]: AgentType.IMPACT_ANALYST
       },
       [UserType.PARTNER]: {
-        [QueryType.ANALYSIS]: AgentType.PROGRAM_MANAGER,
-        [QueryType.RESEARCH]: AgentType.PROGRAM_MANAGER,
-        [QueryType.DOCUMENT]: AgentType.PROGRAM_MANAGER,
-        [QueryType.TECHNICAL]: AgentType.PROGRAM_MANAGER,
-        [QueryType.REPORTING]: AgentType.PROGRAM_MANAGER,
-        [QueryType.GENERAL]: AgentType.PROGRAM_MANAGER
+        [QueryType.ANALYSIS]: AgentType.PROGRAM_ANALYST,
+        [QueryType.RESEARCH]: AgentType.PROGRAM_ANALYST,
+        [QueryType.DOCUMENT]: AgentType.PROGRAM_ANALYST,
+        [QueryType.TECHNICAL]: AgentType.PROGRAM_ANALYST,
+        [QueryType.REPORTING]: AgentType.PROGRAM_ANALYST,
+        [QueryType.GENERAL]: AgentType.PROGRAM_ANALYST
       },
       [UserType.ADMIN]: {
-        [QueryType.ANALYSIS]: AgentType.PLATFORM_ORCHESTRATOR,
-        [QueryType.RESEARCH]: AgentType.PLATFORM_ORCHESTRATOR,
-        [QueryType.DOCUMENT]: AgentType.PLATFORM_ORCHESTRATOR,
-        [QueryType.TECHNICAL]: AgentType.PLATFORM_ORCHESTRATOR,
-        [QueryType.REPORTING]: AgentType.PLATFORM_ORCHESTRATOR,
-        [QueryType.GENERAL]: AgentType.PLATFORM_ORCHESTRATOR
+        [QueryType.ANALYSIS]: AgentType.BUSINESS_ANALYST,
+        [QueryType.RESEARCH]: AgentType.BUSINESS_ANALYST,
+        [QueryType.DOCUMENT]: AgentType.BUSINESS_ANALYST,
+        [QueryType.TECHNICAL]: AgentType.BUSINESS_ANALYST,
+        [QueryType.REPORTING]: AgentType.BUSINESS_ANALYST,
+        [QueryType.GENERAL]: AgentType.BUSINESS_ANALYST
       }
     };
     

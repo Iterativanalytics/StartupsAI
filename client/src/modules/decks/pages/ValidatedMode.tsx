@@ -112,7 +112,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast }) => {
             )}
            
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking Process</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking™ Process</h3>
               <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 {Object.entries(DECK_PHASES).map(([key, phase]) => {
                   const PhaseIcon = phase.icon;
@@ -217,7 +217,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast }) => {
         return (
           <div className="space-y-8 animate-fade-in-up">
             <div className="bg-white rounded-xl shadow-md p-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-4">Lean Design Thinking for Decks</h2>
+              <h2 className="text-3xl font-bold text-slate-800 mb-4">Lean Design Thinking™ for Decks</h2>
               <p className="text-lg text-slate-600 mb-8">Your pitch deck is a story. Our methodology ensures that story is built on a foundation of evidence, not fiction. Each step helps you validate a key part of your narrative.</p>
               
               <div className="space-y-10">

@@ -3,16 +3,16 @@ import { OpenAI } from 'openai';
 import { EmpathyData, Insight, Pattern, InsightEvolution } from './types';
 
 /**
- * AI-Powered Design Thinking Insights Agent
+ * AI-Powered Lean Lean Design Thinking™™ Insights Agent
  * 
- * This agent specializes in generating and analyzing insights from DT data:
+ * This agent specializes in generating and analyzing insights from LLDT data:
  * - Pattern recognition in empathy data
  * - Cross-phase insight connections
  * - Automated insight synthesis
  * - Insight evolution tracking
  * - Business impact assessment
  */
-export class DTInsightsAgent extends BaseAgent {
+export class LLDTInsightsAgent extends BaseAgent {
   private openaiClient: OpenAI | null;
   private patternEngine: PatternEngine;
   private synthesisEngine: SynthesisEngine;
@@ -26,7 +26,7 @@ export class DTInsightsAgent extends BaseAgent {
         apiKey: apiKey
       });
     } else {
-      console.warn('OpenAI API key not configured. DTInsightsAgent features will be limited.');
+      console.warn('OpenAI API key not configured. LDTInsightsAgent features will be limited.');
       this.openaiClient = null;
     }
     this.patternEngine = new PatternEngine();
@@ -141,7 +141,7 @@ export class DTInsightsAgent extends BaseAgent {
    */
   private async generateInsightFromPattern(pattern: Pattern): Promise<Insight | null> {
     const prompt = `
-    Based on this Design Thinking pattern, generate a meaningful insight:
+    Based on this Lean Design Thinking™ pattern, generate a meaningful insight:
     
     Pattern Type: ${pattern.type}
     Category: ${pattern.category}
@@ -246,7 +246,7 @@ export class DTInsightsAgent extends BaseAgent {
    */
   private async calculateBusinessImpact(insight: Insight): Promise<BusinessImpact> {
     const prompt = `
-    Assess the business impact of this Design Thinking insight:
+    Assess the business impact of this Lean Design Thinking™ insight:
     
     Insight: ${insight.content}
     Opportunities: ${insight.opportunities?.join(', ')}
@@ -308,7 +308,7 @@ export class DTInsightsAgent extends BaseAgent {
   }
 
   /**
-   * Track insight evolution across DT phases
+   * Track insight evolution across LLDT phases
    */
   async trackInsightEvolution(insightId: string): Promise<InsightEvolution> {
     const evolution = await this.evolutionTracker.getEvolution(insightId);

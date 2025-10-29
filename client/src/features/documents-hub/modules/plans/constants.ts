@@ -7,7 +7,7 @@ export const PLAN_PHASES: Phases = {
     icon: Search,
     color: 'bg-purple-500',
     description: 'Deep ethnographic research to uncover real user problems',
-    methodology: 'Design Thinking',
+    methodology: 'Lean Design Thinking™',
     steps: [
       { id: 'd1', title: 'Stakeholder Mapping', description: 'Identify all actors in the problem space', tool: 'ai-stakeholder-mapper' },
       { id: 'd2', title: 'Ethnographic Research', description: 'Observe users in natural contexts', tool: 'observation-framework' },
@@ -20,7 +20,7 @@ export const PLAN_PHASES: Phases = {
     icon: Target,
     color: 'bg-blue-500',
     description: 'Frame validated problem as testable hypotheses',
-    methodology: 'Lean + Design Thinking',
+    methodology: 'Lean Design Thinking™',
     steps: [
       { id: 'df1', title: 'Problem Statement', description: 'Craft human-centered problem frame', tool: 'problem-framer' },
       { id: 'df2', title: 'Hypothesis Formation', description: 'Convert insights to testable assumptions', tool: 'hypothesis-builder' },
@@ -33,7 +33,7 @@ export const PLAN_PHASES: Phases = {
     icon: Lightbulb,
     color: 'bg-yellow-500',
     description: 'Generate testable solution concepts rapidly',
-    methodology: 'Design Thinking',
+    methodology: 'Lean Design Thinking™',
     steps: [
       { id: 'i1', title: 'Divergent Generation', description: 'Create 100+ solution concepts', tool: 'ai-idea-multiplier' },
       { id: 'i2', title: 'Assumption Mapping', description: 'Identify riskiest assumptions per solution', tool: 'assumption-mapper' },
@@ -140,7 +140,7 @@ export const PLAN_TOOLS: Tools = {
 export const PLAN_COMPETITOR_COMPARISON: PlanCompetitorRow[] = [
   {
     feature: 'Methodology',
-    iterativePlans: 'Lean Design Thinking (hybrid)',
+    iterativePlans: 'Lean Design Thinking™ (hybrid)',
     growthWheel: 'Structured business planning',
     venturePlanner: 'AI-generated projections',
     livePlan: 'Traditional business plan'

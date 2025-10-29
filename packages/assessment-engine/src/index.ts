@@ -5,7 +5,7 @@
  * - RIASEC (Career Interest Assessment)
  * - Big Five (Personality Assessment)
  * - AI Readiness Assessment
- * - Design Thinking Readiness
+ * - Lean Design Thinking™ Readiness
  */
 
 // Core assessment modules

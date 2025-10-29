@@ -7,9 +7,9 @@ import IterativProposalsApp from '@/modules/proposals/IterativProposalsApp';
 import IterativFormsApp from '@/modules/forms/IterativFormsApp';
 import { Toaster } from '@/components-hub/Toaster';
 import OnboardingModal from '@/components-hub/OnboardingModal';
-import { ConsolidatedOnboarding } from '@/components/onboarding/ConsolidatedOnboarding';
 import CoFounderHub from '@/components-hub/cofounder/CoFounderHub';
 import WhatsAppChat from '@/components-hub/cofounder/WhatsAppChat';
+import { VestedInterestProvider } from '@/contexts/VestedInterestContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { 
@@ -105,39 +105,6 @@ export default function DocumentsHub() {
     setIsOnboardingOpen(true);
   };
 
-  const handleUnifiedOnboardingComplete = (data: {
-    basicData: any;
-    persona?: Persona;
-    stage?: EntrepreneurStage;
-    profile?: CompositeProfile;
-    personality?: CoFounderPersonality;
-  }) => {
-    if (data.persona && data.profile && data.personality) {
-      // Enhanced flow completion
-      setUser({ 
-        loggedIn: true, 
-        persona: data.persona, 
-        name: 'Valued User', 
-        ...(data.stage && { entrepreneurStage: data.stage }),
-        ...(data.profile && { compositeProfile: data.profile })
-      });
-      setAgentPersonality(data.personality);
-      setIsOnboardingOpen(false);
-      setIsCoFounderOpen(true);
-      
-      addToast(`Welcome! Your '${data.profile.founderArchetype.name}' profile is ready.`, 'success');
-    } else {
-      // Basic flow completion - just set basic user data
-      setUser({ 
-        loggedIn: true, 
-        persona: 'entrepreneur', // Default persona for basic flow
-        name: 'Valued User'
-      });
-      setIsOnboardingOpen(false);
-      addToast('Welcome! Your profile has been set up.', 'success');
-    }
-  };
-
   const handleOnboardingComplete = (
     persona: Persona, 
     stage: EntrepreneurStage | undefined,
@@ -161,7 +128,7 @@ export default function DocumentsHub() {
   const handleMilestoneComplete = (milestone: Goal) => {
     const multiplier = milestone.multiplier || 1.2;
     setVestedInterest(prev => prev * multiplier);
-    addToast(`Milestone Complete! Your Co-Founder™'s vested interest increased by ${((multiplier - 1) * 100).toFixed(0)}%!`, 'success');
+    addToast(`Milestone Complete! Your Co-Founder™'s VestedInterest™ increased by ${((multiplier - 1) * 100).toFixed(0)}%!`, 'success');
   };
 
   const renderActiveHub = () => {
@@ -169,7 +136,8 @@ export default function DocumentsHub() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+    <VestedInterestProvider user={user}>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
       {/* Dark mode toggle */}
       <div className="fixed top-24 right-4 z-50">
         <Card className="p-2 shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
@@ -338,10 +306,10 @@ export default function DocumentsHub() {
       </main>
       <Toaster toasts={toasts} removeToast={removeToast} />
       {isOnboardingOpen && (
-        <ConsolidatedOnboarding
-          onComplete={handleUnifiedOnboardingComplete}
-          onSkip={() => setIsOnboardingOpen(false)}
-          showAssessment={true}
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onComplete={handleOnboardingComplete}
         />
       )}
       {user.loggedIn && agentPersonality && (
@@ -374,6 +342,7 @@ export default function DocumentsHub() {
         </>
       )}
       <Footer />
-    </div>
+      </div>
+    </VestedInterestProvider>
   );
 }

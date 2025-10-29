@@ -1,9 +1,9 @@
 import { DatabaseService } from './database-service';
 
 /**
- * Benchmark Service for Design Thinking System
+ * Benchmark Service for Lean Design Thinking™ System
  * 
- * Provides benchmarking capabilities for DT workflows:
+ * Provides benchmarking capabilities for LDT workflows:
  * - Industry comparisons
  * - Performance ranking
  * - Best practice identification

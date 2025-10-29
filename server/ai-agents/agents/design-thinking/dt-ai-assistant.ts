@@ -1,15 +1,15 @@
 import { OpenAI } from 'openai';
 
 /**
- * Design Thinking AI Assistant
+ * Lean Lean Design Thinking™™ AI Assistant
  * 
- * Provides AI-powered assistance for DT workflows:
+ * Provides AI-powered assistance for LLDT workflows:
  * - Element suggestions
  * - Clustering operations
  * - Session insights
  * - Recommendations
  */
-export class DTAIAssistant {
+export class LLDTAIAssistant {
   private openaiClient: OpenAI | null;
 
   constructor() {
@@ -19,7 +19,7 @@ export class DTAIAssistant {
         apiKey: apiKey
       });
     } else {
-      console.warn('OpenAI API key not configured. DTAIAssistant features will be limited.');
+      console.warn('OpenAI API key not configured. LDTAIAssistant features will be limited.');
       this.openaiClient = null;
     }
   }
@@ -37,7 +37,7 @@ export class DTAIAssistant {
     }
     try {
       const prompt = `
-        Based on this Design Thinking context, suggest related elements:
+        Based on this Lean Design Thinking™ context, suggest related elements:
         
         Session Phase: ${context.phase}
         Current Elements: ${JSON.stringify(context.currentElements)}
@@ -85,7 +85,7 @@ export class DTAIAssistant {
   async clusterElements(elements: CanvasElement[]): Promise<Cluster[]> {
     try {
       const prompt = `
-        Cluster these Design Thinking canvas elements into meaningful groups:
+        Cluster these Lean Design Thinking™ canvas elements into meaningful groups:
         
         Elements: ${JSON.stringify(elements)}
         
@@ -125,10 +125,10 @@ export class DTAIAssistant {
   /**
    * Generate session insights
    */
-  async generateSessionInsights(session: DTSession): Promise<SessionInsight[]> {
+  async generateSessionInsights(session: LDTSession): Promise<SessionInsight[]> {
     try {
       const prompt = `
-        Analyze this Design Thinking session and generate insights:
+        Analyze this Lean Design Thinking™ session and generate insights:
         
         Session Data: ${JSON.stringify(session)}
         Participants: ${session.participants.length}
@@ -173,10 +173,10 @@ export class DTAIAssistant {
   /**
    * Generate recommendations for workflow
    */
-  async generateRecommendations(workflow: DTWorkflow): Promise<Recommendation[]> {
+  async generateRecommendations(workflow: LDTWorkflow): Promise<Recommendation[]> {
     try {
       const prompt = `
-        Generate recommendations for this Design Thinking workflow:
+        Generate recommendations for this Lean Design Thinking™ workflow:
         
         Workflow: ${JSON.stringify(workflow)}
         Current Phase: ${workflow.currentPhase}
@@ -220,10 +220,10 @@ export class DTAIAssistant {
   /**
    * Analyze collaboration patterns
    */
-  async analyzeCollaborationPatterns(session: DTSession): Promise<CollaborationAnalysis> {
+  async analyzeCollaborationPatterns(session: LDTSession): Promise<CollaborationAnalysis> {
     try {
       const prompt = `
-        Analyze collaboration patterns in this Design Thinking session:
+        Analyze collaboration patterns in this Lean Design Thinking™ session:
         
         Session: ${JSON.stringify(session)}
         Participants: ${session.participants.length}
@@ -274,10 +274,10 @@ export class DTAIAssistant {
   /**
    * Generate phase transition suggestions
    */
-  async generatePhaseTransitionSuggestions(workflow: DTWorkflow): Promise<PhaseTransitionSuggestion[]> {
+  async generatePhaseTransitionSuggestions(workflow: LDTWorkflow): Promise<PhaseTransitionSuggestion[]> {
     try {
       const prompt = `
-        Suggest phase transitions for this Design Thinking workflow:
+        Suggest phase transitions for this Lean Design Thinking™ workflow:
         
         Current Phase: ${workflow.currentPhase}
         Workflow Status: ${workflow.status}
@@ -378,7 +378,7 @@ interface Cluster {
   createdAt: Date;
 }
 
-interface DTSession {
+interface LDTSession {
   id: string;
   workflow: {
     id: string;
@@ -418,7 +418,7 @@ interface SessionInsight {
   timestamp: Date;
 }
 
-interface DTWorkflow {
+interface LDTWorkflow {
   id: string;
   name: string;
   currentPhase: string;

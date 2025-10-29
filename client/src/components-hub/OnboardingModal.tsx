@@ -115,12 +115,72 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, onCo
             {step === 4 && compositeProfile && proposedPersonality && (
                 <div>
                     <AssessmentResults profile={compositeProfile} />
-                    <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200 text-center">
-                        <h3 className="text-xl font-bold text-slate-800">Your Proposed Co-Founder™ Personality</h3>
-                        <p className="text-slate-600 mt-2 mb-4">Based on your profile, we've configured an AI partner to complement your strengths and support your blind spots. You can adjust this anytime.</p>
-                        <div className="inline-block bg-white p-4 rounded-lg border">
-                          <p>Assertiveness: <strong>{proposedPersonality.traits.assertiveness}/10</strong> | Optimism: <strong>{proposedPersonality.traits.optimism}/10</strong></p>
+                    <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                        <h3 className="text-xl font-bold text-slate-800 text-center mb-4">Your Proposed Co-Founder™ Personality</h3>
+                        <p className="text-slate-600 text-center mb-6">Based on your profile, we've configured an AI partner to complement your strengths and support your blind spots. You can adjust this anytime.</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-4 rounded-lg border">
+                                <h4 className="font-semibold text-slate-800 mb-3">Core Traits</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Assertiveness:</span>
+                                        <span className="font-semibold">{proposedPersonality.traits.assertiveness}/10</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Optimism:</span>
+                                        <span className="font-semibold">{proposedPersonality.traits.optimism}/10</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Detail Orientation:</span>
+                                        <span className="font-semibold">{proposedPersonality.traits.detail_orientation}/10</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Risk Tolerance:</span>
+                                        <span className="font-semibold">{proposedPersonality.traits.risk_tolerance}/10</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Directness:</span>
+                                        <span className="font-semibold">{proposedPersonality.traits.directness}/10</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg border">
+                                <h4 className="font-semibold text-slate-800 mb-3">Communication Style</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Formality:</span>
+                                        <span className="font-semibold capitalize">{proposedPersonality.style.formality}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Humor:</span>
+                                        <span className="font-semibold capitalize">{proposedPersonality.style.humor}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Storytelling:</span>
+                                        <span className="font-semibold">{proposedPersonality.style.storytelling ? 'Yes' : 'No'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Questioning Style:</span>
+                                        <span className="font-semibold capitalize">{proposedPersonality.style.questioning}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        
+                        {proposedPersonality.expertise.primary.length > 0 && (
+                            <div className="mt-4 bg-white p-4 rounded-lg border">
+                                <h4 className="font-semibold text-slate-800 mb-2">Primary Expertise Areas</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {proposedPersonality.expertise.primary.map((expertise, index) => (
+                                        <span key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                                            {expertise}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="mt-8 text-center">
                         <button onClick={handleFinalize} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg">

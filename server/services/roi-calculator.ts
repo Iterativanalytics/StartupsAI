@@ -1,9 +1,9 @@
 import { DatabaseService } from './database-service';
 
 /**
- * ROI Calculator for Design Thinking System
+ * ROI Calculator for Lean Design Thinking™ System
  * 
- * Calculates return on investment for DT workflows:
+ * Calculates return on investment for LDT workflows:
  * - Investment calculation
  * - Returns measurement
  * - ROI calculation

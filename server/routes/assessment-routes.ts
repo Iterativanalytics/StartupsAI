@@ -83,7 +83,7 @@ router.get('/types', requireAuth, async (_req: Request, res: Response): Promise<
       },
       {
         id: 'design_thinking',
-        name: 'Design Thinking Readiness',
+        name: 'Lean Design Thinking™ Readiness',
         description: 'Assess your organization\'s readiness for design thinking',
         duration: '15-20 minutes',
         questions: 50,

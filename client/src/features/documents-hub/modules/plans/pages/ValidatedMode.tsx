@@ -82,7 +82,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ assumptions, onClearAssum
           <h2 className="text-5xl font-bold mb-4">Planning Meets Reality</h2>
           <p className="text-xl text-white/90 mb-6 max-w-3xl mx-auto">
             Stop writing fiction. Start with real problems, validate with real users, pivot with real data.
-            The only platform built on Lean Design Thinking methodology.
+            The only platform built on Lean Design Thinking™ methodology.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
             <div className="bg-white/20 backdrop-blur px-4 py-2 rounded-lg">
@@ -108,7 +108,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ assumptions, onClearAssum
       )}
       
       <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-        <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking Process</h3>
+        <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking™ Process</h3>
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
           {Object.entries(PLAN_PHASES).map(([key, phase]) => {
             const PhaseIcon = phase.icon;
@@ -232,8 +232,8 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ assumptions, onClearAssum
         return (
           <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-md p-8">
-              <h2 className="text-3xl font-bold text-slate-800 mb-4">Lean Design Thinking Framework</h2>
-              <p className="text-lg text-slate-600 mb-6">We combine the empathy and creativity of Design Thinking with the rigor and validation of Lean Startup. This hybrid methodology addresses critical gaps in both approaches.</p>
+              <h2 className="text-3xl font-bold text-slate-800 mb-4">Lean Design Thinking™ Framework</h2>
+              <p className="text-lg text-slate-600 mb-6">We combine the empathy and creativity of Lean Design Thinking™ with the rigor and validation of Lean Startup. This hybrid methodology addresses critical gaps in both approaches.</p>
               {/* Methodology content */}
             </div>
           </div>

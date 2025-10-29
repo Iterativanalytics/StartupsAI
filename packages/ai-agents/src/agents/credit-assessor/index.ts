@@ -2,8 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BaseAgent } from '../base-agent';
 import { AgentType, AgentConfig, AgentContext } from '../../types';
 
-export class CreditAssessorAgent extends BaseAgent {
-  protected agentType = AgentType.CREDIT_ASSESSOR;
+export class CreditAnalystAgent extends BaseAgent {
+  protected agentType = AgentType.CREDIT_ANALYST;
 
   constructor(client: Anthropic, config: AgentConfig) {
     super(client, config);

@@ -139,37 +139,155 @@ export const proposePersonality = (profile: CompositeProfile): CoFounderPersonal
         style: {
             formality: 'adaptive',
             humor: 'occasional',
+            storytelling: false,
+            questioning: 'direct'
+        },
+        expertise: {
+            primary: [],
+            secondary: [],
+            learning: []
+        },
+        interaction: {
+            proactivity: 'medium',
+            checkInFrequency: 'weekly',
+            challengeLevel: 'balanced'
         }
     };
 
+    // ===== BIG FIVE PERSONALITY ADJUSTMENTS =====
+    
     // Low Conscientiousness founder needs a more assertive, detail-oriented partner
     if (profile.bigFive.conscientiousness < 5) {
         personality.traits.assertiveness += 3;
         personality.traits.detail_orientation += 3;
+        personality.interaction.proactivity = 'high';
+        personality.interaction.checkInFrequency = 'daily';
     }
 
     // High Neuroticism founder needs a more optimistic, less direct partner
     if (profile.bigFive.neuroticism > 6) {
         personality.traits.optimism += 2;
         personality.traits.directness -= 2;
+        personality.style.humor = 'frequent';
+        personality.interaction.challengeLevel = 'supportive';
     }
     
-    // Low Extraversion founder might need a partner who initiates more
+    // Low Extraversion founder needs a more proactive partner
     if (profile.bigFive.extraversion < 5) {
-        // This could be modeled as higher proactivity in the agent's behavior, but for personality, we'll keep it simple.
+        personality.interaction.proactivity = 'high';
+        personality.traits.assertiveness += 1;
     }
 
     // Low Agreeableness founder needs a more diplomatic partner
     if (profile.bigFive.agreeableness < 5) {
         personality.traits.directness -= 2;
         personality.style.formality = 'professional';
+        personality.style.questioning = 'socratic';
     }
+
+    // High Openness founder can handle more creative, exploratory partner
+    if (profile.bigFive.openness > 7) {
+        personality.style.storytelling = true;
+        personality.style.questioning = 'exploratory';
+        personality.style.humor = 'frequent';
+    }
+
+    // ===== RIASEC-BASED PERSONALITY ADJUSTMENTS =====
+    
+    // Low Realistic (hands-on) founder needs practical, implementation-focused partner
+    if (profile.riasec.realistic < 4) {
+        personality.traits.detail_orientation += 2;
+        personality.expertise.primary.push('operations', 'implementation');
+        personality.interaction.proactivity = 'high';
+    }
+
+    // Low Investigative (analytical) founder needs data-driven, research-focused partner
+    if (profile.riasec.investigative < 4) {
+        personality.traits.detail_orientation += 2;
+        personality.expertise.primary.push('research', 'data-analysis');
+        personality.style.questioning = 'socratic';
+    }
+
+    // Low Artistic (creative) founder needs innovative, design-focused partner
+    if (profile.riasec.artistic < 4) {
+        personality.style.storytelling = true;
+        personality.expertise.primary.push('design', 'innovation');
+        personality.traits.optimism += 1;
+    }
+
+    // Low Social (people-focused) founder needs relationship-building, team-focused partner
+    if (profile.riasec.social < 4) {
+        personality.traits.directness -= 1;
+        personality.expertise.primary.push('team-building', 'communication');
+        personality.interaction.challengeLevel = 'supportive';
+    }
+
+    // Low Enterprising (business-focused) founder needs sales, growth-focused partner
+    if (profile.riasec.enterprising < 4) {
+        personality.traits.assertiveness += 2;
+        personality.traits.risk_tolerance += 2;
+        personality.expertise.primary.push('sales', 'growth');
+        personality.interaction.proactivity = 'high';
+    }
+
+    // Low Conventional (organized) founder needs process, structure-focused partner
+    if (profile.riasec.conventional < 4) {
+        personality.traits.detail_orientation += 3;
+        personality.expertise.primary.push('process-improvement', 'project-management');
+        personality.interaction.checkInFrequency = 'daily';
+    }
+
+    // ===== AI READINESS ADJUSTMENTS =====
+    
+    // Low AI Readiness founder needs tech-savvy, educational partner
+    if (profile.aiReadiness.overall < 4) {
+        personality.expertise.primary.push('ai-adoption', 'technology');
+        personality.expertise.learning.push('emerging-tech', 'ai-tools');
+        personality.interaction.challengeLevel = 'supportive';
+    }
+
+    // High AI Readiness founder can work with advanced, strategic partner
+    if (profile.aiReadiness.overall > 7) {
+        personality.expertise.primary.push('ai-strategy', 'advanced-tech');
+        personality.interaction.challengeLevel = 'challenging';
+    }
+
+    // ===== FOUNDER ARCHETYPE-SPECIFIC ADJUSTMENTS =====
+    
+    switch (profile.founderArchetype.code) {
+        case 'EIA': // Visionary Innovator
+            personality.traits.detail_orientation += 2;
+            personality.expertise.primary.push('execution', 'operations');
+            personality.interaction.proactivity = 'high';
+            break;
+        case 'CES': // Execution Machine
+            personality.traits.optimism += 2;
+            personality.expertise.primary.push('innovation', 'strategy');
+            personality.style.storytelling = true;
+            break;
+        case 'ISA': // Thoughtful Builder
+            personality.traits.assertiveness += 2;
+            personality.expertise.primary.push('sales', 'marketing');
+            personality.interaction.proactivity = 'high';
+            break;
+        case 'SEA': // Collaborative Innovator
+            personality.traits.detail_orientation += 2;
+            personality.expertise.primary.push('technical-depth', 'product');
+            break;
+    }
+
+    // ===== FINAL ADJUSTMENTS =====
     
     // Clamp values between 1 and 10
     Object.keys(personality.traits).forEach(keyStr => {
         const key = keyStr as keyof typeof personality.traits;
         personality.traits[key] = Math.max(1, Math.min(10, personality.traits[key]));
     });
+
+    // Ensure expertise arrays are unique
+    personality.expertise.primary = [...new Set(personality.expertise.primary)];
+    personality.expertise.secondary = [...new Set(personality.expertise.secondary)];
+    personality.expertise.learning = [...new Set(personality.expertise.learning)];
 
     return personality;
 };

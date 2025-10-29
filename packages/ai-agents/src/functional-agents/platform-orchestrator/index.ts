@@ -7,7 +7,7 @@ import { AgentConfig, AgentContext, AgentResponse, AgentType } from '../../types
  * and ecosystem management. It works in collaboration with Co-Agents and other
  * functional agents to deliver comprehensive platform insights.
  */
-export class PlatformOrchestratorAgent {
+export class BusinessAnalystAgent {
   private config: AgentConfig;
 
   constructor(config: AgentConfig) {
@@ -518,9 +518,9 @@ Would you like me to help you develop a comprehensive platform governance strate
     const lastMessage = context.conversationHistory[context.conversationHistory.length - 1]?.content || '';
     
     return {
-      content: `I'm here to help you with your platform orchestration needs. Based on your query, here's how I can assist:
+      content: `I'm your Business Analyst (Agent-PBA), combining platform orchestration with business analysis expertise. Based on your query, here's how I can assist:
 
-🏗️ **Platform Orchestration Services**
+🏗️ **Platform Orchestration + Business Analysis Services**
 
 I can help you with:
 • Platform analysis and assessment
@@ -529,10 +529,13 @@ I can help you with:
 • Platform optimization and performance
 • Stakeholder management and engagement
 • Platform governance and compliance
+• Business process analysis and improvement
+• Requirements elicitation and management
+• Workflow automation and optimization
 
-**What specific platform orchestration support would you like me to provide?**
+**What specific platform orchestration or business analysis support would you like me to provide?**
 
-I can provide detailed analysis and recommendations for any aspect of your platform management. Just let me know what you'd like to focus on, and I'll dive deep into that area.`,
+I can provide detailed analysis and recommendations for any aspect of your platform management and business processes. Just let me know what you'd like to focus on, and I'll dive deep into that area.`,
 
       suggestions: [
         "Analyze my platform",

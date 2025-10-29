@@ -1,6 +1,6 @@
 // ============================================================================
-// DESIGN THINKING READINESS ASSESSMENT
-// Assess user's DT mindset and capabilities
+// LEAN DESIGN THINKING™ READINESS ASSESSMENT
+// Assess user's LLDT mindset and capabilities
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -25,7 +25,7 @@ interface AssessmentResult {
   recommendations: string[];
 }
 
-export function DTReadinessAssessment({ onComplete }: { onComplete?: (result: AssessmentResult) => void }) {
+export function LLDTReadinessAssessment({ onComplete }: { onComplete?: (result: AssessmentResult) => void }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [result, setResult] = useState<AssessmentResult | null>(null);
@@ -168,7 +168,7 @@ export function DTReadinessAssessment({ onComplete }: { onComplete?: (result: As
               <CheckCircle className="w-10 h-10 text-blue-600" />
             </div>
             <h1 className="text-3xl font-bold mb-2">Assessment Complete!</h1>
-            <p className="text-gray-600">Your Design Thinking Readiness Profile</p>
+            <p className="text-gray-600">Your Lean Lean Design Thinking™™ Readiness Profile</p>
           </div>
 
           {/* Overall Score */}
@@ -248,7 +248,7 @@ export function DTReadinessAssessment({ onComplete }: { onComplete?: (result: As
               href="/design-thinking"
               className="inline-block px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
             >
-              Start Your Design Thinking Journey
+              Start Your Lean Lean Design Thinking™™ Journey
             </a>
           </div>
         </div>

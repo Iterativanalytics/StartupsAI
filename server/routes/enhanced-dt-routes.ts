@@ -1,20 +1,20 @@
 import express from 'express';
 import { authMiddleware } from '../auth-middleware';
-import { DTCollaborationService } from '../services/dt-collaboration-service';
-import { DTAnalyticsService } from '../services/dt-analytics-service';
-import { DTFacilitationAgent } from '../ai-agents/agents/design-thinking/dt-facilitation-agent';
-import { DTInsightsAgent } from '../ai-agents/agents/design-thinking/dt-insights-agent';
+import { LLDTCollaborationService } from '../services/dt-collaboration-service';
+import { LLDTAnalyticsService } from '../services/dt-analytics-service';
+import { LLDTFacilitationAgent } from '../ai-agents/agents/design-thinking/dt-facilitation-agent';
+import { LLDTInsightsAgent } from '../ai-agents/agents/design-thinking/dt-insights-agent';
 import { handleRouteError, requireAuth, requireResource } from '../utils/routeHelpers';
 
 const router = express.Router();
 
 // Initialize services
-const collaborationService = new DTCollaborationService();
-const analyticsService = new DTAnalyticsService();
-const facilitationAgent = new DTFacilitationAgent();
-const insightsAgent = new DTInsightsAgent();
+const collaborationService = new LLDTCollaborationService();
+const analyticsService = new LLDTAnalyticsService();
+const facilitationAgent = new LLDTFacilitationAgent();
+const insightsAgent = new LLDTInsightsAgent();
 
-// Enhanced DT Workflow Routes
+// Enhanced LLDT Workflow Routes
 router.get('/workflows', authMiddleware, async (req, res) => {
   try {
     if (!requireAuth(req, res)) return;
@@ -31,7 +31,7 @@ router.get('/workflows', authMiddleware, async (req, res) => {
     
     res.json(workflows);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to fetch DT workflows');
+    handleRouteError(error, res, 'Failed to fetch LLDT workflows');
   }
 });
 
@@ -56,7 +56,7 @@ router.post('/workflows', authMiddleware, async (req, res) => {
     
     res.status(201).json(workflow);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to create DT workflow');
+    handleRouteError(error, res, 'Failed to create LLDT workflow');
   }
 });
 
@@ -69,7 +69,7 @@ router.get('/workflows/:id', authMiddleware, async (req, res) => {
     
     res.json(workflow);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to fetch DT workflow');
+    handleRouteError(error, res, 'Failed to fetch LLDT workflow');
   }
 });
 
@@ -83,7 +83,7 @@ router.put('/workflows/:id', authMiddleware, async (req, res) => {
     
     res.json(workflow);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to update DT workflow');
+    handleRouteError(error, res, 'Failed to update LLDT workflow');
   }
 });
 
@@ -93,7 +93,7 @@ router.delete('/workflows/:id', authMiddleware, async (req, res) => {
     await deleteWorkflow(id);
     res.status(204).send();
   } catch (error) {
-    handleRouteError(error, res, 'Failed to delete DT workflow');
+    handleRouteError(error, res, 'Failed to delete LLDT workflow');
   }
 });
 

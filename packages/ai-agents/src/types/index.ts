@@ -9,19 +9,21 @@ export enum AgentType {
   CO_INVESTOR = 'co_investor',         // For Investors
   CO_BUILDER = 'co_builder',           // For Partners
   
-  // Specialized Functional Agents
-  BUSINESS_ADVISOR = 'business_advisor',
-  INVESTMENT_ANALYST = 'investment_analyst',
-  CREDIT_ANALYST = 'credit_analyst',
-  IMPACT_ANALYST = 'impact_analyst',
-  PROGRAM_MANAGER = 'program_manager',
-  PLATFORM_ORCHESTRATOR = 'platform_orchestrator',
+  // Specialized Functional Agents (Concept Document Standardized)
+  BUSINESS_ADVISOR = 'business_advisor',        // Agent-CBA
+  INVESTMENT_ANALYST = 'investment_analyst',    // Agent-CFA
+  CREDIT_ANALYST = 'credit_analyst',            // Agent-CRA
+  IMPACT_ANALYST = 'impact_analyst',            // Agent-CIA
+  PROGRAM_ANALYST = 'program_analyst',          // Agent-PMA
+  BUSINESS_ANALYST = 'business_analyst',        // Agent-PBA (Platform Orchestrator + Business Analysis)
   
-  // Additional functional agents
-  DEAL_ANALYZER = 'deal_analyzer',
-  CREDIT_ASSESSOR = 'credit_assessor',
-  IMPACT_EVALUATOR = 'impact_evaluator',
-  PARTNERSHIP_FACILITATOR = 'partnership_facilitator'
+  // Legacy aliases for backward compatibility
+  DEAL_ANALYZER = 'deal_analyzer',              // Legacy: Use INVESTMENT_ANALYST
+  CREDIT_ASSESSOR = 'credit_assessor',          // Legacy: Use CREDIT_ANALYST
+  IMPACT_EVALUATOR = 'impact_evaluator',        // Legacy: Use IMPACT_ANALYST
+  PARTNERSHIP_FACILITATOR = 'partnership_facilitator', // Legacy: Use PROGRAM_ANALYST
+  PROGRAM_MANAGER = 'program_manager',          // Legacy: Use PROGRAM_ANALYST
+  PLATFORM_ORCHESTRATOR = 'platform_orchestrator' // Legacy: Use BUSINESS_ANALYST
 }
 
 // Query Types for Intelligent Routing

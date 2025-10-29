@@ -1,21 +1,21 @@
 // ============================================================================
-// COMPREHENSIVE DESIGN THINKING API ROUTES
-// Complete implementation of DT Enhancement Plan
+// COMPREHENSIVE LEAN DESIGN THINKING™ API ROUTES
+// Complete implementation of LLDT Enhancement Plan
 // ============================================================================
 
 import express from 'express';
 import { authMiddleware } from '../auth-middleware';
-import { dtWorkflowService } from '../services/dt-workflow-service';
-import { EnhancedDesignThinkingAgent } from '../ai-agents/agents/design-thinking/enhanced-dt-agent';
-import { DTCollaborationService } from '../services/dt-collaboration-service';
-import { DTAnalyticsService } from '../services/dt-analytics-service';
+import { ldtWorkflowService } from '../services/dt-workflow-service';
+import { EnhancedLeanDesignThinkingAgent } from '../ai-agents/agents/design-thinking/enhanced-dt-agent';
+import { LLDTCollaborationService } from '../services/dt-collaboration-service';
+import { LLDTAnalyticsService } from '../services/dt-analytics-service';
 
 const router = express.Router();
 
 // Initialize services
-const dtAgent = new EnhancedDesignThinkingAgent();
-const collaborationService = new DTCollaborationService();
-const analyticsService = new DTAnalyticsService();
+const ldtAgent = new EnhancedLeanDesignThinkingAgent();
+const collaborationService = new LLDTCollaborationService();
+const analyticsService = new LLDTAnalyticsService();
 
 // ===========================
 // WORKFLOW MANAGEMENT ROUTES
@@ -53,7 +53,7 @@ router.get('/workflows', authMiddleware, async (req, res) => {
 
 /**
  * POST /api/dt/workflows
- * Create a new DT workflow
+ * Create a new LLDT workflow
  */
 router.post('/workflows', authMiddleware, async (req, res) => {
   try {

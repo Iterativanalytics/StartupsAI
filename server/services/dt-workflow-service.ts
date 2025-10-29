@@ -1,45 +1,45 @@
 // ============================================================================
-// DESIGN THINKING WORKFLOW SERVICE
-// Comprehensive workflow management for DT processes
+// LEAN DESIGN THINKING™ WORKFLOW SERVICE
+// Comprehensive workflow management for LDT processes
 // ============================================================================
 
 import { 
-  DTWorkflow, 
-  DTPhase, 
+  LDTWorkflow, 
+  LDTPhase, 
   WorkflowStatus,
   POVStatement,
   HMWQuestion,
   Idea,
   Prototype,
   TestSession,
-  DTInsight,
+  LDTInsight,
   EmpathyData
 } from '../ai-agents/agents/design-thinking/dt-types';
 
 /**
- * In-memory storage for DT workflows
+ * In-memory storage for LDT workflows
  * In production, this would be replaced with actual database operations
  */
-class DTWorkflowService {
-  private workflows: Map<string, DTWorkflow> = new Map();
+class LDTWorkflowService {
+  private workflows: Map<string, LDTWorkflow> = new Map();
   private povStatements: Map<string, POVStatement> = new Map();
   private hmwQuestions: Map<string, HMWQuestion> = new Map();
   private ideas: Map<string, Idea> = new Map();
   private prototypes: Map<string, Prototype> = new Map();
   private testSessions: Map<string, TestSession> = new Map();
-  private insights: Map<string, DTInsight> = new Map();
+  private insights: Map<string, LDTInsight> = new Map();
   private empathyData: Map<string, EmpathyData> = new Map();
 
   // ===========================
   // WORKFLOW OPERATIONS
   // ===========================
 
-  async createWorkflow(data: Partial<DTWorkflow>): Promise<DTWorkflow> {
-    const workflow: DTWorkflow = {
+  async createWorkflow(data: Partial<LDTWorkflow>): Promise<LDTWorkflow> {
+    const workflow: LDTWorkflow = {
       id: this.generateId(),
       projectId: data.projectId || '',
       userId: data.userId || '',
-      name: data.name || 'New DT Workflow',
+      name: data.name || 'New LDT Workflow',
       description: data.description || '',
       currentPhase: data.currentPhase || 'empathize',
       phaseProgress: data.phaseProgress || {},
@@ -61,16 +61,16 @@ class DTWorkflowService {
     return workflow;
   }
 
-  async getWorkflow(workflowId: string): Promise<DTWorkflow | null> {
+  async getWorkflow(workflowId: string): Promise<LDTWorkflow | null> {
     return this.workflows.get(workflowId) || null;
   }
 
   async getWorkflows(userId: string, filters?: {
     status?: WorkflowStatus;
-    phase?: DTPhase;
+    phase?: LDTPhase;
     limit?: number;
     offset?: number;
-  }): Promise<DTWorkflow[]> {
+  }): Promise<LDTWorkflow[]> {
     let workflows = Array.from(this.workflows.values())
       .filter(w => w.userId === userId);
 
@@ -88,7 +88,7 @@ class DTWorkflowService {
     return workflows.slice(offset, offset + limit);
   }
 
-  async updateWorkflow(workflowId: string, updates: Partial<DTWorkflow>): Promise<DTWorkflow | null> {
+  async updateWorkflow(workflowId: string, updates: Partial<LDTWorkflow>): Promise<LDTWorkflow | null> {
     const workflow = this.workflows.get(workflowId);
     if (!workflow) return null;
 
@@ -106,7 +106,7 @@ class DTWorkflowService {
     return this.workflows.delete(workflowId);
   }
 
-  async transitionPhase(workflowId: string, newPhase: DTPhase): Promise<DTWorkflow | null> {
+  async transitionPhase(workflowId: string, newPhase: LDTPhase): Promise<LDTWorkflow | null> {
     const workflow = this.workflows.get(workflowId);
     if (!workflow) return null;
 
@@ -348,8 +348,8 @@ class DTWorkflowService {
   // INSIGHT OPERATIONS
   // ===========================
 
-  async createInsight(data: Partial<DTInsight>): Promise<DTInsight> {
-    const insight: DTInsight = {
+  async createInsight(data: Partial<LDTInsight>): Promise<LDTInsight> {
+    const insight: LDTInsight = {
       id: this.generateId(),
       workflowId: data.workflowId || '',
       phase: data.phase || 'empathize',
@@ -374,10 +374,10 @@ class DTWorkflowService {
   }
 
   async getInsights(workflowId: string, filters?: {
-    phase?: DTPhase;
+    phase?: LDTPhase;
     type?: string;
     limit?: number;
-  }): Promise<DTInsight[]> {
+  }): Promise<LDTInsight[]> {
     let insights = Array.from(this.insights.values())
       .filter(i => i.workflowId === workflowId);
 
@@ -476,4 +476,4 @@ class DTWorkflowService {
 }
 
 // Export singleton instance
-export const dtWorkflowService = new DTWorkflowService();
+export const dtWorkflowService = new LDTWorkflowService();

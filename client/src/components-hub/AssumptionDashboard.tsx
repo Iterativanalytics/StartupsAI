@@ -24,7 +24,11 @@ const AssumptionDashboard: React.FC<AssumptionDashboardProps> = ({ assumptions, 
                 <div>
                     <h3 className="text-2xl font-bold text-slate-800">Assumption Dashboard</h3>
                     <p className="text-slate-600 mt-1">
-                        Your Fast Track {noun} generated <span className="font-bold text-purple-600">{assumptions.length} assumptions</span>. It's time to validate the riskiest ones.
+                        <span className="font-bold text-purple-600">The Heart of the Lean Loop</span> - Your Fast Track {noun} generated <span className="font-bold text-purple-600">{assumptions.length} assumptions</span>. 
+                        These are the foundational beliefs your entire business rests upon. It's time to make the invisible visible and validate the riskiest ones.
+                    </p>
+                    <p className="text-sm text-slate-500 mt-2">
+                        💡 <strong>Lean Design Thinking™ Core:</strong> Every assumption is a hypothesis waiting to be tested. The goal is learning, not being right.
                     </p>
                 </div>
                 <button 
@@ -45,7 +49,7 @@ const AssumptionDashboard: React.FC<AssumptionDashboardProps> = ({ assumptions, 
                                 <p className="text-xs opacity-80 mt-1">Source: {assumption.sourceSection} • Risk: High</p>
                             </div>
                             <button onClick={() => onDesignExperiment(assumption)} className="bg-purple-600 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-purple-700 transition-colors flex-shrink-0">
-                                Design Experiment
+                                Test Assumption
                             </button>
                         </div>
                     ))}
@@ -53,7 +57,9 @@ const AssumptionDashboard: React.FC<AssumptionDashboardProps> = ({ assumptions, 
             ) : (
                  <p className="text-sm text-slate-500 mt-4 text-center">No high-risk assumptions were generated. You can proceed with the workflow or generate a new {noun}.</p>
             )}
-             <p className="text-sm text-slate-500 mt-4 text-center">Proceed with the workflow below to start validating these assumptions.</p>
+             <p className="text-sm text-slate-500 mt-4 text-center">
+                <strong>Next Step:</strong> Proceed with the workflow below to start validating these assumptions through the Build-Measure-Learn loop.
+             </p>
         </div>
     );
 };

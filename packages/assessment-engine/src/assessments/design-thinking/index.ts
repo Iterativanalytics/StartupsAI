@@ -1,58 +1,58 @@
 /**
- * Design Thinking Assessment Module
- * Main entry point for Design Thinking readiness assessment
+ * Lean Design Thinking™ Assessment Module
+ * Main entry point for Lean Design Thinking™ readiness assessment
  */
 
 import { AssessmentResponse } from '../../models/common.model.ts';
-import { DTReadinessProfile, DTScores, DTRecommendation } from './scoring.ts';
+import { LDTReadinessProfile, LDTScores, LDTRecommendation } from './scoring.ts';
 import { dtQuestions } from './questions.ts';
 import { 
-  calculateDTScores, 
-  generateDTRecommendations, 
+  calculateLDTScores, 
+  generateLDTRecommendations, 
   detectCrossAssessmentPatterns,
-  generateDTReadinessProfile 
+  generateLDTReadinessProfile 
 } from './scoring.ts';
 
 export class DesignThinkingReadinessAssessment {
   /**
-   * Get all Design Thinking questions
+   * Get all Lean Design Thinking™ questions
    */
   getQuestions() {
     return dtQuestions;
   }
 
   /**
-   * Calculate DT scores from responses
+   * Calculate LLDT scores from responses
    */
-  calculateScores(responses: AssessmentResponse[]): DTScores {
-    return calculateDTScores(responses);
+  calculateScores(responses: AssessmentResponse[]): LDTScores {
+    return calculateLDTScores(responses);
   }
 
   /**
-   * Generate DT recommendations based on scores
+   * Generate LLDT recommendations based on scores
    */
-  generateRecommendations(scores: DTScores): DTRecommendation[] {
-    return generateDTRecommendations(scores);
+  generateRecommendations(scores: LDTScores): LDTRecommendation[] {
+    return generateLDTRecommendations(scores);
   }
 
   /**
    * Detect cross-assessment patterns with other assessments
    */
   detectPatterns(
-    dtScores: DTScores, 
+    dtScores: LDTScores, 
     existingScores?: { [key: string]: number }
   ): string[] {
     return detectCrossAssessmentPatterns(dtScores, existingScores);
   }
 
   /**
-   * Generate complete DT readiness profile
+   * Generate complete LLDT readiness profile
    */
   generateProfile(
     responses: AssessmentResponse[],
     existingScores?: { [key: string]: number }
-  ): DTReadinessProfile {
-    return generateDTReadinessProfile(responses, existingScores);
+  ): LDTReadinessProfile {
+    return generateLDTReadinessProfile(responses, existingScores);
   }
 
   /**

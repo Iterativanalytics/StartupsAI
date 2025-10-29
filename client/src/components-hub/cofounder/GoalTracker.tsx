@@ -102,7 +102,7 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ title, goals, setGoals, onMil
                         className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                     />
                     <label htmlFor="isMilestone" className="ml-2 block text-sm text-gray-900">
-                        Mark as a Milestone (completing it boosts vested interest)
+                        Mark as a Milestone (completing it boosts VestedInterest™)
                     </label>
                 </div>
             </form>

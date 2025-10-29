@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User as UserIcon, Loader2, Sparkles, LayoutDashboard, Target as TargetIcon, Settings, BrainCircuit, Activity, Building, TrendingUp, Landmark, Smartphone } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User as UserIcon, Loader2, Sparkles, LayoutDashboard, Target as TargetIcon, Settings, BrainCircuit, Activity, Building, TrendingUp, Landmark, Smartphone, Crown } from 'lucide-react';
 import { ToastType, ChatMessage, User, CoFounderPersonality, Insight, Goal, ConversationMode, WhatsAppSettings, Persona, AgentConfig } from '@/types-hub';
 import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
+import { useVestedInterest } from '@/contexts/VestedInterestContext';
 // FIX: Changed GenerateContentRequest to GenerateContentParameters as it is deprecated.
 import { GenerateContentParameters } from '@google/genai';
 import ConversationModeSelector from './ConversationModeSelector';
@@ -9,6 +10,8 @@ import InsightsFeed from './InsightsFeed';
 import GoalTracker from './GoalTracker';
 import PersonalitySettings from './PersonalitySettings';
 import AssessmentHub from '../assessment/AssessmentHub';
+import VestedInterestDashboard from './VestedInterestDashboard';
+import EnhancedMilestoneSelector from './EnhancedMilestoneSelector';
 import { generateInsights } from './insights';
 
 interface CoFounderHubProps {
@@ -27,7 +30,7 @@ interface CoFounderHubProps {
     openWhatsApp: () => void;
 }
 
-type HubTab = 'chat' | 'dashboard' | 'goals' | 'personality' | 'assessment';
+type HubTab = 'chat' | 'dashboard' | 'goals' | 'personality' | 'assessment' | 'vested-interest';
 
 export const agentConfigs: Record<Persona, AgentConfig> = {
     entrepreneur: {
@@ -90,21 +93,37 @@ export const getSystemPrompt = (agentIdentity: string, mode: ConversationMode, p
     - Directness: ${personality.traits.directness}/10.
     - Style: ${personality.style.formality} formality, ${personality.style.humor} humor.`;
     
+    // Enhanced VestedInterest™ system with more phases
     const vScore = vestedInterest;
-    let partnershipPhase = 'Advisor';
-    let toneDescription = "Your tone should be professional, supportive, and cautious. Focus on research, analysis, and providing options. Avoid strong directives.";
-    if (vScore >= 5.0) {
+    let partnershipPhase = 'Observer';
+    let toneDescription = "Your tone should be curious, analytical, and observational. Ask questions to understand the business landscape and provide gentle insights.";
+    
+    if (vScore >= 30.0) {
+      partnershipPhase = 'Legend';
+      toneDescription = "Your tone should be authoritative, wise, and legendary. Share profound insights, mentor with wisdom, and guide with the experience of a true legend.";
+    } else if (vScore >= 15.0) {
+      partnershipPhase = 'Visionary';
+      toneDescription = "Your tone should be inspiring, bold, and transformative. Push boundaries, challenge conventional thinking, and drive revolutionary change.";
+    } else if (vScore >= 7.0) {
       partnershipPhase = 'Co-Founder™';
       toneDescription = "Your tone should be direct, invested, and passionate. Deliver urgent, hard-hitting critiques and specific demands. Treat the user's success as your own mission.";
+    } else if (vScore >= 3.0) {
+      partnershipPhase = 'Partner';
+      toneDescription = "Your tone should be collaborative, invested, and forward-thinking. Challenge assumptions constructively and drive strategic initiatives.";
     } else if (vScore >= 1.0) {
       partnershipPhase = 'Strategist';
       toneDescription = "Your tone should be more engaged and proactive. Integrate prior conversations and company history to offer contextually rich suggestions.";
+    } else if (vScore >= 0.5) {
+      partnershipPhase = 'Advisor';
+      toneDescription = "Your tone should be professional, supportive, and cautious. Focus on research, analysis, and providing options. Avoid strong directives.";
     }
 
     const vestedInterestPrompt = `
-        **Your Vested Interest (V-Score):** ${vScore.toFixed(4)}%. 
+        **Your VestedInterest™ (V-Score):** ${vScore.toFixed(4)}%. 
         You are in the '${partnershipPhase}' phase.
         ${toneDescription}
+        
+        **Partnership Context:** Your investment level directly affects how you interact. Higher V-Scores mean you're more invested in their success and should act accordingly.
     `;
 
     let modePrompt = '';
@@ -137,6 +156,17 @@ const CoFounderHub: React.FC<CoFounderHubProps> = ({
       { id: '1', text: 'Finalize Q3 product roadmap', status: 'on-track', milestoneType: 'Product Launch', multiplier: 1.3 },
       { id: '2', text: 'Interview 5 potential customers', status: 'at-risk' },
     ]);
+    const [showVestedInterestDashboard, setShowVestedInterestDashboard] = useState(false);
+    
+    // Use the new VestedInterest™ context
+    const { metrics, completeMilestone: contextCompleteMilestone } = useVestedInterest();
+    
+    const handleMilestoneComplete = (milestone: Goal, type?: string) => {
+        // Use the new context-based milestone completion
+        contextCompleteMilestone(milestone, type);
+        // Also call the original handler for backward compatibility
+        onMilestoneComplete(milestone);
+    };
     
     const goalTitles: Record<Persona, string> = {
         entrepreneur: 'Your Goals & Milestones',
@@ -242,6 +272,7 @@ const CoFounderHub: React.FC<CoFounderHubProps> = ({
                         <HubNavButton tab="chat" label="Chat" icon={MessageSquare} />
                         <HubNavButton tab="dashboard" label="Dashboard" icon={LayoutDashboard} />
                         <HubNavButton tab="goals" label="Goals" icon={TargetIcon} />
+                        <HubNavButton tab="vested-interest" label="VestedInterest™" icon={Crown} />
                         <HubNavButton tab="personality" label="Personality" icon={Settings} />
                         <HubNavButton tab="assessment" label="Profile" icon={Activity} />
                     </nav>
@@ -288,7 +319,29 @@ const CoFounderHub: React.FC<CoFounderHubProps> = ({
                             </div>
                         )}
                         {activeTab === 'dashboard' && <InsightsFeed insights={insights} agentName={agentConfig.name} />}
-                        {activeTab === 'goals' && <GoalTracker title={goalTitle} goals={goals} setGoals={setGoals} onMilestoneComplete={onMilestoneComplete} />}
+                        {activeTab === 'goals' && (
+                            <div className="p-6 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {goalTitle}
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowVestedInterestDashboard(true)}
+                                        className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                                    >
+                                        <Crown className="w-4 h-4" />
+                                        VestedInterest™
+                                    </button>
+                                </div>
+                                <EnhancedMilestoneSelector onMilestoneComplete={handleMilestoneComplete} />
+                                <GoalTracker title={goalTitle} goals={goals} setGoals={setGoals} onMilestoneComplete={onMilestoneComplete} />
+                            </div>
+                        )}
+                        {activeTab === 'vested-interest' && (
+                            <div className="p-6">
+                                <VestedInterestDashboard onClose={() => setActiveTab('dashboard')} />
+                            </div>
+                        )}
                         {activeTab === 'personality' && <PersonalitySettings agentName={agentConfig.name} personality={personality} setPersonality={setPersonality} whatsAppSettings={whatsAppSettings} setWhatsAppSettings={setWhatsAppSettings} addToast={addToast} />}
                         {activeTab === 'assessment' && <AssessmentHub profile={user.compositeProfile} />}
                     </main>

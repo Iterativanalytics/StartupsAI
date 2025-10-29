@@ -1,15 +1,15 @@
 import { DatabaseService } from './database-service';
 
 /**
- * Design Thinking Analytics Engine
+ * Lean Lean Design Thinking™™ Analytics Engine
  * 
- * Provides comprehensive analytics for DT workflows:
+ * Provides comprehensive analytics for LLDT workflows:
  * - Effectiveness measurement
  * - Insight mapping
  * - Benchmark comparison
  * - Predictive analytics
  */
-export class DTAnalyticsEngine {
+export class LDTAnalyticsEngine {
   private db: DatabaseService;
 
   constructor() {
@@ -271,7 +271,7 @@ export class DTAnalyticsEngine {
     }
 
     if (dimensions.processAdherence < 0.6) {
-      recommendations.push('Better adherence to Design Thinking methodology');
+      recommendations.push('Better adherence to Lean Design Thinking™ methodology');
     }
 
     return recommendations;

@@ -1,6 +1,6 @@
 // ============================================================================
 // DESIGN THINKING WORKFLOW PAGE
-// Main page for DT workflow management
+// Main page for LDT workflow management
 // ============================================================================
 
 import React, { useState } from 'react';

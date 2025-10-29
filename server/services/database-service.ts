@@ -1,9 +1,9 @@
 import { Pool } from 'pg';
 
 /**
- * Database Service for Design Thinking System
+ * Database Service for Lean Design Thinking™ System
  * 
- * Handles all database operations for the enhanced DT system:
+ * Handles all database operations for the enhanced LDT system:
  * - Workflow management
  * - Canvas operations
  * - Analytics data

@@ -184,6 +184,18 @@ export interface CoFounderPersonality {
   style: {
     formality: 'casual' | 'professional' | 'adaptive';
     humor: 'frequent' | 'occasional' | 'rare';
+    storytelling: boolean;
+    questioning: 'direct' | 'socratic' | 'exploratory';
+  };
+  expertise: {
+    primary: string[];
+    secondary: string[];
+    learning: string[];
+  };
+  interaction: {
+    proactivity: 'low' | 'medium' | 'high';
+    checkInFrequency: 'daily' | 'weekly' | 'monthly';
+    challengeLevel: 'supportive' | 'balanced' | 'challenging';
   };
 }
 

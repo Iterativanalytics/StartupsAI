@@ -126,12 +126,19 @@ export type AgentType =
   | 'co_founder' 
   | 'co_investor' 
   | 'co_builder'
-  | 'business_advisor' 
-  | 'investment_analyst' 
-  | 'credit_analyst'
-  | 'impact_analyst' 
-  | 'program_manager' 
-  | 'platform_orchestrator';
+  | 'business_advisor'        // Agent-CBA
+  | 'investment_analyst'      // Agent-CFA
+  | 'credit_analyst'          // Agent-CRA
+  | 'impact_analyst'          // Agent-CIA
+  | 'program_analyst'         // Agent-PMA
+  | 'business_analyst'        // Agent-PBA (Platform Orchestrator + Business Analysis)
+  // Legacy aliases for backward compatibility
+  | 'deal_analyzer'           // Legacy: Use investment_analyst
+  | 'credit_assessor'         // Legacy: Use credit_analyst
+  | 'impact_evaluator'        // Legacy: Use impact_analyst
+  | 'partnership_facilitator' // Legacy: Use program_analyst
+  | 'program_manager'         // Legacy: Use program_analyst
+  | 'platform_orchestrator';  // Legacy: Use business_analyst
 
 // ============================================================================
 // AGENT DATABASE SERVICE

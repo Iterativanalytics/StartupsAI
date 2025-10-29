@@ -1,9 +1,9 @@
 import { DatabaseService } from './database-service';
 
 /**
- * Insight Tracker for Design Thinking System
+ * Insight Tracker for Lean Design Thinking™ System
  * 
- * Tracks insight evolution across DT phases:
+ * Tracks insight evolution across LDT phases:
  * - Evolution tracking
  * - Impact measurement
  * - Business value calculation

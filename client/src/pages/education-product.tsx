@@ -134,7 +134,7 @@ function EducationProduct() {
     },
     {
       id: 'design-thinking',
-      name: 'Design Thinking',
+      name: 'Lean Design Thinking™',
       description: 'Human-centered approach to innovation and problem-solving',
       steps: 5,
       duration: '4-6 weeks',

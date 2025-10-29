@@ -4,7 +4,7 @@ import { CreditAnalystAgentIntegration } from "./integration";
 import { RealTimeCreditDecisionEngine } from "./real-time-decision";
 import { CreditApplication } from "./types";
 
-export class CreditAssessorAgent {
+export class CreditAnalystAgent {
   private config: AgentConfig;
   private integration: CreditAnalystAgentIntegration;
   private decisionEngine: RealTimeCreditDecisionEngine;

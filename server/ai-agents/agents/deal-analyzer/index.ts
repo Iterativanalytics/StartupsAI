@@ -2,7 +2,7 @@
 import { AgentConfig, AgentContext, AgentResponse } from "../../core/agent-engine";
 import { aiService } from "../../../ai-service";
 
-export class DealAnalyzerAgent {
+export class InvestmentAnalystAgent {
   private config: AgentConfig;
   
   constructor(config: AgentConfig) {

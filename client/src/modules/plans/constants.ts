@@ -6,78 +6,90 @@ export const PLAN_PHASES: Phases = {
     name: 'Problem Discovery',
     icon: Search,
     color: 'bg-purple-500',
-    description: 'Deep ethnographic research to uncover real user problems',
-    methodology: 'Design Thinking',
+    description: 'Deep ethnographic research to uncover real user problems through empathy and observation. This phase embodies the core of Design Thinking - before building any solution, we must deeply understand the user and their authentic needs.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
-      { id: 'd1', title: 'Stakeholder Mapping', description: 'Identify all actors in the problem space', tool: 'ai-stakeholder-mapper' },
-      { id: 'd2', title: 'Ethnographic Research', description: 'Observe users in natural contexts', tool: 'observation-framework' },
-      { id: 'd3', title: 'Deep Interviews', description: 'Conduct 15-20 problem-focused interviews', tool: 'interview-generator' },
-      { id: 'd4', title: 'Synthesis Workshop', description: 'Extract patterns and insights', tool: 'insight-synthesizer' }
+      { id: 'd1', title: 'Stakeholder Mapping', description: 'Identify all actors in the problem space and their relationships', tool: 'ai-stakeholder-mapper' },
+      { id: 'd2', title: 'Empathy Map Builder', description: 'Build 6-quadrant canvas for user psychology analysis', tool: 'empathy-map-builder' },
+      { id: 'd3', title: 'User Journey Mapping', description: 'Map end-to-end experience to identify pain points', tool: 'journey-mapper' },
+      { id: 'd4', title: 'Ethnographic Research', description: 'Observe users in natural contexts for authentic insights', tool: 'observation-framework' },
+      { id: 'd5', title: 'Deep Interviews', description: 'Conduct 15-20 problem-focused interviews using structured protocols', tool: 'interview-generator' },
+      { id: 'd6', title: 'Synthesis Workshop', description: 'Extract patterns and insights using affinity mapping', tool: 'insight-synthesizer' }
     ]
   },
   define: {
     name: 'Problem Definition',
     icon: Target,
     color: 'bg-blue-500',
-    description: 'Frame validated problem as testable hypotheses',
-    methodology: 'Lean + Design Thinking',
+    description: 'Frame validated problem as testable hypotheses without solution bias. This phase completes the Design Thinking foundation by ensuring we\'ve identified the right problem before moving to solution development.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
-      { id: 'df1', title: 'Problem Statement', description: 'Craft human-centered problem frame', tool: 'problem-framer' },
-      { id: 'df2', title: 'Hypothesis Formation', description: 'Convert insights to testable assumptions', tool: 'hypothesis-builder' },
-      { id: 'df3', title: 'Persona Validation', description: 'Build evidence-based personas', tool: 'persona-validator' },
-      { id: 'df4', title: 'Success Metrics', description: 'Define quantitative learning goals', tool: 'metrics-framework' }
+      { id: 'df1', title: 'POV Statement Builder', description: 'Craft human-centered problem frame: [User] needs [Need] because [Insight]', tool: 'pov-builder' },
+      { id: 'df2', title: 'HMW Question Generator', description: 'Generate How Might We questions to open solution space', tool: 'hmw-generator' },
+      { id: 'df3', title: 'Problem Statement Canvas', description: 'Structure problem definition without suggesting solutions', tool: 'problem-canvas' },
+      { id: 'df4', title: 'Hypothesis Formation', description: 'Convert insights to testable assumptions with clear success criteria', tool: 'hypothesis-builder' },
+      { id: 'df5', title: 'Persona Validation', description: 'Build evidence-based personas from research data', tool: 'persona-validator' },
+      { id: 'df6', title: 'Success Metrics Definition', description: 'Define measurable success criteria for validation', tool: 'metrics-definer' }
     ]
   },
   ideate: {
     name: 'Solution Ideation',
     icon: Lightbulb,
     color: 'bg-yellow-500',
-    description: 'Generate testable solution concepts rapidly',
-    methodology: 'Design Thinking',
+    description: 'Generate testable solution concepts rapidly using structured creativity. This is the critical handoff from Design Thinking to Lean Startup - transforming creative ideas into a backlog of testable hypotheses through assumption mapping.',
+    methodology: 'Lean Design Thinking™ - Methodology Bridge',
     steps: [
-      { id: 'i1', title: 'Divergent Generation', description: 'Create 100+ solution concepts', tool: 'ai-idea-multiplier' },
-      { id: 'i2', title: 'Assumption Mapping', description: 'Identify riskiest assumptions per solution', tool: 'assumption-mapper' },
-      { id: 'i3', title: 'Test Design', description: 'Plan minimum experiments', tool: 'experiment-designer' },
-      { id: 'i4', title: 'Prioritization', description: 'Rank by learning/cost ratio', tool: 'priority-matrix' }
+      { id: 'i1', title: 'Brainstorming Canvas', description: 'Structured ideation using Crazy 8s, SCAMPER, and other techniques', tool: 'brainstorming-canvas' },
+      { id: 'i2', title: 'Divergent Generation', description: 'Create 100+ solution concepts using AI-powered idea multiplication', tool: 'ai-idea-multiplier' },
+      { id: 'i3', title: 'Assumption Mapping', description: 'Identify riskiest assumptions per solution using assumption mapping canvas', tool: 'assumption-mapper' },
+      { id: 'i4', title: 'Solution Prioritization', description: 'Rank solutions by learning/cost ratio and impact potential', tool: 'solution-prioritizer' },
+      { id: 'i5', title: 'Experiment Design', description: 'Plan minimum viable experiments for top solutions', tool: 'experiment-designer' },
+      { id: 'i6', title: 'Prototype Planning', description: 'Choose appropriate fidelity level for testing', tool: 'prototype-planner' }
     ]
   },
   experiment: {
     name: 'Rapid Experiments',
     icon: TestTube,
     color: 'bg-green-500',
-    description: 'Test solutions with minimum viable experiments',
-    methodology: 'Lean Startup',
+    description: 'Test solutions with minimum viable experiments to validate assumptions. This is the "Build" phase of the Lean Startup loop - creating the minimum viable experiment to validate our riskiest assumptions efficiently.',
+    methodology: 'Lean Design Thinking™ - Lean Startup Core',
     steps: [
-      { id: 'e1', title: 'MVP Definition', description: 'Design minimum testable version', tool: 'mvp-canvas' },
-      { id: 'e2', title: 'Landing Page Test', description: 'Validate demand before building', tool: 'landing-builder' },
-      { id: 'e3', title: 'Concierge/Wizard', description: 'Manual delivery to test value prop', tool: 'concierge-planner' },
-      { id: 'e4', title: 'Prototype Testing', description: 'Test with 5-7 users minimum', tool: 'test-protocol' }
+      { id: 'e1', title: 'MVP Definition', description: 'Design minimum testable version using MVP canvas', tool: 'mvp-canvas' },
+      { id: 'e2', title: 'Landing Page Builder', description: 'Create demand validation landing pages', tool: 'landing-builder' },
+      { id: 'e3', title: 'Concierge/Wizard Test', description: 'Manual delivery to test value proposition', tool: 'concierge-planner' },
+      { id: 'e4', title: 'Prototype Testing', description: 'Test with 5-7 users using structured protocols', tool: 'test-protocol' },
+      { id: 'e5', title: 'A/B Test Designer', description: 'Design controlled experiments for hypothesis testing', tool: 'ab-test-designer' },
+      { id: 'e6', title: 'Data Collection Setup', description: 'Set up analytics and feedback collection systems', tool: 'data-collector' }
     ]
   },
   measure: {
     name: 'Learn & Measure',
     icon: BarChart3,
     color: 'bg-orange-500',
-    description: 'Analyze results and make pivot decisions',
-    methodology: 'Lean Startup',
+    description: 'Analyze results and make data-driven pivot decisions. This is the "Measure" and "Learn" phase of the Lean Startup loop - determining if assumptions were validated or invalidated, and what to do next.',
+    methodology: 'Lean Design Thinking™ - Lean Startup Core',
     steps: [
-      { id: 'm1', title: 'Data Collection', description: 'Gather qualitative + quantitative data', tool: 'data-dashboard' },
-      { id: 'm2', title: 'Cohort Analysis', description: 'Segment by user behavior patterns', tool: 'cohort-analyzer' },
-      { id: 'm3', title: 'Learning Documentation', description: 'Record validated/invalidated hypotheses', tool: 'learning-log' },
-      { id: 'm4', title: 'Pivot Decision', description: 'Use 10-type framework to decide', tool: 'pivot-intelligence' }
+      { id: 'm1', title: 'Data Dashboard', description: 'Visualize qualitative and quantitative experiment results', tool: 'data-dashboard' },
+      { id: 'm2', title: 'Cohort Analysis', description: 'Segment users by behavior patterns and outcomes', tool: 'cohort-analyzer' },
+      { id: 'm3', title: 'Learning Documentation', description: 'Record validated/invalidated hypotheses systematically', tool: 'learning-log' },
+      { id: 'm4', title: 'Pivot Intelligence', description: 'Use 10-type framework to make informed pivot decisions', tool: 'pivot-intelligence' },
+      { id: 'm5', title: 'Success Metrics Analysis', description: 'Evaluate against defined success criteria', tool: 'metrics-analyzer' },
+      { id: 'm6', title: 'Next Iteration Planning', description: 'Plan next round of experiments based on learnings', tool: 'iteration-planner' }
     ]
   },
   scale: {
     name: 'Scale Strategy',
     icon: TrendingUp,
     color: 'bg-red-500',
-    description: 'Plan growth with validated business model',
-    methodology: 'Business Model Canvas',
+    description: 'Plan growth with validated business model and proven unit economics. This final phase focuses on scaling only after core problem-solution fit has been validated through the preceding phases, ensuring the strategy is grounded in real-world evidence.',
+    methodology: 'Lean Design Thinking™ - Evidence-Backed Strategy',
     steps: [
-      { id: 's1', title: 'Model Validation', description: 'Confirm all 9 canvas blocks', tool: 'bmc-validator' },
-      { id: 's2', title: 'Unit Economics', description: 'Calculate validated CAC, LTV, margins', tool: 'economics-calculator' },
-      { id: 's3', title: 'Growth Plan', description: 'Design scalable acquisition channels', tool: 'growth-planner' },
-      { id: 's4', title: 'Financial Model', description: 'Build projections from real data', tool: 'financial-modeler' }
+      { id: 's1', title: 'Business Model Validation', description: 'Confirm all 9 canvas blocks with evidence', tool: 'bmc-validator' },
+      { id: 's2', title: 'Unit Economics Calculator', description: 'Calculate validated CAC, LTV, margins, and payback period', tool: 'economics-calculator' },
+      { id: 's3', title: 'Growth Channel Planning', description: 'Design scalable acquisition channels based on data', tool: 'growth-planner' },
+      { id: 's4', title: 'Financial Model Builder', description: 'Build projections from validated data and assumptions', tool: 'financial-modeler' },
+      { id: 's5', title: 'Scale Readiness Assessment', description: 'Evaluate operational readiness for growth', tool: 'scale-readiness' },
+      { id: 's6', title: 'Evidence Appendix Generator', description: 'Create comprehensive evidence package for investors', tool: 'evidence-generator' }
     ]
   }
 };
@@ -118,6 +130,83 @@ export const PLAN_TOOLS: Tools = {
     description: 'Analyze data and recommend structured pivot options',
     outputs: ['Pivot Type Recommendation', 'Evidence Summary', 'Impact Forecast']
   },
+  // Enhanced Lean Design Thinking™ Tools
+  'empathy-map-builder': {
+    name: 'Empathy Map Builder',
+    description: 'Build 6-quadrant canvas for user psychology analysis (Think/Feel, Say/Do, See, Hear, Pain, Gain)',
+    outputs: ['Empathy Map', 'User Psychology Insights', 'Pain Point Analysis']
+  },
+  'journey-mapper': {
+    name: 'User Journey Mapper',
+    description: 'Map end-to-end experience to identify pain points and opportunities',
+    outputs: ['Journey Map', 'Pain Point Matrix', 'Opportunity Map']
+  },
+  'pov-builder': {
+    name: 'POV Statement Builder',
+    description: 'Craft human-centered problem frame: [User] needs [Need] because [Insight]',
+    outputs: ['POV Statement', 'Problem Frame', 'Insight Summary']
+  },
+  'hmw-generator': {
+    name: 'HMW Question Generator',
+    description: 'Generate How Might We questions to open solution space',
+    outputs: ['HMW Questions', 'Solution Space Map', 'Ideation Prompts']
+  },
+  'problem-canvas': {
+    name: 'Problem Statement Canvas',
+    description: 'Structure problem definition without suggesting solutions',
+    outputs: ['Problem Canvas', 'Stakeholder Impact', 'Root Cause Analysis']
+  },
+  'metrics-definer': {
+    name: 'Success Metrics Definer',
+    description: 'Define measurable success criteria for validation',
+    outputs: ['Success Metrics', 'KPI Dashboard', 'Measurement Plan']
+  },
+  'brainstorming-canvas': {
+    name: 'Brainstorming Canvas',
+    description: 'Structured ideation using Crazy 8s, SCAMPER, and other techniques',
+    outputs: ['Ideation Canvas', 'Solution Concepts', 'Creative Techniques']
+  },
+  'solution-prioritizer': {
+    name: 'Solution Prioritizer',
+    description: 'Rank solutions by learning/cost ratio and impact potential',
+    outputs: ['Priority Matrix', 'Solution Ranking', 'Resource Allocation']
+  },
+  'prototype-planner': {
+    name: 'Prototype Planner',
+    description: 'Choose appropriate fidelity level for testing (Lo-Fi, Mid-Fi, Hi-Fi)',
+    outputs: ['Prototype Plan', 'Fidelity Guide', 'Testing Strategy']
+  },
+  'ab-test-designer': {
+    name: 'A/B Test Designer',
+    description: 'Design controlled experiments for hypothesis testing',
+    outputs: ['A/B Test Plan', 'Statistical Framework', 'Results Analysis']
+  },
+  'data-collector': {
+    name: 'Data Collection Setup',
+    description: 'Set up analytics and feedback collection systems',
+    outputs: ['Analytics Setup', 'Data Pipeline', 'Collection Framework']
+  },
+  'metrics-analyzer': {
+    name: 'Success Metrics Analyzer',
+    description: 'Evaluate against defined success criteria',
+    outputs: ['Metrics Analysis', 'Performance Report', 'Gap Analysis']
+  },
+  'iteration-planner': {
+    name: 'Next Iteration Planner',
+    description: 'Plan next round of experiments based on learnings',
+    outputs: ['Iteration Plan', 'Learning Integration', 'Next Steps']
+  },
+  'scale-readiness': {
+    name: 'Scale Readiness Assessment',
+    description: 'Evaluate operational readiness for growth',
+    outputs: ['Readiness Score', 'Gap Analysis', 'Scaling Roadmap']
+  },
+  'evidence-generator': {
+    name: 'Evidence Appendix Generator',
+    description: 'Create comprehensive evidence package for investors',
+    outputs: ['Evidence Package', 'Validation Summary', 'Due Diligence Kit']
+  },
+  // Existing tools (keeping for compatibility)
   'persona-validator': { name: 'Persona Validator', description: 'Validate personas with data.', outputs: ['Validated Persona'] },
   'metrics-framework': { name: 'Success Metrics Framework', description: 'Define success metrics.', outputs: ['Metrics Dashboard'] },
   'ai-idea-multiplier': { name: 'AI Idea Multiplier', description: 'Generate solution ideas.', outputs: ['Idea List'] },
@@ -140,7 +229,7 @@ export const PLAN_TOOLS: Tools = {
 export const PLAN_COMPETITOR_COMPARISON: PlanCompetitorRow[] = [
   {
     feature: 'Methodology',
-    iterativePlans: 'Lean Design Thinking (hybrid)',
+    iterativePlans: 'Lean Design Thinking™ (hybrid)',
     growthWheel: 'Structured business planning',
     venturePlanner: 'AI-generated projections',
     livePlan: 'Traditional business plan'

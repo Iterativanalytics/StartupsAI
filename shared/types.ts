@@ -83,8 +83,8 @@ export interface AssessmentResult {
   recommendations: string[];
 }
 
-// Design Thinking types
-export interface DTPhase {
+// Lean Design Thinking™ types
+export interface LLDTPhase {
   id: string;
   name: string;
   description: string;
@@ -93,7 +93,7 @@ export interface DTPhase {
   deliverables: string[];
 }
 
-export interface DTCollaboration {
+export interface LLDTCollaboration {
   participants: string[];
   sessionId: string;
   phase: string;

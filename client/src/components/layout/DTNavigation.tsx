@@ -2,10 +2,10 @@ import React from 'react';
 import { NavItem } from './NavItem';
 import { ChevronDown, Users, Lightbulb, Target, Wrench, TestTube } from 'lucide-react';
 
-export function DTNavigation() {
+export function LLDTNavigation() {
   return (
     <div className="relative group">
-      <NavItem to="/design-thinking" label="Design Thinking" icon={Users} />
+      <NavItem to="/design-thinking" label="Lean Lean Design Thinking™™" icon={Users} />
       
       {/* Dropdown Menu */}
       <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">

@@ -1,7 +1,7 @@
 
 import { AgentConfig, AgentContext, AgentResponse } from "../../core/agent-engine";
 
-export class PlatformOrchestratorAgent {
+export class BusinessAnalystAgent {
   private config: AgentConfig;
   
   constructor(config: AgentConfig) {
@@ -104,13 +104,15 @@ export class PlatformOrchestratorAgent {
   
   private async generalPlatformAdvice(context: AgentContext): Promise<AgentResponse> {
     return {
-      content: "Hello! I'm your Platform Orchestrator. I coordinate workflows, generate insights, and optimize the entire platform ecosystem. What can I help you with?",
+      content: "Hello! I'm your Business Analyst (Agent-PBA). I coordinate workflows, generate insights, and optimize the entire platform ecosystem. I combine platform orchestration with business analysis to ensure seamless operations. What can I help you with?",
       suggestions: [
         "View platform insights",
         "Coordinate workflows",
         "Monitor system health",
         "Optimize performance",
-        "Manage notifications"
+        "Manage notifications",
+        "Analyze business processes",
+        "Facilitate stakeholder coordination"
       ]
     };
   }

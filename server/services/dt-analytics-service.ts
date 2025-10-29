@@ -1,36 +1,36 @@
 import { DatabaseService } from './database-service';
-import { DTAnalyticsEngine } from './dt-analytics-engine';
+import { LDTAnalyticsEngine } from './dt-analytics-engine';
 import { InsightTracker } from './insight-tracker';
 import { ROICalculator } from './roi-calculator';
 import { BenchmarkService } from './benchmark-service';
 
 /**
- * Enhanced Design Thinking Analytics Service
+ * Enhanced Lean Lean Design Thinking™™ Analytics Service
  * 
- * This service provides comprehensive analytics for DT workflows:
+ * This service provides comprehensive analytics for LLDT workflows:
  * - Effectiveness measurement
  * - ROI calculation
  * - Benchmark comparison
  * - Insight tracking
  * - Predictive analytics
  */
-export class DTAnalyticsService {
+export class LLDTAnalyticsService {
   private db: DatabaseService;
-  private analyticsEngine: DTAnalyticsEngine;
+  private analyticsEngine: LDTAnalyticsEngine;
   private insightTracker: InsightTracker;
   private roiCalculator: ROICalculator;
   private benchmarkService: BenchmarkService;
 
   constructor() {
     this.db = new DatabaseService();
-    this.analyticsEngine = new DTAnalyticsEngine();
+    this.analyticsEngine = new LDTAnalyticsEngine();
     this.insightTracker = new InsightTracker();
     this.roiCalculator = new ROICalculator();
     this.benchmarkService = new BenchmarkService();
   }
 
   /**
-   * Get comprehensive analytics for a DT workflow
+   * Get comprehensive analytics for a LLDT workflow
    */
   async getComprehensiveAnalytics(workflowId: string): Promise<ComprehensiveAnalytics> {
     try {

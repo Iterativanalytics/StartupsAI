@@ -1,7 +1,7 @@
--- Design Thinking Integration - Database Schema
+-- Lean Design Thinking™ Integration - Database Schema
 -- Migration: 001_add_dt_tables.sql
 
--- Design Thinking Projects
+-- Lean Design Thinking™ Projects
 CREATE TABLE dt_projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -188,7 +188,7 @@ CREATE TABLE design_sprints (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- DT Readiness Assessments
+-- LDT Readiness Assessments
 CREATE TABLE dt_readiness_assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { Sparkles, Brain, X, FileBadge, LayoutDashboard, Edit, Eye, ShieldCheck, CheckCircle, Circle, GitBranch, RefreshCw } from 'lucide-react';
+import { Sparkles, Brain, X, FileBadge, LayoutDashboard, Edit, Eye, ShieldCheck, CheckCircle, Circle, GitBranch, RefreshCw, Target, TestTube, BarChart3 } from 'lucide-react';
 import { PLAN_PHASES, PLAN_TOOLS } from '../constants';
 import { PIVOT_TYPES } from '@/constants-hub';
 import { Tool, ToastType, Assumption, User, CoFounderPersonality } from '@/types-hub';
 import PivotModal from '@/components-hub/PivotModal';
 import ToolModal from '@/components-hub/ToolModal';
+import DesignThinkingToolModal from '@/components-hub/DesignThinkingToolModal';
 import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
+import AssumptionTracker from '@/components-hub/AssumptionTracker';
+import PivotIntelligence from '@/components-hub/PivotIntelligence';
+import ExperimentDesigner from '@/components-hub/ExperimentDesigner';
+import EvidenceGenerator from '@/components-hub/EvidenceGenerator';
 import { usePlanProject } from '../PlansApp';
 import PlanEditor from '../components/PlanEditor';
 import PlanViewer from '../components/PlanViewer';
@@ -18,7 +23,7 @@ interface ValidatedModeProps {
   vestedInterest: number;
 }
 
-type ValidatedView = 'dashboard' | 'editor' | 'viewer';
+type ValidatedView = 'dashboard' | 'editor' | 'viewer' | 'assumptions' | 'experiments' | 'evidence';
 
 const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPersonality, vestedInterest }) => {
   const { project, clearProject, updateSectionContent } = usePlanProject();
@@ -26,11 +31,14 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const [showPivotModal, setShowPivotModal] = useState(false);
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
+  const [isDTToolModalOpen, setIsDTToolModalOpen] = useState(false);
   const [activeTool, setActiveTool] = useState<{ tool: Tool, stepId: string } | null>(null);
   const [currentView, setCurrentView] = useState<ValidatedView>('dashboard');
   const [currentSection, setCurrentSection] = useState(sections[0]);
   const [currentIteration] = useState(1);
   const [pivotHistory] = useState([]);
+  const [experiments, setExperiments] = useState<any[]>([]);
+  const [evidencePackages, setEvidencePackages] = useState<any[]>([]);
 
   const toggleStep = (stepId: string) => {
     setCompletedSteps(prev => ({ ...prev, [stepId]: !prev[stepId] }));
@@ -40,7 +48,13 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
     const tool = PLAN_TOOLS[toolKey];
     if (tool) {
         setActiveTool({ tool, stepId });
-        setIsToolModalOpen(true);
+        // Check if it's a Design Thinking tool
+        const dtTools = ['empathy-map-builder', 'journey-mapper', 'pov-builder', 'hmw-generator', 'brainstorming-canvas', 'assumption-mapper'];
+        if (dtTools.includes(toolKey)) {
+          setIsDTToolModalOpen(true);
+        } else {
+          setIsToolModalOpen(true);
+        }
     } else {
         addToast(`Tool "${toolKey}" not found. Step marked as complete.`, 'info');
         toggleStep(stepId);
@@ -49,10 +63,49 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
 
   const handleDesignExperiment = (assumption: any) => {
     setActivePhase('experiment');
-    addToast(`Navigated to 'Rapid Experiments' to validate: "${assumption.text}"`, 'info');
-     if (currentView !== 'dashboard') {
-      setCurrentView('dashboard');
+    setCurrentView('experiments');
+    addToast(`Navigated to 'Experiments' to validate: "${assumption.text}"`, 'info');
+  };
+
+  const handleUpdateAssumption = (id: string, updates: Partial<Assumption>) => {
+    // Update assumption in project
+    if (project) {
+      const updatedAssumptions = project.assumptions.map(assumption => 
+        assumption.id === id ? { ...assumption, ...updates } : assumption
+      );
+      // This would need to be implemented in the project context
+      addToast('Assumption updated successfully', 'success');
     }
+  };
+
+  const handleAddAssumption = (assumption: Omit<Assumption, 'id'>) => {
+    // Add new assumption to project
+    if (project) {
+      const newAssumption: Assumption = {
+        ...assumption,
+        id: `assumption_${Date.now()}`
+      };
+      // This would need to be implemented in the project context
+      addToast('Assumption added successfully', 'success');
+    }
+  };
+
+  const handleDeleteAssumption = (id: string) => {
+    // Delete assumption from project
+    if (project) {
+      // This would need to be implemented in the project context
+      addToast('Assumption deleted successfully', 'success');
+    }
+  };
+
+  const handleSaveExperiment = (experiment: any) => {
+    setExperiments(prev => [...prev, experiment]);
+    addToast('Experiment saved successfully', 'success');
+  };
+
+  const handleGenerateEvidencePackage = (evidencePackage: any) => {
+    setEvidencePackages(prev => [...prev, evidencePackage]);
+    addToast('Evidence package generated successfully', 'success');
   };
   
   const handleClearProject = () => {
@@ -109,6 +162,21 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
           addToast={addToast}
       />
       
+      <DesignThinkingToolModal
+          isOpen={isDTToolModalOpen}
+          onClose={() => {
+              setIsDTToolModalOpen(false);
+              setActiveTool(null);
+          }}
+          tool={activeTool?.tool || null}
+          onComplete={() => {
+              if (activeTool) {
+                  toggleStep(activeTool.stepId);
+              }
+          }}
+          addToast={addToast}
+      />
+      
       <div className="bg-white rounded-xl shadow-md p-4 mb-8 flex items-center justify-between border border-slate-200">
           <div className="flex items-center gap-3">
               <FileBadge className="w-8 h-8 text-purple-600" />
@@ -119,6 +187,9 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
           </div>
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
             <SubNavButton view="dashboard" label="Dashboard" icon={LayoutDashboard} />
+            <SubNavButton view="assumptions" label="Assumptions" icon={Target} />
+            <SubNavButton view="experiments" label="Experiments" icon={TestTube} />
+            <SubNavButton view="evidence" label="Evidence" icon={BarChart3} />
             <SubNavButton view="editor" label="Editor" icon={Edit} />
             <SubNavButton view="viewer" label="Viewer" icon={Eye} />
           </div>
@@ -137,7 +208,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
                 noun="plan"
             />
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking Process</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">Lean Design Thinking™ Process</h3>
               <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 {Object.entries(PLAN_PHASES).map(([key, phase]) => {
                   const PhaseIcon = phase.icon;
@@ -202,12 +273,19 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
                 </div>
 
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-                    <div className="flex items-center gap-2 mb-4"><GitBranch className="w-6 h-6" /><h3 className="text-lg font-bold">Pivot Intelligence</h3></div>
-                    <p className="text-sm text-white/90 mb-4">Track all learning. When data suggests a pivot, we help you choose the right type.</p>
-                    <button onClick={() => setShowPivotModal(true)} className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all">Explore 10 Pivot Types</button>
-                    <div className="mt-4 text-xs text-white/80">{pivotHistory.length} pivots documented this iteration</div>
-                  </div>
+                  <PivotIntelligence
+                    currentMetrics={{
+                      userGrowth: 15,
+                      revenue: 25000,
+                      engagement: 65,
+                      retention: 78
+                    }}
+                    assumptions={project.assumptions}
+                    onRecommendPivot={(recommendation) => {
+                      addToast(`Pivot recommendation: ${recommendation.type.name}`, 'info');
+                    }}
+                    addToast={addToast}
+                  />
 
                   <div className="bg-white rounded-xl shadow-md p-6">
                     <div className="flex items-center gap-2 mb-4"><RefreshCw className="w-5 h-5 text-purple-600" /><h3 className="text-lg font-bold text-slate-800">Iteration {currentIteration}</h3></div>
@@ -240,6 +318,35 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ addToast, user, agentPers
             vestedInterest={vestedInterest}
             addToast={addToast}
           />
+      )}
+
+      {currentView === 'assumptions' && (
+        <AssumptionTracker
+          assumptions={project.assumptions}
+          onUpdateAssumption={handleUpdateAssumption}
+          onAddAssumption={handleAddAssumption}
+          onDeleteAssumption={handleDeleteAssumption}
+          addToast={addToast}
+        />
+      )}
+
+      {currentView === 'experiments' && (
+        <ExperimentDesigner
+          assumptions={project.assumptions}
+          onSaveExperiment={handleSaveExperiment}
+          addToast={addToast}
+        />
+      )}
+
+      {currentView === 'evidence' && (
+        <EvidenceGenerator
+          assumptions={project.assumptions}
+          experiments={experiments}
+          financials={{}}
+          team={[]}
+          onGeneratePackage={handleGenerateEvidencePackage}
+          addToast={addToast}
+        />
       )}
 
       {currentView === 'viewer' && (

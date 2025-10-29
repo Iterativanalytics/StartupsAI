@@ -421,7 +421,7 @@ Based on my analysis, this appears to be a ${queryMetadata.type} type query. Let
       investor: [AgentType.INVESTMENT_ANALYST],
       lender: [AgentType.CREDIT_ANALYST],
       grantor: [AgentType.IMPACT_ANALYST],
-      partner: [AgentType.PROGRAM_MANAGER]
+      partner: [AgentType.PROGRAM_ANALYST]
     };
     
     return agentMap[userType] || [AgentType.BUSINESS_ADVISOR];
@@ -429,11 +429,12 @@ Based on my analysis, this appears to be a ${queryMetadata.type} type query. Let
 
   private getFunctionalAgentReason(agent: AgentType, userContext: UserContext): string {
     const reasons = {
-      [AgentType.BUSINESS_ADVISOR]: 'For business analysis and strategic planning',
-      [AgentType.INVESTMENT_ANALYST]: 'For investment analysis and due diligence',
-      [AgentType.CREDIT_ANALYST]: 'For credit assessment and risk analysis',
-      [AgentType.IMPACT_ANALYST]: 'For impact measurement and ESG analysis',
-      [AgentType.PROGRAM_MANAGER]: 'For program optimization and partnerships'
+      [AgentType.BUSINESS_ADVISOR]: 'For business analysis and strategic planning (Agent-CBA)',
+      [AgentType.INVESTMENT_ANALYST]: 'For investment analysis and due diligence (Agent-CFA)',
+      [AgentType.CREDIT_ANALYST]: 'For credit assessment and risk analysis (Agent-CRA)',
+      [AgentType.IMPACT_ANALYST]: 'For impact measurement and ESG analysis (Agent-CIA)',
+      [AgentType.PROGRAM_ANALYST]: 'For program optimization and partnerships (Agent-PMA)',
+      [AgentType.BUSINESS_ANALYST]: 'For platform coordination and workflow management (Agent-PBA)'
     };
     
     return reasons[agent] || 'For specialized analysis';

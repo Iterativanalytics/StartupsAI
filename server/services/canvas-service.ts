@@ -1,7 +1,7 @@
 import { DatabaseService } from './database-service';
 
 /**
- * Canvas Service for Design Thinking Collaborative Canvases
+ * Canvas Service for Lean Design Thinking™ Collaborative Canvases
  * 
  * Handles real-time canvas operations including:
  * - Element management

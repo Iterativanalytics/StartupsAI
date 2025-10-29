@@ -72,8 +72,8 @@ export const AssessmentResultSchema = z.object({
   recommendations: z.array(z.string())
 });
 
-// Design Thinking schemas
-export const DTPhaseSchema = z.object({
+// Lean Design Thinking™ schemas
+export const LLDTPhaseSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(500),
@@ -82,7 +82,7 @@ export const DTPhaseSchema = z.object({
   deliverables: z.array(z.string())
 });
 
-export const DTCollaborationSchema = z.object({
+export const LLDTCollaborationSchema = z.object({
   participants: z.array(z.string().uuid()),
   sessionId: z.string().uuid(),
   phase: z.string().min(1),
@@ -177,8 +177,8 @@ export type DocumentAttachment = z.infer<typeof DocumentAttachmentSchema>;
 export type DocumentAnalysis = z.infer<typeof DocumentAnalysisSchema>;
 export type AssessmentResponse = z.infer<typeof AssessmentResponseSchema>;
 export type AssessmentResult = z.infer<typeof AssessmentResultSchema>;
-export type DTPhase = z.infer<typeof DTPhaseSchema>;
-export type DTCollaboration = z.infer<typeof DTCollaborationSchema>;
+export type LLDTPhase = z.infer<typeof LLDTPhaseSchema>;
+export type LLDTCollaboration = z.infer<typeof LLDTCollaborationSchema>;
 export type AnalyticsMetric = z.infer<typeof AnalyticsMetricSchema>;
 export type DashboardWidget = z.infer<typeof DashboardWidgetSchema>;
 export type ApiResponse<T = unknown> = z.infer<typeof ApiResponseSchema> & { data?: T };

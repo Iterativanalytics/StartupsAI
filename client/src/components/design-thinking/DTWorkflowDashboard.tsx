@@ -1,6 +1,6 @@
 // ============================================================================
-// DESIGN THINKING WORKFLOW DASHBOARD
-// Unified dashboard for DT workflow management and insights
+// LEAN DESIGN THINKING™ WORKFLOW DASHBOARD
+// LLDT workflow management and insights dashboard
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +9,7 @@ import {
   TrendingUp, Clock, CheckCircle, AlertCircle 
 } from 'lucide-react';
 
-interface DTWorkflow {
+interface LLDTWorkflow {
   id: string;
   name: string;
   description: string;
@@ -19,7 +19,7 @@ interface DTWorkflow {
 }
 
 interface WorkflowSummary {
-  workflow: DTWorkflow;
+  workflow: LLDTWorkflow;
   stats: {
     empathyDataCount: number;
     povStatementCount: number;
@@ -36,7 +36,7 @@ interface WorkflowSummary {
   };
 }
 
-export function DTWorkflowDashboard({ workflowId }: { workflowId: string }) {
+export function LDTWorkflowDashboard({ workflowId }: { workflowId: string }) {
   const [summary, setSummary] = useState<WorkflowSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,7 +111,7 @@ export function DTWorkflowDashboard({ workflowId }: { workflowId: string }) {
 
       {/* Phase Progress */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Design Thinking Process</h2>
+        <h2 className="text-xl font-semibold mb-4">Lean Lean Design Thinking™™ Process</h2>
         
         <div className="flex items-center justify-between">
           {phases.map((phase, index) => {

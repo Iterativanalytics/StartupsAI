@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import Dashboard from "@/pages/dashboard";
+import { DashboardRouter } from "@/components/dashboards";
 import Upload from "@/pages/upload";
 import EditPlan from "@/pages/edit-plan";
 import Analysis from "@/pages/analysis";
@@ -152,7 +152,7 @@ function App() {
               <Switch>
                 <Route path="/test" component={() => <div className="p-8"><h1 className="text-2xl font-bold">Test Page - App is working!</h1></div>} />
                 <Route path="/login" component={Login} />
-                <Route path="/" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/" component={() => <ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
                 <Route path="/documents" component={() => <ProtectedRoute><DocumentsHub /></ProtectedRoute>} />
                 <Route path="/business-plans" component={() => <ProtectedRoute><PlansAppWrapper /></ProtectedRoute>} />
                 <Route path="/upload" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />

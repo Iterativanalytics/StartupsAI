@@ -1,18 +1,18 @@
 import { BaseAgent } from '../../core/BaseAgent';
 import { OpenAI } from 'openai';
-import { DTSession, FacilitationResponse, SessionAnalysis, Intervention, Celebration } from './types';
+import { LDTSession, FacilitationResponse, SessionAnalysis, Intervention, Celebration } from './types';
 
 /**
- * AI-Powered Design Thinking Facilitation Agent
+ * AI-Powered Lean Lean Design Thinking™™ Facilitation Agent
  * 
- * This agent provides real-time facilitation during DT sessions, offering:
+ * This agent provides real-time facilitation during LLDT sessions, offering:
  * - Intelligent session monitoring
  * - Automated intervention suggestions
  * - Progress tracking and celebration
  * - Conflict resolution guidance
  * - Engagement optimization
  */
-export class DTFacilitationAgent extends BaseAgent {
+export class LLDTFacilitationAgent extends BaseAgent {
   private openaiClient: OpenAI | null;
   private sessionMonitor: SessionMonitor;
   private interventionEngine: InterventionEngine;
@@ -26,7 +26,7 @@ export class DTFacilitationAgent extends BaseAgent {
         apiKey: apiKey
       });
     } else {
-      console.warn('OpenAI API key not configured. DTFacilitationAgent features will be limited.');
+      console.warn('OpenAI API key not configured. LDTFacilitationAgent features will be limited.');
       this.openaiClient = null;
     }
     this.sessionMonitor = new SessionMonitor();
@@ -37,7 +37,7 @@ export class DTFacilitationAgent extends BaseAgent {
   /**
    * Main facilitation method - provides real-time guidance during sessions
    */
-  async facilitateSession(session: DTSession): Promise<FacilitationResponse> {
+  async facilitateSession(session: LDTSession): Promise<FacilitationResponse> {
     try {
       // Analyze current session context
       const context = await this.analyzeSessionContext(session);
@@ -63,7 +63,7 @@ export class DTFacilitationAgent extends BaseAgent {
         timestamp: new Date()
       };
     } catch (error) {
-      console.error('Error in DT facilitation:', error);
+      console.error('Error in LLDT facilitation:', error);
       throw new Error('Failed to provide facilitation guidance');
     }
   }
@@ -71,7 +71,7 @@ export class DTFacilitationAgent extends BaseAgent {
   /**
    * Analyze session context to understand current state
    */
-  private async analyzeSessionContext(session: DTSession): Promise<SessionContext> {
+  private async analyzeSessionContext(session: LDTSession): Promise<SessionContext> {
     const participants = session.participants;
     const currentPhase = session.workflow.currentPhase;
     const sessionData = session.sessionData;
@@ -103,7 +103,7 @@ export class DTFacilitationAgent extends BaseAgent {
    */
   private async generateRealTimeInsights(context: SessionContext): Promise<RealTimeInsights> {
     const prompt = `
-    Analyze this Design Thinking session and provide insights:
+    Analyze this Lean Design Thinking™ session and provide insights:
     
     Session Phase: ${context.session.workflow.currentPhase}
     Participants: ${context.session.participants.length}
@@ -280,7 +280,7 @@ export class DTFacilitationAgent extends BaseAgent {
   /**
    * Analyze session after completion
    */
-  async analyzeSession(session: DTSession): Promise<SessionAnalysis> {
+  async analyzeSession(session: LDTSession): Promise<SessionAnalysis> {
     const context = await this.analyzeSessionContext(session);
     
     return {
@@ -421,7 +421,7 @@ class CelebrationEngine {
 
 // Type definitions
 interface SessionContext {
-  session: DTSession;
+  session: LDTSession;
   participationAnalysis: ParticipationAnalysis;
   ideaAnalysis: IdeaAnalysis;
   collaborationAnalysis: CollaborationAnalysis;
@@ -502,7 +502,7 @@ interface Participant {
   contributionCount: number;
 }
 
-interface DTSession {
+interface LDTSession {
   id: string;
   workflow: {
     id: string;

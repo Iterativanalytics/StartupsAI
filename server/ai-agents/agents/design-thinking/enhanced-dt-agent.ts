@@ -1,6 +1,6 @@
 // ============================================================================
-// ENHANCED DESIGN THINKING AI AGENT
-// Comprehensive implementation from DT Enhancement Plan
+// ENHANCED LEAN DESIGN THINKING™ AI AGENT
+// Comprehensive implementation from LLDT Enhancement Plan
 // ============================================================================
 
 import { BaseAgent } from '../../core/BaseAgent';
@@ -10,7 +10,7 @@ import { OpenAI } from 'openai';
 // TYPE DEFINITIONS
 // ===========================
 
-interface DTSession {
+interface LLDTSession {
   id: string;
   workflowId: string;
   sessionType: string;
@@ -254,7 +254,7 @@ export class EnhancedDesignThinkingAgent extends BaseAgent {
   // SESSION FACILITATION
   // ===========================
 
-  async facilitateSession(session: DTSession): Promise<FacilitationResponse> {
+  async facilitateSession(session: LDTSession): Promise<FacilitationResponse> {
     const context = await this.analyzeSessionContext(session);
     
     return {
@@ -266,7 +266,7 @@ export class EnhancedDesignThinkingAgent extends BaseAgent {
     };
   }
 
-  private async analyzeSessionContext(session: DTSession): Promise<any> {
+  private async analyzeSessionContext(session: LDTSession): Promise<any> {
     const elapsed = Date.now() - session.startTime.getTime();
     const progress = elapsed / (session.duration * 60 * 1000);
     
@@ -322,7 +322,7 @@ export class EnhancedDesignThinkingAgent extends BaseAgent {
 
   private async generateAISuggestions(context: any): Promise<Suggestion[]> {
     try {
-      const prompt = `You are an expert Design Thinking facilitator. Analyze this session context and provide 2-3 actionable suggestions:
+      const prompt = `You are an expert Lean Design Thinking™ facilitator. Analyze this session context and provide 2-3 actionable suggestions:
 
 Session Type: ${context.session.sessionType}
 Progress: ${(context.progress * 100).toFixed(0)}%
@@ -337,7 +337,7 @@ Format as JSON array: [{type, priority, content, technique}]`;
       const response = await this.openaiClient.chat.completions.create({
         model: 'gpt-4',
         messages: [
-          { role: 'system', content: 'You are an expert Design Thinking facilitator providing real-time coaching.' },
+          { role: 'system', content: 'You are an expert Lean Design Thinking™ facilitator providing real-time coaching.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -384,7 +384,7 @@ Format as JSON array: [{type, priority, content, technique}]`;
     return [];
   }
 
-  private async calculateParticipation(session: DTSession): Promise<any> {
+  private async calculateParticipation(session: LDTSession): Promise<any> {
     const totalParticipants = session.participants.length;
     const activeParticipants = session.participants.filter(p => (p.contributions || 0) > 0).length;
     
@@ -394,7 +394,7 @@ Format as JSON array: [{type, priority, content, technique}]`;
     };
   }
 
-  private async assessEnergyLevel(session: DTSession): Promise<number> {
+  private async assessEnergyLevel(session: LDTSession): Promise<number> {
     const sessionDuration = (Date.now() - session.startTime.getTime()) / 60000;
     let energy = 1.0;
     
@@ -404,7 +404,7 @@ Format as JSON array: [{type, priority, content, technique}]`;
     return Math.max(0, Math.min(1, energy));
   }
 
-  private async assessOutputQuality(session: DTSession): Promise<number> {
+  private async assessOutputQuality(session: LDTSession): Promise<number> {
     // Simple heuristic - would be enhanced with actual data
     return 0.7;
   }
@@ -747,7 +747,7 @@ Format as JSON: {user, need, insight, supportingEvidence, solutionBias, priority
       const response = await this.openaiClient.chat.completions.create({
         model: 'gpt-4',
         messages: [
-          { role: 'system', content: 'You are an expert at framing problems using Design Thinking POV statements.' },
+          { role: 'system', content: 'You are an expert at framing problems using Lean Design Thinking™ POV statements.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.6,
@@ -934,7 +934,7 @@ Format as JSON: {question, reasoning}`;
   }
 
   async initialize(workflowId: string): Promise<void> {
-    console.log(`Initializing Enhanced DT Agent for workflow: ${workflowId}`);
+    console.log(`Initializing Enhanced LLDT Agent for workflow: ${workflowId}`);
   }
 
   async handlePhaseTransition(workflowId: string, phase: string): Promise<void> {

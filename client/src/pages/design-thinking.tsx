@@ -15,10 +15,10 @@ import {
   Clock,
   TrendingUp
 } from 'lucide-react';
-import { DTReadinessWidget } from '@/components/dashboard/DTReadinessWidget';
+// LDTReadinessWidget removed with unified dashboard
 import { useEmpathyMaps } from '@/hooks/use-empathy-maps';
 
-interface DTProject {
+interface LLDTProject {
   id: string;
   name: string;
   currentPhase: 'empathize' | 'define' | 'ideate' | 'prototype' | 'test';
@@ -27,7 +27,7 @@ interface DTProject {
   updatedAt: Date;
 }
 
-interface DTStats {
+interface LLDTStats {
   totalProjects: number;
   activeProjects: number;
   completedProjects: number;
@@ -37,8 +37,8 @@ interface DTStats {
 }
 
 export function DesignThinkingPage() {
-  const [projects, setProjects] = useState<DTProject[]>([]);
-  const [stats, setStats] = useState<DTStats>({
+  const [projects, setProjects] = useState<LDTProject[]>([]);
+  const [stats, setStats] = useState<LDTStats>({
     totalProjects: 0,
     activeProjects: 0,
     completedProjects: 0,
@@ -48,33 +48,7 @@ export function DesignThinkingPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Mock DT scores for demonstration
-  const dtScores = {
-    empathy: 75,
-    problemFraming: 60,
-    iterationComfort: 80,
-    prototypingMindset: 70,
-    userCentricity: 85
-  };
-
-  const dtRecommendations = [
-    {
-      category: 'Empathy',
-      score: 75,
-      level: 'advanced' as const,
-      strengths: ['Strong user research skills', 'Good at understanding user needs'],
-      gaps: ['Could improve emotional insight depth'],
-      recommendations: ['Conduct more in-depth user interviews', 'Use empathy mapping techniques']
-    },
-    {
-      category: 'Problem Framing',
-      score: 60,
-      level: 'intermediate' as const,
-      strengths: ['Basic problem analysis skills'],
-      gaps: ['Limited experience with problem reframing', 'Tends to jump to solutions'],
-      recommendations: ['Practice the "5 Whys" method', 'Learn problem reframing techniques']
-    }
-  ];
+  // LLDT scores and recommendations removed with unified dashboard
 
   useEffect(() => {
     // Mock data loading
@@ -167,7 +141,7 @@ export function DesignThinkingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Design Thinking</h1>
+          <h1 className="text-3xl font-bold">Lean Design Thinking™</h1>
           <p className="text-gray-600 mt-1">
             Human-centered innovation for better products and services
           </p>
@@ -178,19 +152,8 @@ export function DesignThinkingPage() {
         </Button>
       </div>
 
-      {/* DT Readiness Widget */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <DTReadinessWidget 
-            scores={dtScores}
-            recommendations={dtRecommendations}
-            onRetakeAssessment={() => console.log('Retake assessment')}
-            onViewDetails={() => console.log('View details')}
-          />
-        </div>
-        
-        {/* Quick Stats */}
-        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -241,10 +204,10 @@ export function DesignThinkingPage() {
         </div>
       </div>
 
-      {/* DT Process Overview */}
+      {/* LLDT Process Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Design Thinking Process</CardTitle>
+          <CardTitle>Lean Design Thinking™ Process</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

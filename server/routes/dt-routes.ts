@@ -4,7 +4,7 @@ import { EmpathyMapService } from '../services/empathy-map-service';
 import { POVService } from '../services/pov-service';
 import { PrototypeService } from '../services/prototype-service';
 import { TestSessionService } from '../services/test-session-service';
-import { DTProjectService } from '../services/dt-project-service';
+import { LLDTProjectService } from '../services/dt-project-service';
 import { handleRouteError, requireAuth, requireResource } from '../utils/routeHelpers';
 
 const router = express.Router();
@@ -14,9 +14,9 @@ const empathyMapService = new EmpathyMapService();
 const povService = new POVService();
 const prototypeService = new PrototypeService();
 const testSessionService = new TestSessionService();
-const dtProjectService = new DTProjectService();
+const ldtProjectService = new LLDTProjectService();
 
-// DT Projects Routes
+// LLDT Projects Routes
 router.get('/projects', authMiddleware, async (req, res) => {
   try {
     if (!requireAuth(req, res)) return;
@@ -25,7 +25,7 @@ router.get('/projects', authMiddleware, async (req, res) => {
     const projects = await dtProjectService.getByUserId(userId);
     res.json(projects);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to fetch DT projects', 'fetching DT projects');
+    handleRouteError(error, res, 'Failed to fetch LLDT projects', 'fetching LLDT projects');
   }
 });
 
@@ -38,7 +38,7 @@ router.post('/projects', authMiddleware, async (req, res) => {
     const project = await dtProjectService.create(projectData);
     res.status(201).json(project);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to create DT project', 'creating DT project');
+    handleRouteError(error, res, 'Failed to create LLDT project', 'creating LLDT project');
   }
 });
 
@@ -51,7 +51,7 @@ router.get('/projects/:projectId', authMiddleware, async (req, res) => {
     
     res.json(project);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to fetch DT project', 'fetching DT project');
+    handleRouteError(error, res, 'Failed to fetch LLDT project', 'fetching LLDT project');
   }
 });
 
@@ -65,7 +65,7 @@ router.put('/projects/:projectId', authMiddleware, async (req, res) => {
     
     res.json(project);
   } catch (error) {
-    handleRouteError(error, res, 'Failed to update DT project', 'updating DT project');
+    handleRouteError(error, res, 'Failed to update LLDT project', 'updating LLDT project');
   }
 });
 
@@ -75,7 +75,7 @@ router.delete('/projects/:projectId', authMiddleware, async (req, res) => {
     await dtProjectService.delete(projectId);
     res.status(204).send();
   } catch (error) {
-    handleRouteError(error, res, 'Failed to delete DT project', 'deleting DT project');
+    handleRouteError(error, res, 'Failed to delete LLDT project', 'deleting LLDT project');
   }
 });
 

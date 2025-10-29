@@ -1,25 +1,25 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HTTPServer } from 'http';
-import { DTAIAssistant } from '../ai-agents/agents/design-thinking/dt-ai-assistant';
+import { LLDTAIAssistant } from '../ai-agents/agents/design-thinking/dt-ai-assistant';
 import { CanvasService } from './canvas-service';
 import { ConflictResolver } from './conflict-resolver';
 
 /**
- * Real-Time Design Thinking Collaboration Service
+ * Real-Time Lean Lean Design Thinking™™ Collaboration Service
  * 
- * This service handles real-time collaboration for DT sessions:
+ * This service handles real-time collaboration for LLDT sessions:
  * - WebSocket-based real-time updates
  * - AI-powered suggestions
  * - Conflict resolution
  * - Smart clustering
  * - Session management
  */
-export class DTCollaborationService {
+export class LLDTCollaborationService {
   private io: SocketIOServer;
   private canvasService: CanvasService;
-  private aiAssistant: DTAIAssistant;
+  private aiAssistant: LLDTAIAssistant;
   private conflictResolver: ConflictResolver;
-  private activeSessions: Map<string, DTSession>;
+  private activeSessions: Map<string, LDTSession>;
   private updateBatcher: UpdateBatcher;
 
   constructor(httpServer: HTTPServer) {
@@ -31,7 +31,7 @@ export class DTCollaborationService {
     });
 
     this.canvasService = new CanvasService();
-    this.aiAssistant = new DTAIAssistant();
+    this.aiAssistant = new LDTAIAssistant();
     this.conflictResolver = new ConflictResolver();
     this.activeSessions = new Map();
     this.updateBatcher = new UpdateBatcher();
@@ -46,12 +46,12 @@ export class DTCollaborationService {
     this.io.on('connection', (socket) => {
       console.log('User connected:', socket.id);
 
-      // Join DT session
+      // Join LLDT session
       socket.on('join-session', async (data: JoinSessionData) => {
         await this.handleJoinSession(socket, data);
       });
 
-      // Leave DT session
+      // Leave LLDT session
       socket.on('leave-session', async (data: LeaveSessionData) => {
         await this.handleLeaveSession(socket, data);
       });
@@ -93,7 +93,7 @@ export class DTCollaborationService {
   }
 
   /**
-   * Handle user joining a DT session
+   * Handle user joining a LLDT session
    */
   private async handleJoinSession(socket: any, data: JoinSessionData): Promise<void> {
     try {
@@ -132,7 +132,7 @@ export class DTCollaborationService {
   }
 
   /**
-   * Handle user leaving a DT session
+   * Handle user leaving a LLDT session
    */
   private async handleLeaveSession(socket: any, data: LeaveSessionData): Promise<void> {
     try {
@@ -337,11 +337,11 @@ export class DTCollaborationService {
   /**
    * Get or create session
    */
-  private async getOrCreateSession(sessionId: string): Promise<DTSession> {
+  private async getOrCreateSession(sessionId: string): Promise<LDTSession> {
     let session = this.activeSessions.get(sessionId);
     
     if (!session) {
-      session = new DTSession(sessionId);
+      session = new LDTSession(sessionId);
       this.activeSessions.set(sessionId, session);
     }
     
@@ -373,7 +373,7 @@ export class DTCollaborationService {
   /**
    * Generate session summary
    */
-  private async generateSessionSummary(session: DTSession): Promise<SessionSummary> {
+  private async generateSessionSummary(session: LDTSession): Promise<SessionSummary> {
     const participants = session.getParticipants();
     const activities = session.getActivities();
     const canvas = await this.canvasService.getCanvas(session.id);
@@ -476,7 +476,7 @@ class UpdateBatcher {
   }
 }
 
-class DTSession {
+class LDTSession {
   private id: string;
   private participants: Map<string, Participant>;
   private activities: Activity[];

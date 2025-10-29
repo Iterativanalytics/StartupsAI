@@ -6,8 +6,8 @@ import { z } from "zod";
 import { aiService } from "./ai-service";
 import aiAgentRoutes from "./ai-agent-routes";
 import documentAIRoutes from "./routes/document-ai-routes";
-import enhancedDTRoutes from "./routes/enhanced-dt-routes";
-import dtComprehensiveRoutes from "./routes/dt-comprehensive-routes";
+import enhancedLDTRoutes from "./routes/enhanced-ldt-routes";
+import ldtComprehensiveRoutes from "./routes/ldt-comprehensive-routes";
 // import assessmentRoutes from "./routes/assessment-routes";
 import iterativePlanRoutes from "./routes/iterative-plan-routes";
 import userRoutes from "./routes/user-routes";
@@ -3353,8 +3353,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", apiRouter);
   app.use("/api/ai-agents", aiAgentRoutes);
   app.use("/api/documents/ai", documentAIRoutes);
-  app.use("/api/dt", enhancedDTRoutes);
-  app.use("/api/dt", dtComprehensiveRoutes);
+  app.use("/api/ldt", enhancedLDTRoutes);
+  app.use("/api/ldt", ldtComprehensiveRoutes);
   // app.use("/api/assessments", assessmentRoutes); // Temporarily disabled due to import issues
   
   // New modular routes

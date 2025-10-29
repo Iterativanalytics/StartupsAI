@@ -1,7 +1,7 @@
 
 import { AgentConfig, AgentContext, AgentResponse } from "../../core/agent-engine";
 
-export class PartnershipFacilitatorAgent {
+export class ProgramAnalystAgent {
   private config: AgentConfig;
   
   constructor(config: AgentConfig) {

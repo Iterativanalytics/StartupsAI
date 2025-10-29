@@ -47,8 +47,8 @@ export const DECK_PHASES: Phases = {
     icon: Users,
     color: 'bg-gradient-to-br from-blue-500 to-cyan-500',
     description:
-      'Deeply understand your target audience and the problems they face.',
-    methodology: 'Design Thinking',
+      'Deeply understand your target audience and the problems they face. This phase embodies the core of Design Thinking - before building any solution, we must deeply understand the user and their authentic needs.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
       {
         id: 'd1',
@@ -78,8 +78,8 @@ export const DECK_PHASES: Phases = {
     icon: Target,
     color: 'bg-gradient-to-br from-purple-500 to-pink-500',
     description:
-      'Clearly articulate the problem and frame your unique value proposition.',
-    methodology: 'Jobs-to-be-Done',
+      'Clearly articulate the problem and frame your unique value proposition. This phase completes the Design Thinking foundation by ensuring we\'ve identified the right problem before moving to solution development.',
+    methodology: 'Lean Design Thinking™ - Design Thinking Foundation',
     steps: [
       {
         id: 'def1',
@@ -109,8 +109,8 @@ export const DECK_PHASES: Phases = {
     icon: Lightbulb,
     color: 'bg-gradient-to-br from-yellow-400 to-orange-500',
     description:
-      'Generate a wide range of potential solutions to the defined problem.',
-    methodology: 'Divergent Thinking',
+      'Generate a wide range of potential solutions to the defined problem. This is the critical handoff from Design Thinking to Lean Startup - transforming creative ideas into a backlog of testable hypotheses through assumption mapping.',
+    methodology: 'Lean Design Thinking™ - Methodology Bridge',
     steps: [
       {
         id: 'i1',
@@ -139,8 +139,8 @@ export const DECK_PHASES: Phases = {
     icon: TestTube,
     color: 'bg-gradient-to-br from-green-500 to-teal-500',
     description:
-      'Build minimum viable experiments to test your core hypotheses.',
-    methodology: 'Lean Prototyping',
+      'Build minimum viable experiments to test your core hypotheses. This is the "Build" phase of the Lean Startup loop - creating the minimum viable experiment to validate our riskiest assumptions efficiently.',
+    methodology: 'Lean Design Thinking™ - Lean Startup Core',
     steps: [
       {
         id: 'p1',
@@ -170,8 +170,8 @@ export const DECK_PHASES: Phases = {
     icon: TrendingUp,
     color: 'bg-gradient-to-br from-red-500 to-orange-500',
     description:
-      'Test your prototypes with real users to gather qualitative and quantitative data.',
-    methodology: 'Build-Measure-Learn',
+      'Test your prototypes with real users to gather qualitative and quantitative data. This is the "Measure" and "Learn" phase of the Lean Startup loop - determining if assumptions were validated or invalidated, and what to do next.',
+    methodology: 'Lean Design Thinking™ - Lean Startup Core',
     steps: [
       {
         id: 't1',

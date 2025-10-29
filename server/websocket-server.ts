@@ -3,9 +3,9 @@ import { Server as SocketIOServer } from 'socket.io';
 import { DTCollaborationService } from './services/dt-collaboration-service';
 
 /**
- * WebSocket Server for Real-Time Design Thinking Collaboration
+ * WebSocket Server for Real-Time Lean Design Thinking™ Collaboration
  * 
- * Handles real-time communication for DT workflows:
+ * Handles real-time communication for LDT workflows:
  * - Canvas updates
  * - Participant management
  * - AI suggestions
@@ -35,12 +35,12 @@ export class WebSocketServer {
     this.io.on('connection', (socket) => {
       console.log('User connected:', socket.id);
 
-      // Join DT session
+      // Join LDT session
       socket.on('join-dt-session', async (data: JoinSessionData) => {
         await this.handleJoinSession(socket, data);
       });
 
-      // Leave DT session
+      // Leave LDT session
       socket.on('leave-dt-session', async (data: LeaveSessionData) => {
         await this.handleLeaveSession(socket, data);
       });
@@ -82,7 +82,7 @@ export class WebSocketServer {
   }
 
   /**
-   * Handle user joining a DT session
+   * Handle user joining a LDT session
    */
   private async handleJoinSession(socket: any, data: JoinSessionData): Promise<void> {
     try {
@@ -113,7 +113,7 @@ export class WebSocketServer {
   }
 
   /**
-   * Handle user leaving a DT session
+   * Handle user leaving a LDT session
    */
   private async handleLeaveSession(socket: any, data: LeaveSessionData): Promise<void> {
     try {

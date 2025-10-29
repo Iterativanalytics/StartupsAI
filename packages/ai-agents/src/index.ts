@@ -4,14 +4,21 @@ export { ContextManager } from './core/context-manager';
 export { PromptBuilder } from './core/prompt-builder';
 export { ResponseHandler } from './core/response-handler';
 
-// Agent exports
+// Agent exports (Concept Document Standardized)
 export { BaseAgent } from './agents/base-agent';
-export { BusinessAdvisorAgent } from './agents/business-advisor';
-export { DealAnalyzerAgent } from './agents/deal-analyzer';
-export { CreditAssessorAgent } from './agents/credit-assessor';
-export { ImpactEvaluatorAgent } from './agents/impact-evaluator';
-export { PartnershipFacilitatorAgent } from './agents/partnership-facilitator';
-export { PlatformOrchestratorAgent } from './agents/platform-orchestrator';
+export { BusinessAdvisorAgent } from './agents/business-advisor';        // Agent-CBA
+export { InvestmentAnalystAgent } from './agents/deal-analyzer';         // Agent-CFA
+export { CreditAnalystAgent } from './agents/credit-assessor';           // Agent-CRA
+export { ImpactAnalystAgent } from './agents/impact-evaluator';          // Agent-CIA
+export { ProgramAnalystAgent } from './agents/partnership-facilitator';  // Agent-PMA
+export { BusinessAnalystAgent } from './agents/platform-orchestrator'; // Agent-PBA
+
+// Legacy exports for backward compatibility
+export { InvestmentAnalystAgent as DealAnalyzerAgent } from './agents/deal-analyzer';
+export { CreditAnalystAgent as CreditAssessorAgent } from './agents/credit-assessor';
+export { ImpactAnalystAgent as ImpactEvaluatorAgent } from './agents/impact-evaluator';
+export { ProgramAnalystAgent as PartnershipFacilitatorAgent } from './agents/partnership-facilitator';
+export { BusinessAnalystAgent as PlatformOrchestratorAgent } from './agents/platform-orchestrator';
 
 // Memory exports
 export { MemoryStore } from './memory/memory-store';

@@ -1,23 +1,31 @@
 
 import { UserType } from "../../../shared/schema";
 import { BusinessAdvisorAgent } from "../agents/business-advisor";
-import { DealAnalyzerAgent } from "../agents/deal-analyzer";
-import { CreditAssessorAgent } from "../agents/credit-assessor";
-import { ImpactEvaluatorAgent } from "../agents/impact-evaluator";
-import { PartnershipFacilitatorAgent } from "../agents/partnership-facilitator";
-import { PlatformOrchestratorAgent } from "../agents/platform-orchestrator";
+import { InvestmentAnalystAgent } from "../agents/deal-analyzer";
+import { CreditAnalystAgent } from "../agents/credit-assessor";
+import { ImpactAnalystAgent } from "../agents/impact-evaluator";
+import { ProgramAnalystAgent } from "../agents/partnership-facilitator";
+import { BusinessAnalystAgent } from "../agents/platform-orchestrator";
 import { CoFounderAgent } from "../agents/co-founder";
 import { ContextManager } from "./context-manager";
 import { MemoryStore } from "../memory/conversation-store";
 
 export enum AgentType {
-  BUSINESS_ADVISOR = 'business_advisor',
-  DEAL_ANALYZER = 'deal_analyzer',
-  CREDIT_ASSESSOR = 'credit_assessor',
-  IMPACT_EVALUATOR = 'impact_evaluator',
-  PARTNERSHIP_FACILITATOR = 'partnership_facilitator',
-  PLATFORM_ORCHESTRATOR = 'platform_orchestrator',
-  CO_FOUNDER = 'co_founder'
+  // Specialized Functional Agents (Concept Document Standardized)
+  BUSINESS_ADVISOR = 'business_advisor',        // Agent-CBA
+  INVESTMENT_ANALYST = 'investment_analyst',    // Agent-CFA
+  CREDIT_ANALYST = 'credit_analyst',            // Agent-CRA
+  IMPACT_ANALYST = 'impact_analyst',            // Agent-CIA
+  PROGRAM_ANALYST = 'program_analyst',          // Agent-PMA
+  BUSINESS_ANALYST = 'business_analyst',        // Agent-PBA (Platform Orchestrator + Business Analysis)
+  CO_FOUNDER = 'co_founder',
+  
+  // Legacy aliases for backward compatibility
+  DEAL_ANALYZER = 'deal_analyzer',              // Legacy: Use INVESTMENT_ANALYST
+  CREDIT_ASSESSOR = 'credit_assessor',          // Legacy: Use CREDIT_ANALYST
+  IMPACT_EVALUATOR = 'impact_evaluator',        // Legacy: Use IMPACT_ANALYST
+  PARTNERSHIP_FACILITATOR = 'partnership_facilitator', // Legacy: Use PROGRAM_ANALYST
+  PLATFORM_ORCHESTRATOR = 'platform_orchestrator' // Legacy: Use BUSINESS_ANALYST
 }
 
 export interface AgentCapabilities {
@@ -110,15 +118,15 @@ export class AgentEngine {
     
     const agentMap = {
       [UserType.ENTREPRENEUR]: new BusinessAdvisorAgent(this.config),
-      [UserType.INVESTOR]: new DealAnalyzerAgent(this.config),
-      [UserType.LENDER]: new CreditAssessorAgent(this.config),
-      [UserType.GRANTOR]: new ImpactEvaluatorAgent(this.config),
-      [UserType.PARTNER]: new PartnershipFacilitatorAgent(this.config),
-      [UserType.TEAM_MEMBER]: new PlatformOrchestratorAgent(this.config),
-      [UserType.ADMIN]: new PlatformOrchestratorAgent(this.config)
+      [UserType.INVESTOR]: new InvestmentAnalystAgent(this.config),
+      [UserType.LENDER]: new CreditAnalystAgent(this.config),
+      [UserType.GRANTOR]: new ImpactAnalystAgent(this.config),
+      [UserType.PARTNER]: new ProgramAnalystAgent(this.config),
+      [UserType.TEAM_MEMBER]: new BusinessAnalystAgent(this.config),
+      [UserType.ADMIN]: new BusinessAnalystAgent(this.config)
     };
     
-    return agentMap[userType] || new PlatformOrchestratorAgent(this.config);
+    return agentMap[userType] || new BusinessAnalystAgent(this.config);
   }
   
   private getAvailableTools(userType: UserType): string[] {

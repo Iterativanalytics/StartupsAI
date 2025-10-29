@@ -64,7 +64,7 @@ export class AssessmentEngine {
   }
 
   /**
-   * Process Design Thinking Readiness assessment
+   * Process Lean Design Thinking™ Readiness assessment
    */
   processDesignThinkingReadiness(responses: AssessmentResponse[]): any {
     return this.dtReadinessAssessment.generateProfile(responses);

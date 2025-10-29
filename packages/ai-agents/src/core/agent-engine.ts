@@ -23,11 +23,11 @@ import { ContextManager } from './context-manager';
 import { MemoryStore } from '../memory/memory-store';
 import { BaseAgent } from '../agents/base-agent';
 import { BusinessAdvisorAgent } from '../agents/business-advisor';
-import { DealAnalyzerAgent } from '../agents/deal-analyzer';
-import { CreditAssessorAgent } from '../agents/credit-assessor';
-import { ImpactEvaluatorAgent } from '../agents/impact-evaluator';
-import { PartnershipFacilitatorAgent } from '../agents/partnership-facilitator';
-import { PlatformOrchestratorAgent } from '../agents/platform-orchestrator';
+import { InvestmentAnalystAgent } from '../agents/deal-analyzer';
+import { CreditAnalystAgent } from '../agents/credit-assessor';
+import { ImpactAnalystAgent } from '../agents/impact-evaluator';
+import { ProgramAnalystAgent } from '../agents/partnership-facilitator';
+import { BusinessAnalystAgent } from '../agents/platform-orchestrator';
 import { ToolRegistry } from '../tools/tool-registry';
 
 export class AgentEngine {
@@ -53,10 +53,10 @@ export class AgentEngine {
 
   private initializeAgents(): void {
     this.agents.set(UserType.ENTREPRENEUR, new BusinessAdvisorAgent(this.client, this.config));
-    this.agents.set(UserType.INVESTOR, new DealAnalyzerAgent(this.client, this.config));
-    this.agents.set(UserType.LENDER, new CreditAssessorAgent(this.client, this.config));
-    this.agents.set(UserType.GRANTOR, new ImpactEvaluatorAgent(this.client, this.config));
-    this.agents.set(UserType.PARTNER, new PartnershipFacilitatorAgent(this.client, this.config));
+    this.agents.set(UserType.INVESTOR, new InvestmentAnalystAgent(this.client, this.config));
+    this.agents.set(UserType.LENDER, new CreditAnalystAgent(this.client, this.config));
+    this.agents.set(UserType.GRANTOR, new ImpactAnalystAgent(this.client, this.config));
+    this.agents.set(UserType.PARTNER, new ProgramAnalystAgent(this.client, this.config));
   }
 
   async processRequest(request: AgentRequest): Promise<AgentResponse> {

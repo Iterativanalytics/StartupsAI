@@ -2,8 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { BaseAgent } from '../base-agent';
 import { AgentType, AgentConfig, AgentContext } from '../../types';
 
-export class ImpactEvaluatorAgent extends BaseAgent {
-  protected agentType = AgentType.IMPACT_EVALUATOR;
+export class ImpactAnalystAgent extends BaseAgent {
+  protected agentType = AgentType.IMPACT_ANALYST;
 
   constructor(client: Anthropic, config: AgentConfig) {
     super(client, config);
