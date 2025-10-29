@@ -207,9 +207,9 @@ export class HandoffManager {
 
   private generateHandoffMessage(fromAgent: AgentType, toAgent: AgentType, reason: string): string {
     const agentNames = {
-      [AgentType.CO_FOUNDER]: 'Co-Founder',
-      [AgentType.CO_INVESTOR]: 'Co-Investor',
-      [AgentType.CO_BUILDER]: 'Co-Builder',
+      [AgentType.CO_FOUNDER]: 'Co-Founder™',
+      [AgentType.CO_INVESTOR]: 'Co-Investor™',
+      [AgentType.CO_BUILDER]: 'Co-Builder™',
       [AgentType.BUSINESS_ADVISOR]: 'Business Advisor',
       [AgentType.INVESTMENT_ANALYST]: 'Investment Analyst',
       [AgentType.CREDIT_ANALYST]: 'Credit Analyst',
@@ -306,9 +306,9 @@ export class HandoffManager {
 
   private generateUserNotification(fromAgent: AgentType, toAgent: AgentType, reason: string): string {
     const agentNames = {
-      [AgentType.CO_FOUNDER]: 'your Co-Founder',
-      [AgentType.CO_INVESTOR]: 'your Co-Investor',
-      [AgentType.CO_BUILDER]: 'your Co-Builder',
+      [AgentType.CO_FOUNDER]: 'your Co-Founder™',
+      [AgentType.CO_INVESTOR]: 'your Co-Investor™',
+      [AgentType.CO_BUILDER]: 'your Co-Builder™',
       [AgentType.BUSINESS_ADVISOR]: 'the Business Advisor',
       [AgentType.INVESTMENT_ANALYST]: 'the Investment Analyst',
       [AgentType.CREDIT_ANALYST]: 'the Credit Analyst',

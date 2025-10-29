@@ -38,7 +38,79 @@ import Accelerator from "./pages/accelerator";
 import Incubator from "@/pages/incubator";
 import IterativProposals from "@/pages/iterativ-proposals";
 import IterativForms from "@/pages/iterativ-forms";
+import PlansApp from "@/modules/plans/PlansApp";
+import DecksApp from "@/modules/decks/DecksApp";
+import ProposalsApp from "@/modules/proposals/ProposalsApp";
+import FormsApp from "@/modules/forms/FormsApp";
 import Login from "@/pages/login"; // Assuming Login component is created
+
+// Wrapper component for PlansApp with default props
+const PlansAppWrapper = () => {
+  const addToast = (message: string, type: any) => {
+    console.log(`Toast: ${message} (${type})`);
+  };
+  
+  const user = { loggedIn: false, persona: null, name: 'Guest' };
+  const agentPersonality = null;
+  const vestedInterest = 0;
+
+  return (
+    <PlansApp 
+      addToast={addToast}
+      user={user}
+      agentPersonality={agentPersonality}
+      vestedInterest={vestedInterest}
+    />
+  );
+};
+
+// Wrapper component for DecksApp with default props
+const DecksAppWrapper = () => {
+  const showToast = (message: string, type: any) => {
+    console.log(`Toast: ${message} (${type})`);
+  };
+  
+  const user = { loggedIn: false, persona: null, name: 'Guest' };
+
+  return (
+    <DecksApp 
+      showToast={showToast}
+      user={user}
+    />
+  );
+};
+
+// Wrapper component for ProposalsApp with default props
+const ProposalsAppWrapper = () => {
+  const addToast = (message: string, type: any) => {
+    console.log(`Toast: ${message} (${type})`);
+  };
+  
+  const user = { loggedIn: false, persona: null, name: 'Guest' };
+
+  return (
+    <ProposalsApp 
+      addToast={addToast}
+      user={user}
+    />
+  );
+};
+
+// Wrapper component for FormsApp with default props
+const FormsAppWrapper = () => {
+  const addToast = (message: string, type: any) => {
+    console.log(`Toast: ${message} (${type})`);
+  };
+  
+  const user = { loggedIn: false, persona: null, name: 'Guest' };
+
+  return (
+    <FormsApp 
+      addToast={addToast}
+      user={user}
+    />
+  );
+};
 import Collaboration from "@/pages/collaboration";
 import AIMarketAnalysis from "@/pages/ai-market-analysis";
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
@@ -82,11 +154,11 @@ function App() {
                 <Route path="/login" component={Login} />
                 <Route path="/" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/documents" component={() => <ProtectedRoute><DocumentsHub /></ProtectedRoute>} />
-                <Route path="/business-plans" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
+                <Route path="/business-plans" component={() => <ProtectedRoute><PlansAppWrapper /></ProtectedRoute>} />
                 <Route path="/upload" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
-                <Route path="/proposals" component={() => <ProtectedRoute><IterativProposals /></ProtectedRoute>} />
-                <Route path="/pitch-decks" component={() => <ProtectedRoute><IterativDeck /></ProtectedRoute>} />
-                <Route path="/applications" component={() => <ProtectedRoute><IterativForms /></ProtectedRoute>} />
+                <Route path="/proposals" component={() => <ProtectedRoute><ProposalsAppWrapper /></ProtectedRoute>} />
+                <Route path="/decks" component={() => <ProtectedRoute><DecksAppWrapper /></ProtectedRoute>} />
+                <Route path="/forms" component={() => <ProtectedRoute><FormsAppWrapper /></ProtectedRoute>} />
                 <Route path="/edit-plan/:id" component={() => <ProtectedRoute><EditPlan /></ProtectedRoute>} />
                 <Route path="/analysis/:id" component={() => <ProtectedRoute><Analysis /></ProtectedRoute>} />
                 <Route path="/funding-matcher" component={() => <ProtectedRoute><FundingMatcher /></ProtectedRoute>} />

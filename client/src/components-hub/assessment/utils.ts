@@ -9,56 +9,112 @@ const calculateAverage = (answers: Record<string, number>, ids: string[]): numbe
 };
 
 export const synthesizeProfile = (answers: Record<string, number>): CompositeProfile => {
-    // These would map to the full set of questions
+    // RIASEC scoring with multiple questions per category
     const riasec: RIASECScore = {
-        realistic: calculateAverage(answers, ['r1']),
-        investigative: calculateAverage(answers, ['i1']),
-        artistic: calculateAverage(answers, ['a1']),
-        social: calculateAverage(answers, ['s1']),
-        enterprising: calculateAverage(answers, ['e1']),
-        conventional: calculateAverage(answers, ['c1']),
+        realistic: calculateAverage(answers, ['r1', 'r2', 'r3']),
+        investigative: calculateAverage(answers, ['i1', 'i2', 'i3']),
+        artistic: calculateAverage(answers, ['a1', 'a2', 'a3']),
+        social: calculateAverage(answers, ['s1', 's2', 's3']),
+        enterprising: calculateAverage(answers, ['e1', 'e2', 'e3']),
+        conventional: calculateAverage(answers, ['c1', 'c2', 'c3']),
     };
 
+    // Big Five scoring with multiple questions per category
     const bigFive: BigFiveScore = {
-        openness: calculateAverage(answers, ['o1']),
-        conscientiousness: calculateAverage(answers, ['c2']),
-        extraversion: calculateAverage(answers, ['e2']),
-        agreeableness: calculateAverage(answers, ['a2']),
-        neuroticism: calculateAverage(answers, ['n1']),
+        openness: calculateAverage(answers, ['o1', 'o2', 'o3', 'o4']),
+        conscientiousness: calculateAverage(answers, ['c4', 'c5', 'c6', 'c7']),
+        extraversion: calculateAverage(answers, ['e4', 'e5', 'e6', 'e7']),
+        agreeableness: calculateAverage(answers, ['a4', 'a5', 'a6', 'a7']),
+        neuroticism: calculateAverage(answers, ['n1', 'n2', 'n3', 'n4']),
     };
     
+    // AI Readiness scoring with multiple questions per category
     const aiReadinessScores = {
-        awareness: calculateAverage(answers, ['ai_aw1']),
-        adoption: calculateAverage(answers, ['ai_ad1']),
-        implementation: calculateAverage(answers, ['ai_im1']),
-        strategy: calculateAverage(answers, ['ai_st1']),
+        awareness: calculateAverage(answers, ['ai_aw1', 'ai_aw2', 'ai_aw3', 'ai_aw4']),
+        adoption: calculateAverage(answers, ['ai_ad1', 'ai_ad2', 'ai_ad3', 'ai_ad4']),
+        implementation: calculateAverage(answers, ['ai_im1', 'ai_im2', 'ai_im3', 'ai_im4']),
+        strategy: calculateAverage(answers, ['ai_st1', 'ai_st2', 'ai_st3', 'ai_st4']),
     };
 
     const aiReadiness: AIReadinessScore = {
         ...aiReadinessScores,
         overall: ((aiReadinessScores.awareness + aiReadinessScores.adoption + aiReadinessScores.implementation + aiReadinessScores.strategy) / 4) * 10,
     };
+
+    // Calculate additional scores for new categories
+    const entrepreneurialScore = calculateAverage(answers, ['ent1', 'ent2', 'ent3', 'ent4', 'ent5', 'ent6']);
+    const leadershipScore = calculateAverage(answers, ['lead1', 'lead2', 'lead3', 'lead4', 'lead5']);
+    const innovationScore = calculateAverage(answers, ['inn1', 'inn2', 'inn3', 'inn4', 'inn5']);
     
-    // Archetype Logic (Simplified)
+    // Enhanced Archetype Logic with more comprehensive scoring
     let founderArchetype: FounderArchetype = FOUNDER_ARCHETYPES['default'];
-    if (riasec.enterprising > 6 && riasec.investigative > 6 && bigFive.openness > 7) {
+    
+    // Visionary Innovator: High enterprising, investigative, openness, and innovation
+    if (riasec.enterprising > 7 && riasec.investigative > 7 && bigFive.openness > 7 && innovationScore > 7) {
         founderArchetype = FOUNDER_ARCHETYPES['visionary-innovator'];
-    } else if (riasec.conventional > 6 && riasec.enterprising > 6 && bigFive.conscientiousness > 7) {
+    }
+    // Execution Machine: High conventional, enterprising, conscientiousness, and leadership
+    else if (riasec.conventional > 7 && riasec.enterprising > 7 && bigFive.conscientiousness > 7 && leadershipScore > 6) {
         founderArchetype = FOUNDER_ARCHETYPES['execution-machine'];
-    } else if (riasec.investigative > 6 && riasec.social > 6 && bigFive.agreeableness > 6) {
+    }
+    // Thoughtful Builder: High investigative, social, agreeableness, and AI readiness
+    else if (riasec.investigative > 7 && riasec.social > 7 && bigFive.agreeableness > 7 && aiReadiness.overall > 6) {
         founderArchetype = FOUNDER_ARCHETYPES['thoughtful-builder'];
-    } else if (riasec.social > 6 && riasec.enterprising > 6 && bigFive.extraversion > 7) {
+    }
+    // Collaborative Innovator: High social, enterprising, extraversion, and innovation
+    else if (riasec.social > 7 && riasec.enterprising > 7 && bigFive.extraversion > 7 && innovationScore > 6) {
         founderArchetype = FOUNDER_ARCHETYPES['collaborative-innovator'];
+    }
+    // Technical Founder: High investigative, conscientiousness, and AI readiness
+    else if (riasec.investigative > 8 && bigFive.conscientiousness > 7 && aiReadiness.overall > 7) {
+        founderArchetype = FOUNDER_ARCHETYPES['technical-founder'];
+    }
+    // Growth-Focused Leader: High enterprising, extraversion, and leadership
+    else if (riasec.enterprising > 8 && bigFive.extraversion > 7 && leadershipScore > 7) {
+        founderArchetype = FOUNDER_ARCHETYPES['growth-focused-leader'];
     }
 
     const coreStrengths: string[] = [];
     const blindSpots: string[] = [];
 
-    if(bigFive.openness > 7) coreStrengths.push("Highly creative and open to new ideas."); else blindSpots.push("May be resistant to new or unconventional ideas.");
-    if(bigFive.conscientiousness > 7) coreStrengths.push("Excellent at planning and execution."); else blindSpots.push("Struggles with organization and follow-through.");
-    if(bigFive.extraversion > 7) coreStrengths.push("Natural networker and comfortable in the spotlight."); else blindSpots.push("May find networking and public speaking draining.");
-    if(bigFive.agreeableness > 7) coreStrengths.push("Great at building team harmony and partnerships."); else blindSpots.push("May avoid necessary conflict or tough decisions.");
-    if(bigFive.neuroticism < 4) coreStrengths.push("Remains calm and stable under pressure."); else blindSpots.push("Prone to stress and anxiety, which can impact decisions.");
+    // RIASEC strengths and blind spots
+    if (riasec.enterprising > 7) coreStrengths.push("Strong leadership and business development skills");
+    if (riasec.investigative > 7) coreStrengths.push("Excellent analytical and problem-solving abilities");
+    if (riasec.artistic > 7) coreStrengths.push("High creativity and innovation potential");
+    if (riasec.social > 7) coreStrengths.push("Strong people skills and team building capabilities");
+    if (riasec.conventional > 7) coreStrengths.push("Excellent organizational and operational skills");
+    if (riasec.realistic > 7) coreStrengths.push("Practical, hands-on approach to problem solving");
+
+    // Big Five strengths and blind spots
+    if (bigFive.openness > 7) coreStrengths.push("Highly creative and open to new ideas"); else blindSpots.push("May be resistant to new or unconventional ideas");
+    if (bigFive.conscientiousness > 7) coreStrengths.push("Excellent at planning and execution"); else blindSpots.push("Struggles with organization and follow-through");
+    if (bigFive.extraversion > 7) coreStrengths.push("Natural networker and comfortable in the spotlight"); else blindSpots.push("May find networking and public speaking draining");
+    if (bigFive.agreeableness > 7) coreStrengths.push("Great at building team harmony and partnerships"); else blindSpots.push("May avoid necessary conflict or tough decisions");
+    if (bigFive.neuroticism < 4) coreStrengths.push("Remains calm and stable under pressure"); else blindSpots.push("Prone to stress and anxiety, which can impact decisions");
+
+    // AI Readiness strengths
+    if (aiReadiness.overall > 7) coreStrengths.push("High AI readiness and technology adoption");
+    if (aiReadiness.awareness > 7) coreStrengths.push("Strong understanding of AI capabilities and limitations");
+    if (aiReadiness.implementation > 7) coreStrengths.push("Skilled at implementing AI solutions");
+    if (aiReadiness.strategy > 7) coreStrengths.push("Strategic thinking about AI's long-term impact");
+
+    // Entrepreneurial and Leadership strengths
+    if (entrepreneurialScore > 7) coreStrengths.push("Strong entrepreneurial mindset and risk tolerance");
+    if (leadershipScore > 7) coreStrengths.push("Excellent leadership and team management skills");
+    if (innovationScore > 7) coreStrengths.push("High innovation and creative problem-solving abilities");
+
+    // Blind spots for new categories
+    if (riasec.enterprising < 4) blindSpots.push("May struggle with sales and business development");
+    if (riasec.investigative < 4) blindSpots.push("May need support with data analysis and research");
+    if (riasec.artistic < 4) blindSpots.push("May benefit from creative and design support");
+    if (riasec.social < 4) blindSpots.push("May need help with team management and networking");
+    if (riasec.conventional < 4) blindSpots.push("May struggle with organization and process management");
+    if (riasec.realistic < 4) blindSpots.push("May need support with practical implementation");
+
+    if (aiReadiness.overall < 4) blindSpots.push("May need education and support with AI adoption");
+    if (entrepreneurialScore < 4) blindSpots.push("May need support with risk-taking and opportunity identification");
+    if (leadershipScore < 4) blindSpots.push("May need development in leadership and team management");
+    if (innovationScore < 4) blindSpots.push("May need support with creative thinking and innovation");
 
     return {
         riasec,

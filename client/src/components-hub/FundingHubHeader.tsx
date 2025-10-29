@@ -1,21 +1,17 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { FileText, Presentation, FileSignature, FormInput, Sparkles, User as UserIcon } from 'lucide-react';
-import { HubModule, User } from '@/types-hub';
+import { DollarSign, CreditCard, Gift, Search, Sparkles } from 'lucide-react';
 
-interface HubHeaderProps {
-  user: User;
-  onStartFree: () => void;
-}
+interface FundingHubHeaderProps {}
 
-const hubModules = [
-  { id: 'plans' as HubModule, label: 'IterativPlans', icon: FileText, path: '/business-plans' },
-  { id: 'decks' as HubModule, label: 'IterativDecks', icon: Presentation, path: '/decks' },
-  { id: 'proposals' as HubModule, label: 'IterativProposals', icon: FileSignature, path: '/proposals' },
-  { id: 'forms' as HubModule, label: 'IterativForms', icon: FormInput, path: '/forms' },
+const fundingModules = [
+  { id: 'equity' as const, label: 'Equity Funding', icon: DollarSign, path: '/funding/equity' },
+  { id: 'debt' as const, label: 'Debt Funding', icon: CreditCard, path: '/funding/debt' },
+  { id: 'grants' as const, label: 'Grant Funding', icon: Gift, path: '/funding/grants' },
+  { id: 'matcher' as const, label: 'Match Funding', icon: Search, path: '/funding/matcher' },
 ];
 
-const HubHeader: React.FC<HubHeaderProps> = ({ user, onStartFree }) => {
+const FundingHubHeader: React.FC<FundingHubHeaderProps> = () => {
   const [location, setLocation] = useLocation();
 
   return (
@@ -26,13 +22,13 @@ const HubHeader: React.FC<HubHeaderProps> = ({ user, onStartFree }) => {
             <div className="flex items-center gap-2">
               <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent">
-                IterativStartups
+                Funding Hub
               </span>
             </div>
           </div>
 
           <nav className="hidden lg:flex items-center gap-2 bg-slate-100 dark:bg-gray-800 p-1.5 rounded-full">
-            {hubModules.map(mod => {
+            {fundingModules.map(mod => {
               const isActive = location === mod.path;
               const Icon = mod.icon;
               return (
@@ -52,18 +48,6 @@ const HubHeader: React.FC<HubHeaderProps> = ({ user, onStartFree }) => {
             })}
           </nav>
           
-          <div className="flex items-center gap-4">
-            {user.loggedIn ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-slate-700 dark:text-gray-300">Welcome, {user.name}!</span>
-                <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-md">
-                    <UserIcon className="w-5 h-5 text-white" />
-                </div>
-              </div>
-            ) : (
-                <button onClick={onStartFree} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg">Start Free</button>
-            )}
-          </div>
 
         </div>
       </div>
@@ -71,4 +55,4 @@ const HubHeader: React.FC<HubHeaderProps> = ({ user, onStartFree }) => {
   );
 };
 
-export default HubHeader;
+export default FundingHubHeader;

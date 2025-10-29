@@ -71,7 +71,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
         icon: 'user-group',
         description: 'Build your team and network',
         items: [
-          { label: 'Find Co-Founders', path: '/collaborate/co-founders', icon: 'user-plus' },
+          { label: 'Find Co-Founders™', path: '/collaborate/co-founders', icon: 'user-plus' },
           { label: 'Team Management', path: '/collaborate/team', icon: 'users' },
           { label: 'Mentors & Advisors', path: '/collaborate/mentors', icon: 'academic-cap' },
           { label: 'Partnerships', path: '/collaborate/partners', icon: 'link' }
@@ -91,7 +91,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
       }
     ],
     aiCompanion: {
-      label: 'Co-Founder',
+      label: 'Co-Founder™',
       description: 'Your strategic partner',
       path: '/co-founder'
     }
@@ -149,7 +149,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
       }
     ],
     aiCompanion: {
-      label: 'Co-Investor',
+      label: 'Co-Investor™',
       description: 'Your deal intelligence partner',
       path: '/co-investor'
     }
@@ -207,7 +207,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
       }
     ],
     aiCompanion: {
-      label: 'Co-Lender',
+      label: 'Co-Lender™',
       description: 'Your credit intelligence partner',
       path: '/co-lender'
     }
@@ -265,7 +265,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
       }
     ],
     aiCompanion: {
-      label: 'Co-Builder',
+      label: 'Co-Builder™',
       description: 'Your impact intelligence partner',
       path: '/co-builder'
     }
@@ -323,7 +323,7 @@ export const NAVIGATION_CONFIG: Record<UserType, NavigationConfig> = {
       }
     ],
     aiCompanion: {
-      label: 'Co-Builder',
+      label: 'Co-Builder™',
       description: 'Your ecosystem intelligence partner',
       path: '/co-builder'
     }

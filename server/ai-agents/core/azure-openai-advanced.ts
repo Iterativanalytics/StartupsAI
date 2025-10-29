@@ -1,5 +1,5 @@
 /**
- * Advanced Azure OpenAI Integration for Co-Founder Agent
+ * Advanced Azure OpenAI Integration for Co-Founder™ Agent
  * Extends base Azure OpenAI client with advanced features:
  * - Function calling for structured outputs
  * - Streaming with function calls
@@ -378,7 +378,7 @@ Then provide your response.`;
   ): Promise<string> {
     try {
       const conversationText = messages
-        .map(msg => `${msg.role === 'user' ? 'Entrepreneur' : 'Co-Founder'}: ${msg.content}`)
+        .map(msg => `${msg.role === 'user' ? 'Entrepreneur' : 'Co-Founder™'}: ${msg.content}`)
         .join('\n\n');
       
       const response = await this.client.chat.completions.create({
@@ -386,7 +386,7 @@ Then provide your response.`;
         messages: [
           {
             role: 'system',
-            content: 'Summarize this conversation between an entrepreneur and their AI co-founder, preserving key decisions, insights, and action items.'
+            content: 'Summarize this conversation between an entrepreneur and their Co-Founder™, preserving key decisions, insights, and action items.'
           },
           {
             role: 'user',

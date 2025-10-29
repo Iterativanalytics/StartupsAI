@@ -322,7 +322,7 @@ class InMemoryStorage {
     );
   }
 
-  // Co-Founder Goal operations
+  // Co-Founder™ Goal operations
   createGoal(goalData: InsertCoFounderGoal): CoFounderGoal {
     const goal: CoFounderGoal = {
       id: randomUUID(),
@@ -357,7 +357,7 @@ class InMemoryStorage {
     return this.coFounderGoals.delete(id);
   }
 
-  // Co-Founder Commitment operations
+  // Co-Founder™ Commitment operations
   createCommitment(commitmentData: InsertCoFounderCommitment): CoFounderCommitment {
     const commitment: CoFounderCommitment = {
       id: randomUUID(),

@@ -217,9 +217,9 @@ const learningPath = engine.generateLearningPath(compositeProfile);
 const cofounderMatches = await engine.matchCoFounders(compositeProfile);
 ```
 
-## Integration with AI Co-Founder
+## Integration with Co-Founder™
 
-The assessment system integrates with the AI co-founder agent to provide profile-aware interactions:
+The assessment system integrates with the Co-Founder™ agent to provide profile-aware interactions:
 
 ```typescript
 import { ProfileAwareCoFounder } from '@iterative-startups/ai-agents';
@@ -283,7 +283,7 @@ const guidance = await aiCoFounder.provideProfileAwareAdvice(
 - Visualization charts
 - Evolution tracking
 - Behavioral validation
-- Integration with AI co-founder
+- Integration with Co-Founder™
 
 ## Contributing
 

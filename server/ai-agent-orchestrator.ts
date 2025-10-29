@@ -303,14 +303,14 @@ export class AIAgentOrchestrator {
     const coAgents = [
       {
         type: AgentType.CO_INVESTOR,
-        name: 'Co-Investor',
+        name: 'Co-Investor™',
         status: 'active',
         relationshipScore: 0.85,
         lastInteraction: new Date()
       },
       {
         type: AgentType.CO_BUILDER,
-        name: 'Co-Builder',
+        name: 'Co-Builder™',
         status: 'active',
         relationshipScore: 0.78,
         lastInteraction: new Date()

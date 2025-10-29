@@ -692,9 +692,9 @@ export class EnhancedCollaborationManager {
 
   private getAgentName(agentType: AgentType): string {
     const names: Record<AgentType, string> = {
-      co_founder: 'Co-Founder',
-      co_investor: 'Co-Investor',
-      co_builder: 'Co-Builder',
+      co_founder: 'Co-Founder™',
+      co_investor: 'Co-Investor™',
+      co_builder: 'Co-Builder™',
       business_advisor: 'Business Advisor',
       investment_analyst: 'Investment Analyst',
       credit_analyst: 'Credit Analyst',

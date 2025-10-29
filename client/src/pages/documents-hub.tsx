@@ -7,6 +7,7 @@ import IterativProposalsApp from '@/modules/proposals/IterativProposalsApp';
 import IterativFormsApp from '@/modules/forms/IterativFormsApp';
 import { Toaster } from '@/components-hub/Toaster';
 import OnboardingModal from '@/components-hub/OnboardingModal';
+import { ConsolidatedOnboarding } from '@/components/onboarding/ConsolidatedOnboarding';
 import CoFounderHub from '@/components-hub/cofounder/CoFounderHub';
 import WhatsAppChat from '@/components-hub/cofounder/WhatsAppChat';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +43,6 @@ import {
 } from 'lucide-react';
 
 export default function DocumentsHub() {
-  const [activeHub, setActiveHub] = useState<HubModule>('plans');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [user, setUser] = useState<User>({ loggedIn: false, persona: null, name: 'Guest' });
   const [darkMode, setDarkMode] = useState(false);
@@ -105,6 +105,39 @@ export default function DocumentsHub() {
     setIsOnboardingOpen(true);
   };
 
+  const handleUnifiedOnboardingComplete = (data: {
+    basicData: any;
+    persona?: Persona;
+    stage?: EntrepreneurStage;
+    profile?: CompositeProfile;
+    personality?: CoFounderPersonality;
+  }) => {
+    if (data.persona && data.profile && data.personality) {
+      // Enhanced flow completion
+      setUser({ 
+        loggedIn: true, 
+        persona: data.persona, 
+        name: 'Valued User', 
+        ...(data.stage && { entrepreneurStage: data.stage }),
+        ...(data.profile && { compositeProfile: data.profile })
+      });
+      setAgentPersonality(data.personality);
+      setIsOnboardingOpen(false);
+      setIsCoFounderOpen(true);
+      
+      addToast(`Welcome! Your '${data.profile.founderArchetype.name}' profile is ready.`, 'success');
+    } else {
+      // Basic flow completion - just set basic user data
+      setUser({ 
+        loggedIn: true, 
+        persona: 'entrepreneur', // Default persona for basic flow
+        name: 'Valued User'
+      });
+      setIsOnboardingOpen(false);
+      addToast('Welcome! Your profile has been set up.', 'success');
+    }
+  };
+
   const handleOnboardingComplete = (
     persona: Persona, 
     stage: EntrepreneurStage | undefined,
@@ -128,22 +161,11 @@ export default function DocumentsHub() {
   const handleMilestoneComplete = (milestone: Goal) => {
     const multiplier = milestone.multiplier || 1.2;
     setVestedInterest(prev => prev * multiplier);
-    addToast(`Milestone Complete! Your Co-Founder's vested interest increased by ${((multiplier - 1) * 100).toFixed(0)}%!`, 'success');
+    addToast(`Milestone Complete! Your Co-Founder™'s vested interest increased by ${((multiplier - 1) * 100).toFixed(0)}%!`, 'success');
   };
 
   const renderActiveHub = () => {
-    switch (activeHub) {
-      case 'plans':
-        return <PlansApp user={user} addToast={addToast} agentPersonality={agentPersonality} vestedInterest={vestedInterest} />;
-      case 'decks':
-        return <DecksApp user={user} showToast={addToast} />;
-      case 'proposals':
-        return <IterativProposalsApp user={user} addToast={addToast} />;
-      case 'forms':
-        return <IterativFormsApp user={user} addToast={addToast} />;
-      default:
-        return <PlansApp user={user} addToast={addToast} agentPersonality={agentPersonality} vestedInterest={vestedInterest}/>;
-    }
+    return <PlansApp user={user} addToast={addToast} agentPersonality={agentPersonality} vestedInterest={vestedInterest} />;
   };
 
   return (
@@ -160,8 +182,6 @@ export default function DocumentsHub() {
       </div>
 
       <HubHeader 
-        activeHub={activeHub} 
-        setActiveHub={setActiveHub} 
         user={user}
         onStartFree={handleStartFree}
       />
@@ -190,7 +210,8 @@ export default function DocumentsHub() {
               icon: FileText,
               color: 'from-purple-500 to-indigo-600',
               bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-              features: ['Fast Track Mode', 'Validated Mode', 'Pivot Intelligence']
+              features: ['Fast Track Mode', 'Validated Mode', 'Pivot Intelligence'],
+              path: '/business-plans'
             },
             {
               id: 'decks',
@@ -199,7 +220,8 @@ export default function DocumentsHub() {
               icon: Presentation,
               color: 'from-teal-500 to-blue-600',
               bgColor: 'bg-teal-50 dark:bg-teal-900/20',
-              features: ['AI Generation', 'Style Templates', 'Investor Matching']
+              features: ['AI Generation', 'Style Templates', 'Investor Matching'],
+              path: '/decks'
             },
             {
               id: 'proposals',
@@ -208,7 +230,8 @@ export default function DocumentsHub() {
               icon: FileSignature,
               color: 'from-orange-500 to-red-600',
               bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-              features: ['RFP Automation', 'Client Discovery', 'Win Themes']
+              features: ['RFP Automation', 'Client Discovery', 'Win Themes'],
+              path: '/proposals'
             },
             {
               id: 'forms',
@@ -217,18 +240,19 @@ export default function DocumentsHub() {
               icon: FormInput,
               color: 'from-green-500 to-emerald-600',
               bgColor: 'bg-green-50 dark:bg-green-900/20',
-              features: ['Auto-fill', 'Progress Tracking', 'Template Library']
+              features: ['Auto-fill', 'Progress Tracking', 'Template Library'],
+              path: '/forms'
             }
           ].map((module) => {
             const Icon = module.icon;
-            const isActive = activeHub === module.id;
+            const isActive = false; // No longer using active state
             return (
               <Card 
                 key={module.id} 
                 className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 ${module.bgColor} ${
                   isActive ? 'ring-2 ring-purple-500 shadow-lg' : ''
                 }`}
-                onClick={() => setActiveHub(module.id as HubModule)}
+                onClick={() => window.location.href = module.path}
               >
                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${module.color} opacity-10 rounded-full -mr-16 -mt-16`} />
                 
@@ -313,11 +337,13 @@ export default function DocumentsHub() {
         {renderActiveHub()}
       </main>
       <Toaster toasts={toasts} removeToast={removeToast} />
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onComplete={handleOnboardingComplete}
-      />
+      {isOnboardingOpen && (
+        <ConsolidatedOnboarding
+          onComplete={handleUnifiedOnboardingComplete}
+          onSkip={() => setIsOnboardingOpen(false)}
+          showAssessment={true}
+        />
+      )}
       {user.loggedIn && agentPersonality && (
         <>
             <CoFounderHub 

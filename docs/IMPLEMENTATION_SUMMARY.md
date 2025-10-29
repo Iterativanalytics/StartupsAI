@@ -55,7 +55,7 @@ Production-ready agent framework with:
 - `executeWithMemory()` - full-featured execution
 - `executeWithContext()` - lightweight execution
 
-**All specialized agents** (Co-Founder, Co-Investor, Co-Lender, Co-Builder) can now extend this base.
+**All specialized agents** (Co-Founder™, Co-Investor™, Co-Lender™, Co-Builder™) can now extend this base.
 
 #### ✅ **4. Supporting Utilities**
 
@@ -83,7 +83,7 @@ Production-ready agent framework with:
 
 Complete navigation for all 5 user types:
 - **Entrepreneur**: Build, Fund, Collaborate, Learn + Co-Founder
-- **Investor**: Discover, Analyze, Manage, Connect + Co-Investor  
+- **Investor**: Discover, Analyze, Manage, Connect + Co-Investor™  
 - **Lender**: Applications, Underwrite, Portfolio, Insights + Co-Lender
 - **Grantor**: Applications, Evaluate, Portfolio, Strategy + Co-Builder
 - **Partner**: Programs, Companies, Connect, Impact + Co-Builder
@@ -229,10 +229,10 @@ Currently using placeholder database queries in:
 
 ### 🔄 Gradual Migration Path
 Existing agents can migrate to EnhancedBaseAgent incrementally:
-1. Week 5-6: Migrate Co-Founder agent
-2. Week 9: Migrate/create Co-Investor agent
-3. Week 10: Migrate/enhance Co-Lender (credit-assessor)
-4. Week 11-12: Migrate/create Co-Builder agent
+1. Week 5-6: Migrate Co-Founder™ agent
+2. Week 9: Migrate/create Co-Investor™ agent
+3. Week 10: Migrate/enhance Co-Lender™ (credit-assessor)
+4. Week 11-12: Migrate/create Co-Builder™ agent
 
 ---
 
@@ -304,7 +304,7 @@ class MyAgent extends EnhancedBaseAgent {
   constructor(userId: number) {
     super({
       agentType: 'co_founder',
-      name: 'Co-Founder',
+      name: 'Co-Founder™',
       description: 'Your strategic partner',
       capabilities: ['Planning', 'Strategy', 'Execution']
     });

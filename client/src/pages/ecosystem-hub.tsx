@@ -1,7 +1,10 @@
 import { Link } from "wouter";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import HubHeader from "@/components-hub/HubHeader";
+import { HubModule, User } from "@/types-hub";
 import { 
   Rocket, 
   Target, 
@@ -17,14 +20,9 @@ import {
   CheckCircle2,
   Trophy,
   Award,
-  Star,
-  Calendar,
   MapPin,
-  Filter,
-  Search,
   ExternalLink,
-  Bookmark,
-  Share2
+  Sparkles
 } from "lucide-react";
 
 const ecosystemModels = [
@@ -294,29 +292,78 @@ const comparisons = [
 ];
 
 export default function EcosystemHub() {
+  const [activeHub, setActiveHub] = useState<HubModule>('plans');
+  const [user] = useState<User>({ loggedIn: false, persona: null, name: 'Guest' });
+
+
+  const handleStartFree = () => {
+    // Handle start free action
+    console.log('Start Free clicked');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+      <HubHeader 
+        activeHub={activeHub} 
+        setActiveHub={setActiveHub} 
+        user={user}
+        onStartFree={handleStartFree}
+      />
+
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Building2 className="h-10 w-10 text-purple-600" />
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
+            <Sparkles className="h-10 w-10 text-purple-600" />
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-teal-500 bg-clip-text text-transparent">
               Ecosystem Hub
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Choose the right ecosystem model for your startup journey. Each model offers unique approaches, 
             timelines, and support structures tailored to different stages and needs
           </p>
         </div>
+
+        {/* Success Metrics */}
+        <Card className="mb-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0 shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+              <TrendingUp className="h-7 w-7 text-green-600" />
+              Platform Success Metrics
+            </CardTitle>
+            <CardDescription>
+              Real outcomes from our ecosystem platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">$2.8B</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Funding Raised</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">1,247</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Companies Launched</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600 mb-2">73%</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-600 mb-2">156</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Successful Exits</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
       {/* Ecosystem Model Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
         {ecosystemModels.map((model) => {
           const IconComponent = model.icon;
           return (
-            <Card key={model.name} className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 ${model.bgColor}`}>
+            <Card key={model.name} className={`relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${model.bgColor} dark:bg-gray-900/50 backdrop-blur-sm`}>
               <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${model.color} opacity-10 rounded-full -mr-16 -mt-16`} />
 
               <CardHeader className="relative">
@@ -328,8 +375,8 @@ export default function EcosystemHub() {
                     {model.stage}
                   </Badge>
                 </div>
-                <CardTitle className="text-2xl mb-2">{model.name}</CardTitle>
-                <CardDescription className="text-base">
+                <CardTitle className="text-2xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{model.name}</CardTitle>
+                <CardDescription className="text-base text-gray-600 dark:text-gray-400">
                   {model.description}
                 </CardDescription>
               </CardHeader>
@@ -337,27 +384,27 @@ export default function EcosystemHub() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-gray-500" />
+                    <DollarSign className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <div>
-                      <p className="font-medium">Equity</p>
-                      <p className="text-gray-600">{model.equity}</p>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">Equity</p>
+                      <p className="text-gray-600 dark:text-gray-400">{model.equity}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
+                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <div>
-                      <p className="font-medium">Timeline</p>
-                      <p className="text-gray-600">{model.timeline}</p>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">Timeline</p>
+                      <p className="text-gray-600 dark:text-gray-400">{model.timeline}</p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
                     <Zap className="h-4 w-4" />
                     Key Features
                   </h4>
-                  <ul className="space-y-1 text-sm text-gray-600">
+                  <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                     {model.features.map((feature, index) => (
                       <li key={index} className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
@@ -368,7 +415,7 @@ export default function EcosystemHub() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
                     <Building2 className="h-4 w-4" />
                     Examples
                   </h4>
@@ -382,7 +429,7 @@ export default function EcosystemHub() {
                 </div>
 
                 <Link href={model.href}>
-                  <Button className={`w-full bg-gradient-to-r ${model.color} hover:opacity-90 transition-opacity`}>
+                  <Button className={`w-full bg-gradient-to-r ${model.color} hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl`}>
                     Explore {model.name}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -394,13 +441,17 @@ export default function EcosystemHub() {
       </div>
 
       {/* Comparison Table */}
-      <Card className="mb-16">
+      <Card className="mb-16 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Handshake className="h-6 w-6" />
-            Model Comparison
+            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+              <Handshake className="h-6 w-6" />
+            </div>
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Model Comparison
+            </span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
             Key differences between the three ecosystem models
           </CardDescription>
         </CardHeader>
@@ -408,22 +459,22 @@ export default function EcosystemHub() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold">Aspect</th>
-                  <th className="text-left py-3 px-4 font-semibold text-purple-600">Venture Studio</th>
-                  <th className="text-left py-3 px-4 font-semibold text-teal-600">Accelerator</th>
-                  <th className="text-left py-3 px-4 font-semibold text-orange-600">Incubator</th>
-                  <th className="text-left py-3 px-4 font-semibold text-yellow-600">Competitions</th>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-800 dark:text-gray-200">Aspect</th>
+                  <th className="text-left py-3 px-4 font-semibold text-purple-600 dark:text-purple-400">Venture Studio</th>
+                  <th className="text-left py-3 px-4 font-semibold text-teal-600 dark:text-teal-400">Accelerator</th>
+                  <th className="text-left py-3 px-4 font-semibold text-orange-600 dark:text-orange-400">Incubator</th>
+                  <th className="text-left py-3 px-4 font-semibold text-yellow-600 dark:text-yellow-400">Competitions</th>
                 </tr>
               </thead>
               <tbody>
                 {comparisons.map((comparison, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-3 px-4 font-medium">{comparison.aspect}</td>
-                    <td className="py-3 px-4 text-gray-600">{comparison.studio}</td>
-                    <td className="py-3 px-4 text-gray-600">{comparison.accelerator}</td>
-                    <td className="py-3 px-4 text-gray-600">{comparison.incubator}</td>
-                    <td className="py-3 px-4 text-gray-600">{comparison.competitions}</td>
+                  <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
+                    <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">{comparison.aspect}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{comparison.studio}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{comparison.accelerator}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{comparison.incubator}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{comparison.competitions}</td>
                   </tr>
                 ))}
               </tbody>
@@ -436,17 +487,21 @@ export default function EcosystemHub() {
       <div className="mb-16">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
-            <Trophy className="h-8 w-8 text-yellow-500" />
-            Featured Competitions
+            <div className="p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+              <Trophy className="h-8 w-8" />
+            </div>
+            <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              Featured Competitions
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Compete for prizes, recognition, and networking opportunities at the world's leading startup competitions
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {competitions.filter(comp => comp.featured).map((competition) => (
-            <Card key={competition.id} className="relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-yellow-50 to-orange-50">
+            <Card key={competition.id} className="relative overflow-hidden border-2 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 backdrop-blur-sm">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-10 rounded-full -mr-12 -mt-12" />
               
               <CardHeader className="relative">
@@ -548,14 +603,18 @@ export default function EcosystemHub() {
 
       {/* Enhanced Quick Actions */}
       <div className="grid md:grid-cols-2 gap-8 mb-16">
-        <Card className="relative overflow-hidden">
+        <Card className="relative overflow-hidden bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-400 opacity-10 rounded-full -mr-12 -mt-12" />
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-6 w-6 text-purple-600" />
-              Smart Ecosystem Matcher
+              <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                <Users className="h-6 w-6" />
+              </div>
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Smart Ecosystem Matcher
+              </span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               AI-powered assessment to find your perfect ecosystem fit based on stage, goals, and industry
             </CardDescription>
           </CardHeader>
@@ -581,14 +640,18 @@ export default function EcosystemHub() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden">
+        <Card className="relative overflow-hidden bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-teal-400 to-blue-400 opacity-10 rounded-full -mr-12 -mt-12" />
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-teal-600" />
-              Global Program Directory
+              <div className="p-2 rounded-lg bg-gradient-to-r from-teal-500 to-blue-500 text-white">
+                <Building2 className="h-6 w-6" />
+              </div>
+              <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+                Global Program Directory
+              </span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Discover and connect with 500+ accelerators, incubators, and venture studios worldwide
             </CardDescription>
           </CardHeader>
@@ -616,13 +679,17 @@ export default function EcosystemHub() {
       </div>
 
       {/* Success Metrics */}
-      <Card className="mb-16">
+      <Card className="mb-16 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-            <TrendingUp className="h-7 w-7 text-green-600" />
-            Platform Success Metrics
+            <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+              <TrendingUp className="h-7 w-7" />
+            </div>
+            <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Platform Success Metrics
+            </span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
             Real outcomes from our ecosystem participants
           </CardDescription>
         </CardHeader>
@@ -630,39 +697,43 @@ export default function EcosystemHub() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">$2.8B</div>
-              <div className="text-sm text-gray-600">Total Funding Raised</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Total Funding Raised</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">1,247</div>
-              <div className="text-sm text-gray-600">Companies Launched</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Companies Launched</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600 mb-2">73%</div>
-              <div className="text-sm text-gray-600">Success Rate</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600 mb-2">156</div>
-              <div className="text-sm text-gray-600">Successful Exits</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Successful Exits</div>
             </div>
           </div>
           
-          <div className="mt-8 pt-8 border-t">
+          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-center mb-6 flex items-center justify-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Competition Highlights
+              <div className="p-1 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                Competition Highlights
+              </span>
             </h3>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600 mb-2">$2.1M</div>
-                <div className="text-sm text-gray-600">Total Prize Money Won</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Prize Money Won</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600 mb-2">89</div>
-                <div className="text-sm text-gray-600">Competitions Entered</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Competitions Entered</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600 mb-2">23</div>
-                <div className="text-sm text-gray-600">First Place Wins</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">First Place Wins</div>
               </div>
             </div>
           </div>

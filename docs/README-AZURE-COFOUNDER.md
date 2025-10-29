@@ -1,15 +1,15 @@
-# Azure OpenAI Co-Founder Agent Integration
+# Azure OpenAI Co-Founder™ Agent Integration
 
 ## 🎯 Overview
 
-This implementation integrates Azure OpenAI and Azure AI Services into the Co-Founder Agent, providing enterprise-grade AI capabilities for sophisticated business co-founding support.
+This implementation integrates Azure OpenAI and Azure AI Services into the Co-Founder™ Agent, providing enterprise-grade AI capabilities for sophisticated business co-founding support.
 
 ## 🏗️ Architecture
 
 ```
-Co-Founder Agent
+Co-Founder™ Agent
 ├── Core Components
-│   ├── Co-Founder Brain (conversation analysis & decision logic)
+│   ├── Co-Founder™ Brain (conversation analysis & decision logic)
 │   ├── Personality Manager (adaptive personality system)
 │   ├── Relationship Manager (partnership health tracking)
 │   └── Memory System (long-term business context)
@@ -397,7 +397,7 @@ try {
 ## 📚 Documentation
 
 - [Azure Integration Guide](./docs/AZURE_INTEGRATION.md)
-- [Co-Founder Agent Overview](./README-AI-AGENTS.md)
+- [Co-Founder™ Agent Overview](./README-AI-AGENTS.md)
 - [API Documentation](./docs/api.md)
 
 ## 🤝 Contributing

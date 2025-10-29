@@ -1,4 +1,4 @@
-# Azure Co-Founder Agent - Architecture Diagram
+# Azure Co-Founder™ Agent - Architecture Diagram
 
 ## 🏗️ Complete System Architecture
 
@@ -47,7 +47,7 @@
 │  └─────────────────────────────┬───────────────────────────────────────┘   │
 │                                │                                             │
 │  ┌─────────────────────────────▼───────────────────────────────────────┐   │
-│  │                      CO-FOUNDER AGENT                                │   │
+│  │                      CO-FOUNDER™ AGENT                                │   │
 │  │                       (Main Entry Point)                             │   │
 │  │                                                                       │   │
 │  │  execute(context, options) → AgentResponse                          │   │
@@ -63,7 +63,7 @@
 │  └───────────┬───────────────────────┬──────────────────────────────────┘   │
 │              │                       │                                       │
 │  ┌───────────▼─────────┐  ┌─────────▼────────────┐  ┌──────────────────┐  │
-│  │  Co-Founder Brain   │  │ Azure Enhanced       │  │  Other Components│  │
+│  │  Co-Founder™ Brain   │  │ Azure Enhanced       │  │  Other Components│  │
 │  │  • Conversation     │  │ Capabilities         │  │  • Personality   │  │
 │  │    Analysis         │  │                      │  │  • Relationship  │  │
 │  │  • Need Detection   │  │  • Multi-Perspective │  │  • Memory        │  │
@@ -172,9 +172,9 @@ Entrepreneur Message
 Platform Orchestrator
         │
         ▼
-  Co-Founder Agent
+  Co-Founder™ Agent
         │
-        ├──► Co-Founder Brain
+        ├──► Co-Founder™ Brain
         │    │
         │    ├──► Azure Cognitive Services
         │    │    └──► Conversation Analysis
@@ -315,7 +315,7 @@ Azure Enhanced Capabilities
 Crisis Message
         │
         ▼
-Co-Founder Agent (Crisis Mode)
+Co-Founder™ Agent (Crisis Mode)
         │
         ├──► Azure Cognitive Services
         │    • Detect urgency: CRITICAL
@@ -466,4 +466,4 @@ Azure OpenAI Advanced enables:
 
 ---
 
-**This architecture creates a truly intelligent, proactive AI co-founder that leverages the full power of Azure's AI services.**
+**This architecture creates a truly intelligent, proactive Co-Founder™ that leverages the full power of Azure's AI services.**

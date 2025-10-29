@@ -629,7 +629,7 @@ What's your ${perspective} perspective?` }
             messages: [
               {
                 role: "system",
-                content: "Summarize this conversation between an entrepreneur and their AI co-founder, preserving key decisions, insights, and action items."
+                content: "Summarize this conversation between an entrepreneur and their Co-Founder™, preserving key decisions, insights, and action items."
               },
               {
                 role: "user",

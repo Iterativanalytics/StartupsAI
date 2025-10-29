@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import HubHeader from "@/components-hub/HubHeader";
+import { HubModule, User } from "@/types-hub";
 
 import {
   Card,
@@ -689,6 +691,8 @@ function LearningPathsList() {
 
 export default function EducationPage() {
   const [darkMode, setDarkMode] = useState(false);
+  const [activeHub, setActiveHub] = useState<HubModule>('plans');
+  const [user, setUser] = useState<User>({ loggedIn: false, persona: null, name: 'Guest' });
   const tabs = ["Modules", "Mentorships", "Learning Paths"];
 
   useEffect(() => {
@@ -711,18 +715,19 @@ export default function EducationPage() {
     }
   };
 
+  const handleStartFree = () => {
+    // Handle start free action
+    console.log('Start Free clicked');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-      {/* Dark mode toggle */}
-      <div className="fixed top-24 right-4 z-50">
-        <Card className="p-2 shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-          <div className="flex items-center space-x-2">
-            <Sun className="h-4 w-4 text-yellow-500" />
-            <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-            <Moon className="h-4 w-4 text-purple-500" />
-          </div>
-        </Card>
-      </div>
+      <HubHeader 
+        activeHub={activeHub} 
+        setActiveHub={setActiveHub} 
+        user={user}
+        onStartFree={handleStartFree}
+      />
 
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">

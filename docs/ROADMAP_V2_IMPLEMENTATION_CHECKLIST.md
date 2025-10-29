@@ -381,7 +381,7 @@
 
 ## Phase 3: Specialized Agents (Weeks 9-12)
 
-### Week 9: Co-Investor Agent (50 hours)
+### Week 9: Co-Investor™ Agent (50 hours)
 
 **Status**: ⏳ Pending Phase 2  
 **Priority**: HIGH - Multi-stakeholder support
@@ -424,11 +424,11 @@
 - [ ] Write tests
 
 **Dependencies**: Enhanced BaseAgent  
-**Deliverable**: Fully functional Co-Investor agent
+**Deliverable**: Fully functional Co-Investor™ agent
 
 ---
 
-### Week 10: Co-Lender Agent (50 hours)
+### Week 10: Co-Lender™ Agent (50 hours)
 
 **Status**: ⏳ Pending Week 9  
 **Priority**: HIGH - Leverage existing credit-assessor
@@ -470,11 +470,11 @@
 - [ ] Write tests
 
 **Dependencies**: Enhanced BaseAgent, existing credit-assessor  
-**Deliverable**: Fully functional Co-Lender agent
+**Deliverable**: Fully functional Co-Lender™ agent
 
 ---
 
-### Week 11: Co-Builder Agent - Grantors (50 hours)
+### Week 11: Co-Builder™ Agent - Grantors (50 hours)
 
 **Status**: ⏳ Pending Week 10  
 **Priority**: HIGH - Grantor support
@@ -515,11 +515,11 @@
 - [ ] Write tests
 
 **Dependencies**: Enhanced BaseAgent  
-**Deliverable**: Co-Builder agent for grantors
+**Deliverable**: Co-Builder™ agent for grantors
 
 ---
 
-### Week 12: Co-Builder Agent - Partners (50 hours)
+### Week 12: Co-Builder™ Agent - Partners (50 hours)
 
 **Status**: ⏳ Pending Week 11  
 **Priority**: HIGH - Partner/accelerator support
@@ -560,7 +560,7 @@
 - [ ] Write tests
 
 **Dependencies**: Enhanced BaseAgent  
-**Deliverable**: Co-Builder agent for partners
+**Deliverable**: Co-Builder™ agent for partners
 
 ---
 

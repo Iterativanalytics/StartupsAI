@@ -3,6 +3,7 @@ import { UserType } from "@shared/schema";
 import { UnifiedDashboard } from "@/components/dashboard";
 import UserTypeSelector from "../components/onboarding/UserTypeSelector";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { ConsolidatedOnboarding } from "@/components/onboarding/ConsolidatedOnboarding";
 import { useFeature } from "@/contexts/FeatureFlagsContext";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,14 +21,21 @@ export default function Dashboard() {
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen">
-        {onboardingEnabled ? (
-          <OnboardingWizard onComplete={() => { /* no-op */ }} onSkip={() => { /* no-op */ }} />
-        ) : (
-          <UserTypeSelector onUserTypeSelect={(type, subtype) => {
-            setSelectedUserType(type);
-            console.log('Selected user type:', type, 'subtype:', subtype);
-          }} />
-        )}
+        <ConsolidatedOnboarding 
+          onComplete={(data) => {
+            console.log('Onboarding completed:', data);
+            // Handle completion based on data structure
+            if (data.persona && data.profile && data.personality) {
+              // Enhanced flow completion
+              console.log('Enhanced onboarding completed');
+            } else {
+              // Basic flow completion
+              console.log('Basic onboarding completed');
+            }
+          }} 
+          onSkip={() => { /* no-op */ }} 
+          showAssessment={onboardingEnabled}
+        />
       </div>
     );
   }
@@ -39,14 +47,21 @@ export default function Dashboard() {
   if (!userType) {
     return (
       <div className="min-h-screen">
-        {onboardingEnabled ? (
-          <OnboardingWizard onComplete={() => { /* no-op */ }} onSkip={() => { /* no-op */ }} />
-        ) : (
-          <UserTypeSelector onUserTypeSelect={(type, subtype) => {
-            setSelectedUserType(type);
-            console.log('Selected user type:', type, 'subtype:', subtype);
-          }} />
-        )}
+        <ConsolidatedOnboarding 
+          onComplete={(data) => {
+            console.log('Onboarding completed:', data);
+            // Handle completion based on data structure
+            if (data.persona && data.profile && data.personality) {
+              // Enhanced flow completion
+              console.log('Enhanced onboarding completed');
+            } else {
+              // Basic flow completion
+              console.log('Basic onboarding completed');
+            }
+          }} 
+          onSkip={() => { /* no-op */ }} 
+          showAssessment={onboardingEnabled}
+        />
       </div>
     );
   }

@@ -236,21 +236,21 @@ export class AgentSelector {
   getAgentMetadata(agent: AgentType) {
     const metadata = {
       [AgentType.CO_FOUNDER]: {
-        name: 'Co-Founder',
+        name: 'Co-Founder™',
         tier: AgentTier.CO_AGENT,
         description: 'Your strategic partner and accountability coach',
         emoji: '🤝',
         color: '#6366f1'
       },
       [AgentType.CO_INVESTOR]: {
-        name: 'Co-Investor',
+        name: 'Co-Investor™',
         tier: AgentTier.CO_AGENT,
         description: 'Your investment strategy partner',
         emoji: '💰',
         color: '#10b981'
       },
       [AgentType.CO_BUILDER]: {
-        name: 'Co-Builder',
+        name: 'Co-Builder™',
         tier: AgentTier.CO_AGENT,
         description: 'Your ecosystem partnership strategist',
         emoji: '🏗️',

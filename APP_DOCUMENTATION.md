@@ -140,7 +140,7 @@
 │   │   │   │   ├── AIAssistant.tsx
 │   │   │   │   ├── ConversationHistory.tsx
 │   │   │   │   └── [8 more AI components]
-│   │   │   ├── 📁 co-founder/         # Co-Founder Agent Interface
+│   │   │   ├── 📁 co-founder/         # Co-Founder™ Agent Interface
 │   │   │   │   ├── CoFounderHub.tsx
 │   │   │   │   └── CoFounderChat.tsx
 │   │   │   ├── 📁 documents/          # Document Management
@@ -180,7 +180,7 @@
 │   │   │   │   ├── use-ai-analysis.ts
 │   │   │   │   ├── use-ai-insights.ts
 │   │   │   │   └── use-ai-automation.ts
-│   │   │   ├── 📁 co-founder/         # Co-Founder Hooks
+│   │   │   ├── 📁 co-founder/         # Co-Founder™ Hooks
 │   │   │   │   ├── use-co-founder-chat.ts
 │   │   │   │   ├── use-co-founder-insights.ts
 │   │   │   │   └── use-co-founder-accountability.ts
@@ -253,7 +253,7 @@
 │   │   │   │   └── index.ts
 │   │   │   ├── 📁 platform-orchestrator/ # Platform Orchestrator
 │   │   │   │   └── index.ts
-│   │   │   └── 📁 co-founder/         # Co-Founder Agent
+│   │   │   └── 📁 co-founder/         # Co-Founder™ Agent
 │   │   │       ├── index.ts
 │   │   │       ├── 📁 core/
 │   │   │       │   ├── co-founder-brain.ts
@@ -425,7 +425,7 @@
 │  └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────────┐ │
-│  │  🤖 AI Co-Founder Assistant                           │ │
+│  │  🤖 Co-Founder™ Assistant                           │ │
 │  │  "Ready to help with your strategic planning. What     │ │
 │  │   would you like to focus on today?"                   │ │
 │  └─────────────────────────────────────────────────────────┘ │
@@ -637,7 +637,7 @@
 | **Credit Assessor** | Lenders | Loan underwriting, financial analysis, risk scoring |
 | **Impact Evaluator** | Grantors | Social impact measurement, ESG reporting |
 | **Partnership Facilitator** | Partners/Accelerators | Startup-program matching, resource optimization |
-| **Co-Founder Agent** | All Users | Universal strategic partner, accountability, coaching |
+| **Co-Founder™ Agent** | All Users | Universal strategic partner, accountability, coaching |
 
 ### AI Agent Features
 - **Context-Aware Processing**: Maintains conversation history and user context
@@ -660,7 +660,7 @@
 - **Strategic Planning**: Long-term business strategy development
 - **Performance Coaching**: Proactive guidance and motivation
 
-### Co-Founder Agent Special Features
+### Co-Founder™ Agent Special Features
 - **Daily Standup Management**: Structured daily progress reviews
 - **Strategic Session Facilitation**: Deep strategic planning sessions
 - **Devil's Advocate**: Critical thinking and challenge assumptions

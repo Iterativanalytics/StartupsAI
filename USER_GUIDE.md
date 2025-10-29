@@ -204,10 +204,10 @@ Navigate to **Ecosystem Hub** to select your preferred model:
 3. Get matched with relevant investors/lenders
 4. Track application progress
 
-#### **Step 6: AI Co-Founder Assistant**
+#### **Step 6: Co-Founder™ Assistant**
 
 **Daily Standup:**
-- Set up daily check-ins with your AI Co-Founder
+- Set up daily check-ins with your Co-Founder™
 - Review progress and obstacles
 - Get strategic guidance and accountability
 
@@ -497,7 +497,7 @@ Each user type gets a specialized AI agent designed for their specific needs:
 - Resource allocation
 - Success tracking
 
-#### **👥 Co-Founder Agent (All Users)**
+#### **👥 Co-Founder™ Agent (All Users)**
 - Universal strategic partner
 - Accountability and coaching
 - Crisis management support

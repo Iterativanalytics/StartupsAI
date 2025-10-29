@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document analyzes the gap between the current IterativStartups codebase and the proposed 20-week v2.0 transformation roadmap. The roadmap aims to create a comprehensive AI-powered ecosystem with specialized agents (Co-Founder, Co-Investor, Co-Lender, Co-Builder) serving five stakeholder groups.
+This document analyzes the gap between the current IterativStartups codebase and the proposed 20-week v2.0 transformation roadmap. The roadmap aims to create a comprehensive AI-powered ecosystem with specialized agents (Co-Founder™, Co-Investor™, Co-Lender™, Co-Builder™) serving five stakeholder groups.
 
 **Key Findings**:
 - ✅ **Strong Foundation**: Agent database, some specialized agents, and core infrastructure exist
@@ -149,7 +149,7 @@ abstract class BaseAgent {
 **Priority**: **HIGH** - Differentiating feature
 
 #### 7. Specialized Agent Implementations
-**Required**: Full Co-Investor, Co-Lender, Co-Builder implementations
+**Required**: Full Co-Investor™, Co-Lender™, Co-Builder™ implementations
 **Status**: ⚠️ **Partial** - Basic versions exist, need enhancement
 **Priority**: **HIGH** - Core to multi-stakeholder vision
 
@@ -280,25 +280,25 @@ Based on the gap analysis, we recommend a **16-week modified plan** that:
 
 ### Phase 3: Specialized Agents (Weeks 9-12) - 200 hours
 
-#### Week 9: Co-Investor Agent
+#### Week 9: Co-Investor™ Agent
 **Deliverables** (from original roadmap):
 - [ ] Deal flow analysis system
 - [ ] Portfolio optimization engine
 - [ ] Investment thesis matching
-- [ ] Co-Investor conversational interface
+- [ ] Co-Investor™ conversational interface
 
 **Effort**: 50 hours (reduced from 70 - foundation exists)
 
-#### Week 10: Co-Lender Agent
+#### Week 10: Co-Lender™ Agent
 **Deliverables** (from original roadmap):
 - [ ] Loan underwriting system (ENHANCE existing credit-assessor)
 - [ ] Credit analysis engine
 - [ ] Portfolio risk monitoring
-- [ ] Co-Lender conversational interface
+- [ ] Co-Lender™ conversational interface
 
 **Effort**: 50 hours (reduced from 70 - credit-assessor exists)
 
-#### Week 11: Co-Builder Agent (Grantors)
+#### Week 11: Co-Builder™ Agent (Grantors)
 **Deliverables** (from original roadmap):
 - [ ] Grant application analysis system
 - [ ] Impact assessment engine
@@ -307,7 +307,7 @@ Based on the gap analysis, we recommend a **16-week modified plan** that:
 
 **Effort**: 50 hours (reduced from 60)
 
-#### Week 12: Co-Builder Agent (Partners)
+#### Week 12: Co-Builder™ Agent (Partners)
 **Deliverables** (from original roadmap):
 - [ ] Cohort analysis system
 - [ ] Mentor matching engine

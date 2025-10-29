@@ -142,7 +142,7 @@ class MyAgent extends EnhancedBaseAgent {
 }
 ```
 
-**Integration**: Ready for all specialized agents (Co-Founder, Co-Investor, Co-Lender, Co-Builder)
+**Integration**: Ready for all specialized agents (Co-Founder™, Co-Investor™, Co-Lender™, Co-Builder™)
 
 ---
 

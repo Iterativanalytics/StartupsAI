@@ -22,13 +22,6 @@ const HubHeader: React.FC<HubHeaderProps> = ({ activeHub, setActiveHub }) => {
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sparkles className="w-8 h-8 text-purple-600" />
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                Documents Hub
-              </h1>
-              <p className="text-sm text-slate-500">The Strategic Workspace of IterativStartups</p>
-            </div>
           </div>
 
           <nav className="hidden lg:flex items-center gap-2 bg-slate-100 p-1.5 rounded-full">
