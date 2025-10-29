@@ -1,7 +1,7 @@
-
-import { PivotType } from './types';
+import type React from 'react';
+import { PivotType } from './types-hub';
 import { Target, Brain, Settings, DollarSign } from 'lucide-react';
-import { PlatformTab } from './types';
+import { PlatformTab } from './types-hub';
 
 export const PIVOT_TYPES: PivotType[] = [
   { id: 'zoom-in', name: 'Zoom-In Pivot', description: 'Single feature becomes the product' },
@@ -22,3 +22,8 @@ export const NAV_TABS: {id: PlatformTab, label: string, icon: React.ComponentTyp
   { id: 'competitors', label: 'vs Competitors', icon: Target },
   { id: 'pricing', label: 'Pricing', icon: DollarSign }
 ];
+
+export { DECK_PHASES, DECK_TOOLS, DECK_COMPETITOR_COMPARISON, DECK_PRICING_TIERS, DECK_REVENUE_STREAMS, DECK_STYLES } from './modules/decks/constants';
+export { PLAN_PHASES, PLAN_TOOLS } from './modules/plans/constants';
+export { PROPOSAL_PHASES, PROPOSAL_TOOLS, PROPOSAL_COMPETITOR_COMPARISON, PROPOSAL_PRICING_TIERS } from './modules/proposals/constants';
+export { MOCK_BUSINESS_PLAN } from './modules/forms/constants';

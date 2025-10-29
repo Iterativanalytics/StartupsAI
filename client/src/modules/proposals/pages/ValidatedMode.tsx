@@ -3,9 +3,9 @@ import { Users, Target, Lightbulb, TestTube, RefreshCw, CheckCircle, Circle, Spa
 import { PROPOSAL_PHASES, PROPOSAL_TOOLS, PROPOSAL_COMPETITOR_COMPARISON, PROPOSAL_PRICING_TIERS } from '@/constants-hub';
 import { PIVOT_TYPES, NAV_TABS } from '@/constants-hub';
 import { PlatformTab, Assumption, Tool, ToastType } from '@/types-hub';
-import PivotModal from '../../../components/PivotModal';
-import ToolModal from '../../../components/ToolModal';
-import AssumptionDashboard from '../../../components/AssumptionDashboard';
+import PivotModal from '@/components-hub/PivotModal';
+import ToolModal from '@/components-hub/ToolModal';
+import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
 import { useProposalProject } from '../ProposalsApp';
 
 interface ValidatedModeProps {
