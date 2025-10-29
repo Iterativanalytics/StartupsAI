@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { useBusinessPlan } from '@/contexts/BusinessPlanContext';
+import { useIterativePlan } from '@/contexts/IterativePlanContext';
 import { useBusinessPlanProgress } from '@/hooks/useBusinessPlanProgress';
 import type { PlanChapter } from '@/constants/businessPlanStructure';
 
@@ -46,7 +46,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
   onChapterSelect,
   onSectionSelect
 }) => {
-  const { getSectionStatus } = useBusinessPlan();
+  const { getSectionStatus } = useIterativePlan();
   const { chapterProgress } = useBusinessPlanProgress();
 
   const getStatusIcon = (status: string) => {

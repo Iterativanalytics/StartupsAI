@@ -77,7 +77,7 @@ This document contains the complete source code for the IterativStartups Documen
 ```json
 {
   "name": "IterativStartups 1.0",
-  "description": "A comprehensive AI-powered business innovation platform that connects entrepreneurs, investors, lenders and partners. This hub unifies IterativePlans, IterativProposals, IterativForms, and IterativDecks into a central workspace for strategic documents.",
+  "description": "A comprehensive AI-powered business innovation platform that connects entrepreneurs, investors, lenders and partners. This hub unifies IterativPlans, IterativProposals, IterativForms, and IterativDecks into a central workspace for strategic documents.",
   "requestFramePermissions": []
 }
 ```
@@ -699,7 +699,7 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition-colors">IterativePlans</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">IterativPlans</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Methodology</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
             </ul>
@@ -748,7 +748,7 @@ interface HubHeaderProps {
 }
 
 const hubModules = [
-  { id: 'plans' as HubModule, label: 'IterativePlans', icon: FileText },
+  { id: 'plans' as HubModule, label: 'IterativPlans', icon: FileText },
   { id: 'decks' as HubModule, label: 'IterativDecks', icon: Presentation },
   { id: 'proposals' as HubModule, label: 'IterativProposals', icon: FileSignature },
   { id: 'forms' as HubModule, label: 'IterativForms', icon: FormInput },

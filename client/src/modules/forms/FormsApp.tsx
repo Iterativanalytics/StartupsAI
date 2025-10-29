@@ -6,17 +6,17 @@ import ModeToggle from './components/ModeToggle';
 import { MOCK_APPLICATIONS } from './constants';
 import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
-// The "Project" for Forms is the application being filled.
-export const { ProjectProvider: FormProjectProvider, useProject: useFormProject } = createProjectContext<ApplicationForm>();
+// The "Project" for Forms is the iterative form being filled.
+export const { ProjectProvider: IterativFormProjectProvider, useProject: useIterativFormProject } = createProjectContext<ApplicationForm>();
 
-interface FormsAppProps {
+interface IterativFormsAppProps {
   addToast: (message: string, type: ToastType) => void;
   user: User;
 }
 
-const FormsAppContent: React.FC<FormsAppProps> = ({ addToast, user }) => {
+const IterativFormsAppContent: React.FC<IterativFormsAppProps> = ({ addToast, user }) => {
   const [mode, setMode] = useState<Mode>('fast-track');
-  const { project, generateProject, clearProject } = useFormProject();
+  const { project, generateProject, clearProject } = useIterativFormProject();
 
   useEffect(() => {
     if (project) {
@@ -27,7 +27,7 @@ const FormsAppContent: React.FC<FormsAppProps> = ({ addToast, user }) => {
   }, [project]);
 
 
-  const handleSelectApplication = (app: ApplicationForm) => {
+  const handleSelectIterativForm = (app: ApplicationForm) => {
     generateProject(app, [], app.name);
   };
 
@@ -37,7 +37,7 @@ const FormsAppContent: React.FC<FormsAppProps> = ({ addToast, user }) => {
 
   const handleSetMode = (newMode: Mode) => {
     if (newMode === 'validated' && !project) {
-      addToast("Select an application to enter Validated Mode.", "info");
+      addToast("Select an iterative form to enter Validated Mode.", "info");
       return;
     }
     if (newMode === 'fast-track' && mode === 'validated') {
@@ -61,17 +61,17 @@ const FormsAppContent: React.FC<FormsAppProps> = ({ addToast, user }) => {
       ) : (
         <ApplicationsListPage 
           applications={MOCK_APPLICATIONS} 
-          onSelectApplication={handleSelectApplication} 
+          onSelectApplication={handleSelectIterativForm} 
         />
       )}
     </div>
   );
 };
 
-const FormsApp: React.FC<FormsAppProps> = (props) => (
-    <FormProjectProvider>
-        <FormsAppContent {...props} />
-    </FormProjectProvider>
+const IterativFormsApp: React.FC<IterativFormsAppProps> = (props) => (
+    <IterativFormProjectProvider>
+        <IterativFormsAppContent {...props} />
+    </IterativFormProjectProvider>
 );
 
-export default FormsApp;
+export default IterativFormsApp;

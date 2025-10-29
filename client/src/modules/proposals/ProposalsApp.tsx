@@ -5,18 +5,18 @@ import FastTrackMode from './pages/FastTrackMode';
 import ModeToggle from './components/ModeToggle';
 import { createProjectContext } from '@/contexts-hub/ProjectContext';
 
-// Create a specific context for Proposals, where the content is a string (Markdown)
-export const { ProjectProvider: ProposalProjectProvider, useProject: useProposalProject } = createProjectContext<string>();
+// Create a specific context for IterativProposals, where the content is a string (Markdown)
+export const { ProjectProvider: IterativProposalProjectProvider, useProject: useIterativProposalProject } = createProjectContext<string>();
 
 
-interface ProposalsAppProps {
+interface IterativProposalsAppProps {
   addToast: (message: string, type: ToastType) => void;
   user: User;
 }
 
-const ProposalsAppContent: React.FC<ProposalsAppProps> = ({ addToast, user }) => {
+const IterativProposalsAppContent: React.FC<IterativProposalsAppProps> = ({ addToast, user }) => {
   const [mode, setMode] = useState<Mode>('fast-track');
-  const { project, clearProject } = useProposalProject();
+  const { project, clearProject } = useIterativProposalProject();
   
   useEffect(() => {
     if (project) {
@@ -27,12 +27,12 @@ const ProposalsAppContent: React.FC<ProposalsAppProps> = ({ addToast, user }) =>
 
   const handleSetMode = (newMode: Mode) => {
       if (newMode === 'fast-track' && project) {
-          if (window.confirm('This will clear your current proposal project. Are you sure?')) {
+          if (window.confirm('This will clear your current iterative proposal project. Are you sure?')) {
               clearProject();
               setMode('fast-track');
           }
       } else if (newMode === 'validated' && !project) {
-          addToast('Generate a proposal plan in Fast Track mode first!', 'info');
+          addToast('Generate an iterative proposal plan in Fast Track mode first!', 'info');
       }
       else {
           setMode(newMode);
@@ -46,20 +46,20 @@ const ProposalsAppContent: React.FC<ProposalsAppProps> = ({ addToast, user }) =>
       </div>
 
       {mode === 'validated' && project ? (
-        <ProposalsPage 
+        <IterativProposalsPage 
           addToast={addToast}
         />
       ) : (
-        <FastTrackMode addToast={addToast} user={user} />
+        <IterativProposalsFastTrackMode addToast={addToast} user={user} />
       )}
     </div>
   );
 }
 
-const ProposalsApp: React.FC<ProposalsAppProps> = (props) => (
-    <ProposalProjectProvider>
-        <ProposalsAppContent {...props} />
-    </ProposalProjectProvider>
+const IterativProposalsApp: React.FC<IterativProposalsAppProps> = (props) => (
+    <IterativProposalProjectProvider>
+        <IterativProposalsAppContent {...props} />
+    </IterativProposalProjectProvider>
 );
 
-export default ProposalsApp;
+export default IterativProposalsApp;

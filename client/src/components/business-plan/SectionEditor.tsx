@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useBusinessPlan } from '@/contexts/BusinessPlanContext';
+import { useIterativePlan } from '@/contexts/IterativePlanContext';
 import { useBusinessPlanAI } from '@/hooks/useBusinessPlanAI';
 import { getSectionById } from '@/constants/businessPlanStructure';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,7 @@ export const SectionEditor: React.FC<SectionEditorProps> = ({
     getSectionWordCount,
     save,
     isDirty
-  } = useBusinessPlan();
+  } = useIterativePlan();
   
   const {
     generateSectionContent,

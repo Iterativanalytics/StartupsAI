@@ -6,14 +6,14 @@ import { PlatformTab, Assumption, Tool, ToastType } from '@/types-hub';
 import PivotModal from '@/components-hub/PivotModal';
 import ToolModal from '@/components-hub/ToolModal';
 import AssumptionDashboard from '@/components-hub/AssumptionDashboard';
-import { useProposalProject } from '../ProposalsApp';
+import { useIterativProposalProject } from '../IterativProposalsApp';
 
 interface ValidatedModeProps {
   addToast: (message: string, type: ToastType) => void;
 }
 
-const ProposalsPage: React.FC<ValidatedModeProps> = ({ addToast }) => {
-  const { project, clearProject } = useProposalProject();
+const IterativProposalsPage: React.FC<ValidatedModeProps> = ({ addToast }) => {
+  const { project, clearProject } = useIterativProposalProject();
   const [activeTab, setActiveTab] = useState<PlatformTab>('platform');
   const [activePhase, setActivePhase] = useState<keyof typeof PROPOSAL_PHASES>('discover');
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
@@ -320,4 +320,4 @@ const ProposalsPage: React.FC<ValidatedModeProps> = ({ addToast }) => {
   );
 };
 
-export default ProposalsPage;
+export default IterativProposalsPage;

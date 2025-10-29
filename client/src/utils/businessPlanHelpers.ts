@@ -3,7 +3,7 @@
  * Helper functions for business plan operations
  */
 
-import type { SectionStatus } from '@/contexts/BusinessPlanContext';
+import type { SectionStatus } from '@/contexts/IterativePlanContext';
 
 /**
  * Calculate word count from text content

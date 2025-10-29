@@ -248,7 +248,7 @@ const ValidatedMode: React.FC<ValidatedModeProps> = ({ assumptions, onClearAssum
                   <thead>
                     <tr className="border-b-2 border-slate-300">
                       <th className="text-left py-4 px-4 font-bold text-slate-800">Feature</th>
-                      <th className="text-left py-4 px-4 font-bold text-purple-600 bg-purple-50">IterativePlans</th>
+                      <th className="text-left py-4 px-4 font-bold text-purple-600 bg-purple-50">IterativPlans</th>
                       <th className="text-left py-4 px-4 font-bold text-slate-600">Advisor Platforms</th>
                       <th className="text-left py-4 px-4 font-bold text-slate-600">AI Plan Generators</th>
                       <th className="text-left py-4 px-4 font-bold text-slate-600">Traditional Tools</th>

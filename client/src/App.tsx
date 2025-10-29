@@ -27,7 +27,7 @@ import EducationProduct from "@/pages/education-product";
 import EducationLeadership from "@/pages/education-leadership";
 import Programs from "@/pages/programs";
 import VentureBuilding from "@/pages/venture-building";
-import PitchDeck from "@/pages/pitch-deck";
+import IterativDeck from "@/pages/iterativ-deck";
 import Valuation from "@/pages/valuation";
 import AICreditScoring from "@/pages/ai-credit-scoring";
 import NotFound from "@/pages/not-found";
@@ -36,8 +36,8 @@ import DocumentsHub from "@/pages/documents-hub";
 import VentureStudio from "@/pages/venture-studio";
 import Accelerator from "./pages/accelerator";
 import Incubator from "@/pages/incubator";
-import Proposals from "@/pages/proposals";
-import Applications from "@/pages/applications";
+import IterativProposals from "@/pages/iterativ-proposals";
+import IterativForms from "@/pages/iterativ-forms";
 import Login from "@/pages/login"; // Assuming Login component is created
 import Collaboration from "@/pages/collaboration";
 import AIMarketAnalysis from "@/pages/ai-market-analysis";
@@ -84,9 +84,9 @@ function App() {
                 <Route path="/documents" component={() => <ProtectedRoute><DocumentsHub /></ProtectedRoute>} />
                 <Route path="/business-plans" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
                 <Route path="/upload" component={() => <ProtectedRoute><Upload /></ProtectedRoute>} />
-                <Route path="/proposals" component={() => <ProtectedRoute><Proposals /></ProtectedRoute>} />
-                <Route path="/pitch-decks" component={() => <ProtectedRoute><PitchDeck /></ProtectedRoute>} />
-                <Route path="/applications" component={() => <ProtectedRoute><Applications /></ProtectedRoute>} />
+                <Route path="/proposals" component={() => <ProtectedRoute><IterativProposals /></ProtectedRoute>} />
+                <Route path="/pitch-decks" component={() => <ProtectedRoute><IterativDeck /></ProtectedRoute>} />
+                <Route path="/applications" component={() => <ProtectedRoute><IterativForms /></ProtectedRoute>} />
                 <Route path="/edit-plan/:id" component={() => <ProtectedRoute><EditPlan /></ProtectedRoute>} />
                 <Route path="/analysis/:id" component={() => <ProtectedRoute><Analysis /></ProtectedRoute>} />
                 <Route path="/funding-matcher" component={() => <ProtectedRoute><FundingMatcher /></ProtectedRoute>} />
@@ -106,7 +106,7 @@ function App() {
                 <Route path="/education/leadership" component={() => <ProtectedRoute><EducationLeadership /></ProtectedRoute>} />
                 <Route path="/programs" component={Programs} />
                 <Route path="/venture-building" component={() => <ProtectedRoute><VentureBuilding /></ProtectedRoute>} />
-                <Route path="/pitch-deck" component={() => <ProtectedRoute><PitchDeck /></ProtectedRoute>} />
+                <Route path="/pitch-deck" component={() => <ProtectedRoute><IterativDeck /></ProtectedRoute>} />
                 <Route path="/valuation" component={() => <ProtectedRoute><Valuation /></ProtectedRoute>} />
                 <Route path="/ai-credit-scoring" component={() => <ProtectedRoute><AICreditScoring /></ProtectedRoute>} />
                 <Route path="/ecosystem" component={EcosystemHub} />

@@ -8,8 +8,8 @@ import { Loader2 } from 'lucide-react';
 // Lazy load modules for better performance
 const PlansApp = lazy(() => import('./modules/plans/PlansApp'));
 const DecksApp = lazy(() => import('./modules/decks/DecksApp'));
-const ProposalsApp = lazy(() => import('./modules/proposals/ProposalsApp'));
-const FormsApp = lazy(() => import('./modules/forms/FormsApp'));
+const IterativProposalsApp = lazy(() => import('./modules/proposals/IterativProposalsApp'));
+const IterativFormsApp = lazy(() => import('./modules/forms/IterativFormsApp'));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -37,8 +37,8 @@ const DocumentsHubApp: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         {activeHub === 'plans' && <PlansApp {...moduleProps} />}
         {activeHub === 'decks' && <DecksApp showToast={addToast} />}
-        {activeHub === 'proposals' && <ProposalsApp {...moduleProps} />}
-        {activeHub === 'forms' && <FormsApp {...moduleProps} />}
+        {activeHub === 'proposals' && <IterativProposalsApp {...moduleProps} />}
+        {activeHub === 'forms' && <IterativFormsApp {...moduleProps} />}
       </Suspense>
     );
   };

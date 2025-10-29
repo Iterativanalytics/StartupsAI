@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="#" className="hover:text-white transition-colors">IterativePlans</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">IterativPlans</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Methodology</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
             </ul>

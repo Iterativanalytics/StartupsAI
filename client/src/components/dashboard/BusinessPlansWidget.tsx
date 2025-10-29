@@ -1,6 +1,6 @@
 /**
- * Business Plans Widget
- * Dashboard widget for quick access to business plans
+ * IterativePlans Widget
+ * Dashboard widget for quick access to iterative plans
  */
 
 import React from 'react';
@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { apiRequest } from '@/lib/queryClient';
 
-interface BusinessPlan {
+interface IterativePlan {
   id: string;
   name: string;
   completionPercentage: number;
@@ -30,8 +30,8 @@ interface BusinessPlan {
   wordCount: number;
 }
 
-export const BusinessPlansWidget: React.FC = () => {
-  // Fetch recent business plans
+export const IterativePlansWidget: React.FC = () => {
+  // Fetch recent iterative plans
   const { data: plans, isLoading } = useQuery({
     queryKey: ['/api/business-plans/recent'],
     queryFn: async () => {
@@ -62,7 +62,7 @@ export const BusinessPlansWidget: React.FC = () => {
           status: 'complete' as const,
           wordCount: 8200
         }
-      ] as BusinessPlan[];
+      ] as IterativePlan[];
     }
   });
 
@@ -96,7 +96,7 @@ export const BusinessPlansWidget: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Business Plans
+            IterativePlans
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -115,10 +115,10 @@ export const BusinessPlansWidget: React.FC = () => {
           <div>
             <CardTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600" />
-              Business Plans
+              IterativePlans
             </CardTitle>
             <CardDescription>
-              Your recent business plans and progress
+              Your recent iterative plans and progress
             </CardDescription>
           </div>
           <Button asChild size="sm">
@@ -136,9 +136,9 @@ export const BusinessPlansWidget: React.FC = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
               <FileText className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No Business Plans Yet</h3>
+            <h3 className="text-lg font-semibold mb-2">No IterativePlans Yet</h3>
             <p className="text-gray-600 mb-4">
-              Create your first business plan with AI assistance
+              Create your first iterative plan with AI assistance
             </p>
             <Button asChild>
               <Link href="/ai-business-plan">

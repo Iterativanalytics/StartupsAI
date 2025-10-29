@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useBusinessPlan } from '@/contexts/BusinessPlanContext';
+import { useIterativePlan } from '@/contexts/IterativePlanContext';
 import { BUSINESS_PLAN_STRUCTURE } from '@/constants/businessPlanStructure';
 
 export interface ProgressStats {
@@ -23,7 +23,7 @@ export interface ChapterProgressInfo {
 }
 
 export const useBusinessPlanProgress = () => {
-  const { getSectionStatus, getSectionWordCount, completedSections } = useBusinessPlan();
+  const { getSectionStatus, getSectionWordCount, completedSections } = useIterativePlan();
 
   const progressStats = useMemo((): ProgressStats => {
     let totalSections = 0;

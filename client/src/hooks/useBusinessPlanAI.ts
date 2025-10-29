@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useBusinessPlan } from '@/contexts/BusinessPlanContext';
+import { useIterativePlan } from '@/contexts/IterativePlanContext';
 import { getSectionById } from '@/constants/businessPlanStructure';
 
 export interface AIGenerationOptions {
@@ -17,7 +17,7 @@ export interface AIGenerationResult {
 }
 
 export const useBusinessPlanAI = () => {
-  const { updateSectionContent, getSectionContent, metadata } = useBusinessPlan();
+  const { updateSectionContent, getSectionContent, metadata } = useIterativePlan();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

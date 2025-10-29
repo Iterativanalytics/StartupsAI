@@ -10,7 +10,7 @@ interface HubHeaderProps {
 }
 
 const hubModules = [
-  { id: 'plans' as HubModule, label: 'IterativePlans', icon: FileText },
+  { id: 'plans' as HubModule, label: 'IterativPlans', icon: FileText },
   { id: 'decks' as HubModule, label: 'IterativDecks', icon: Presentation },
   { id: 'proposals' as HubModule, label: 'IterativProposals', icon: FileSignature },
   { id: 'forms' as HubModule, label: 'IterativForms', icon: FormInput },

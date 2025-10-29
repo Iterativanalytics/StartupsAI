@@ -12,11 +12,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useBusinessPlan } from '@/contexts/BusinessPlanContext';
+import { useIterativePlan } from '@/contexts/IterativePlanContext';
 import { useBusinessPlanProgress } from '@/hooks/useBusinessPlanProgress';
 
 export const ProgressDashboard: React.FC = () => {
-  const { metadata, lastSaved } = useBusinessPlan();
+  const { metadata, lastSaved } = useIterativePlan();
   const { 
     progressStats, 
     chapterProgress,

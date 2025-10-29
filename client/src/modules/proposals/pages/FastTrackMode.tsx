@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Zap, Bot, Lightbulb, TrendingUp, BarChart2, CheckCircle, ArrowRight, Loader2, UploadCloud, File, Trash2 } from 'lucide-react';
 import { ToastType, User, EntrepreneurStage, Assumption } from '@/types-hub';
-import { useProposalProject } from '../ProposalsApp';
+import { useIterativProposalProject } from '../IterativProposalsApp';
 import { useGeminiGenerator } from '@/hooks-hub/useGeminiGenerator';
 import { Type } from '@google/genai';
 
@@ -10,7 +10,7 @@ interface FastTrackModeProps {
   user: User;
 }
 
-const getStageInstructionForProposal = (stage?: EntrepreneurStage): string => {
+const getStageInstructionForIterativProposal = (stage?: EntrepreneurStage): string => {
     switch(stage) {
         case 'ideation':
             return 'The user is at the Ideation Stage. Focus on helping them structure a compelling narrative around the client\'s core problem and the proposed solution\'s unique value. The tone should be visionary and problem-oriented.';
@@ -23,8 +23,8 @@ const getStageInstructionForProposal = (stage?: EntrepreneurStage): string => {
 }
 
 
-const FastTrackMode: React.FC<FastTrackModeProps> = ({ addToast, user }) => {
-  const { generateProject } = useProposalProject();
+const IterativProposalsFastTrackMode: React.FC<FastTrackModeProps> = ({ addToast, user }) => {
+  const { generateProject } = useIterativProposalProject();
   const { isLoading, generateContent } = useGeminiGenerator(addToast);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,7 +44,7 @@ const FastTrackMode: React.FC<FastTrackModeProps> = ({ addToast, user }) => {
   const handleGenerateProposal = async () => {
     if (isLoading) return;
 
-    const stageInstruction = getStageInstructionForProposal(user.entrepreneurStage);
+    const stageInstruction = getStageInstructionForIterativProposal(user.entrepreneurStage);
      const userInput = `
         Client Problem: ${formData.problem}
         Proposed Solution: ${formData.solution}
@@ -284,4 +284,4 @@ const FastTrackMode: React.FC<FastTrackModeProps> = ({ addToast, user }) => {
   );
 };
 
-export default FastTrackMode;
+export default IterativProposalsFastTrackMode;

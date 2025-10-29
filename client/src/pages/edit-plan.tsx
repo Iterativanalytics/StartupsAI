@@ -10,7 +10,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { BusinessPlanProvider } from '@/contexts/BusinessPlanContext';
+import { IterativePlanProvider } from '@/contexts/IterativePlanContext';
 import { BUSINESS_PLAN_STRUCTURE } from '@/constants/businessPlanStructure';
 import { ChapterNavigation } from '@/components/business-plan/ChapterNavigation';
 import { SectionEditor } from '@/components/business-plan/SectionEditor';
@@ -214,9 +214,9 @@ function EditPlan() {
   const { id } = useParams();
   
   return (
-    <BusinessPlanProvider planId={id}>
+    <IterativePlanProvider planId={id}>
       <EditPlanContent />
-    </BusinessPlanProvider>
+    </IterativePlanProvider>
   );
 }
 

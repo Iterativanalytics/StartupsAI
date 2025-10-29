@@ -1,12 +1,12 @@
 # Documents Hub - IterativStartups
 
-The Documents Hub is a comprehensive AI-powered business innovation platform that unifies four powerful modules: IterativePlans, IterativDecks, IterativProposals, and IterativForms into a central workspace for strategic documents.
+The Documents Hub is a comprehensive AI-powered business innovation platform that unifies four powerful modules: IterativPlans, IterativDecks, IterativProposals, and IterativForms into a central workspace for strategic documents.
 
 ## 🚀 Features
 
 ### Core Modules
 
-#### 1. **IterativePlans** 📋
+#### 1. **IterativPlans** 📋
 - **Fast Track Mode**: Generate complete business plans in minutes using AI
 - **Validated Mode**: Follow Lean Design Thinking methodology to validate assumptions
 - **Pivot Intelligence**: 10 structured pivot types based on validated learning
